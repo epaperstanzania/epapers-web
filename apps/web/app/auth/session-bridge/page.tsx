@@ -10,6 +10,7 @@ export default function SessionBridge() {
       window.parent.postMessage({ type: 'epapers:session', id: event.data.id, session }, event.origin);
     };
     window.addEventListener('message', receive);
+    for (const origin of Object.values(portalOrigins)) window.parent.postMessage({type:'epapers:ready'},origin);
     return () => window.removeEventListener('message', receive);
   }, []);
   return null;

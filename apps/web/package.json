@@ -14,14 +14,16 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@epapers/auth": "workspace:*",
+    "@epapers/config": "workspace:*",
+    "@epapers/database": "workspace:*",
+    "@epapers/server": "workspace:*",
+    "@epapers/ui": "workspace:*",
+    "@prisma/client": "6.19.3",
+    "argon2": "0.41.1",
     "next": "16.4.2",
     "react": "19.3.1",
     "react-dom": "19.3.1",
-    "@epapers/ui": "workspace:*",
-    "@epapers/auth": "workspace:*",
-    "@epapers/config": "workspace:*",
-    "@epapers/server": "workspace:*",
-    "@epapers/database": "workspace:*",
     "zod": "4.3.6"
   },
   "devDependencies": {

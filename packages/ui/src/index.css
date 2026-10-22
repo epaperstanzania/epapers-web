@@ -174,3 +174,11 @@
 h1,h2,h3,.font-heading { font-family: "Plus Jakarta Sans Variable", Inter, sans-serif; }
 body { font-family: "Inter Variable", Inter, sans-serif; }
 [data-portal="admin"] aside { background-color: #0B1B33; }
+[data-portal="admin"] aside, [data-portal="contributor"] aside {
+  --color-text: #f5f8ff; --color-text-muted: #c9d9f2; --color-neutral: #c9d9f2;
+  --color-primary: #b5e6ff; --color-active: #15487c; --color-hover: #123d67;
+  --color-sidebar-border: #254767; --color-sidebar: #00337A;
+  --color-input: #102f50;
+}
+[data-portal="admin"] aside { --color-sidebar: #0B1B33; }
+[data-portal="lecturer"] aside { --color-primary: #b5e6ff; --color-neutral: #c9d9f2; }

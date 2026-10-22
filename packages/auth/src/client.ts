@@ -106,9 +106,11 @@ let bridge: Promise<HTMLIFrameElement> | undefined;
 function refreshThroughBridge(): Promise<Session> {
   bridge ??= new Promise((resolve, reject) => {
     const frame = document.createElement('iframe'); frame.hidden = true; frame.title = 'EPapers secure session'; frame.src = portalOrigins.web + '/auth/session-bridge';
-    const timer = setTimeout(() => { frame.remove(); bridge = undefined; reject(new Error('Session service timed out')); }, 20000);
-    frame.onload = () => { clearTimeout(timer); resolve(frame); };
-    frame.onerror = () => { clearTimeout(timer); frame.remove(); bridge = undefined; reject(new Error('Session service unavailable')); };
+    const onReady = (event: MessageEvent) => { if(event.origin===portalOrigins.web && event.source===frame.contentWindow && event.data?.type==='epapers:ready'){cleanup();resolve(frame);} };
+    const cleanup = () => { clearTimeout(timer); window.removeEventListener('message',onReady); };
+    const timer = setTimeout(() => { cleanup(); frame.remove(); bridge = undefined; reject(new Error('Session service timed out')); }, 20000);
+    window.addEventListener('message',onReady);
+    frame.onerror = () => { cleanup(); frame.remove(); bridge = undefined; reject(new Error('Session service unavailable')); };
     document.body.appendChild(frame);
   });
   return bridge.then(frame => new Promise<Session>((resolve, reject) => {

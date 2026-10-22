@@ -1,21 +1,23 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "incremental": true
-  },
-  "include": [
-    "next-env.d.ts",
-    "app/**/*.ts",
-    "app/**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+    "extends":  "../../tsconfig.base.json",
+    "compilerOptions":  {
+                            "plugins":  [
+                                            {
+                                                "name":  "next"
+                                            }
+                                        ],
+                            "incremental":  true
+                        },
+    "include":  [
+                    "next-env.d.ts",
+                    "app/**/*.ts",
+                    "app/**/*.tsx",
+                    ".next/types/**/*.ts",
+                    ".next/dev/types/**/*.ts",
+                    "components/**/*.tsx",
+                    "instrumentation.ts"
+                ],
+    "exclude":  [
+                    "node_modules"
+                ]
 }

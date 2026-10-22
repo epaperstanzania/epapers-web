@@ -1,3 +1,4 @@
+import { clientIp } from '@epapers/auth/policy';
 export const runtime = 'nodejs';
 import { route, preflight } from '@epapers/server/modules/auth/routes-helpers';
 import { empty } from '@epapers/server/modules/catalog/schemas';
@@ -12,5 +13,5 @@ export async function POST(req: NextRequest, context: {
     }>;
 }) {
     const params = await context.params;
-    return route('papers/[id]/view', empty, async (_data, request, _identity) => { const id = z.string().uuid().parse(params.id); return service.view(id, ipHash(request.headers.get('cf-connecting-ip') || 'local')); }, "optional", false)(req);
+    return route('papers/[id]/view', empty, async (_data, request, _identity) => { const id = z.string().uuid().parse(params.id); return service.view(id, ipHash(clientIp(request.headers))); }, "optional", false)(req);
 }
