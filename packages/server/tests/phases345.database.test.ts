@@ -154,7 +154,7 @@ describe.skipIf(!enabled)('Phases 3–5 real CockroachDB with isolated storage a
     it('rejects unsafe PDFs in the worker without XP and queues a private notice', async () => {
         const body=Buffer.from('%PDF-1.7\n /JavaScript () \n%%EOF\n');
         const examUploadId=await upload(contributor,body);
-        const p=await createPaper(contributor,{moduleId:module.id,title:'Unsafe scan fixture',category:'TEST',academicYear:2024,semester:1,examPeriod:'',examUploadId});
+        const p=await createPaper(contributor,{moduleId:module.id,title:'Unsafe scan fixture',category:'TEST',testNumber:1,academicYear:2024,semester:1,examPeriod:'Test 1',examUploadId});
         paperIds.push(p.id);
         await scanFile(examUploadId);await scanFile(examUploadId);
         const rejected=await db.paper.findUniqueOrThrow({where:{id:p.id}});

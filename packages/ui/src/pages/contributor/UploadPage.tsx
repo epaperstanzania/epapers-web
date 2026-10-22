@@ -29,6 +29,7 @@ export const UploadPage: React.FC = () => {
   const [semester, setSemester] = useState<1 | 2 | ''>('');
   const [selectedModuleId, setSelectedModuleId] = useState('');
   const [category, setCategory] = useState<ExamCategory | ''>('');
+  const [testNumber, setTestNumber] = useState<1 | 2 | ''>('');
   const [moduleSearch, setModuleSearch] = useState('');
   const [paperFile, setPaperFile] = useState<SelectedFile | null>(null);
   const [markingSchemeFile, setMarkingSchemeFile] = useState<SelectedFile | null>(null);
@@ -104,14 +105,14 @@ export const UploadPage: React.FC = () => {
   useEffect(() => {
     let active = true;
     setIsDuplicate(false);
-    if (!selectedModuleId || !category || !academicYear || !semester) return;
-    api.hasDuplicatePaper({ moduleId: selectedModuleId, category, academicYear, semester }).then((exists) => {
+    if (!selectedModuleId || !category || (category === 'TEST' && !testNumber) || !academicYear || !semester) return;
+    api.hasDuplicatePaper({ moduleId: selectedModuleId, category, ...(category === 'TEST' && testNumber ? { testNumber } : {}), academicYear, semester }).then((exists) => {
       if (active) setIsDuplicate(exists);
     }).catch(() => {
       if (active) setLoadError('Duplicate status could not be checked. You can continue; moderation will review the submission.');
     });
     return () => { active = false; };
-  }, [selectedModuleId, category, academicYear, semester]);
+  }, [selectedModuleId, category, testNumber, academicYear, semester]);
 
   const resetFiles = () => {
     setPaperFile(null);
@@ -127,6 +128,7 @@ export const UploadPage: React.FC = () => {
     setSemester('');
     setSelectedModuleId('');
     setCategory('');
+    setTestNumber('');
     setModules([]);
     setModuleSearch('');
     setIsDuplicate(false);
@@ -139,6 +141,7 @@ export const UploadPage: React.FC = () => {
     setSemester('');
     setSelectedModuleId('');
     setCategory('');
+    setTestNumber('');
     setModules([]);
     setModuleSearch('');
     setIsDuplicate(false);
@@ -150,6 +153,7 @@ export const UploadPage: React.FC = () => {
     setSemester('');
     setSelectedModuleId('');
     setCategory('');
+    setTestNumber('');
     setModules([]);
     setIsDuplicate(false);
     resetFiles();
@@ -159,6 +163,7 @@ export const UploadPage: React.FC = () => {
     setSemester(value);
     setSelectedModuleId('');
     setCategory('');
+    setTestNumber('');
     setIsDuplicate(false);
     resetFiles();
   };
@@ -166,6 +171,7 @@ export const UploadPage: React.FC = () => {
   const selectModule = (module: Module) => {
     setSelectedModuleId(module.id);
     setCategory('');
+    setTestNumber('');
     setIsDuplicate(false);
     resetFiles();
   };
@@ -199,16 +205,17 @@ export const UploadPage: React.FC = () => {
 
   const handleSubmit = async () => {
     if (submissionInFlight.current) return;
-    if (!selectedDepartment || !selectedProgram || !selectedModule || !academicYear || !semester || !category || !paperFile) return;
+    if (!selectedDepartment || !selectedProgram || !selectedModule || !academicYear || !semester || !category || (category === 'TEST' && !testNumber) || !paperFile) return;
     submissionInFlight.current = true;
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      const examPeriod = category === 'TEST' ? 'Continuous Assessment Test' : category === 'UE' ? 'University Examination' : 'Supplementary Examination';
+      const examPeriod = category === 'TEST' ? `Test ${testNumber}` : category === 'UE' ? 'University Examination' : 'Supplementary Examination';
       const result = await api.uploadPaper({
-        title: `${category} Exam: ${selectedModule.code}`,
+        title: `${category === 'TEST' ? `Test ${testNumber}` : category} Exam: ${selectedModule.code}`,
         moduleId: selectedModule.id,
         category,
+        ...(category === 'TEST' ? { testNumber: testNumber as 1 | 2 } : {}),
         academicYear,
         semester,
         examPeriod,
@@ -360,7 +367,7 @@ export const UploadPage: React.FC = () => {
           <fieldset className="space-y-2">
             <legend className="text-sm font-semibold text-[var(--color-text)]">Assessment category</legend>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {([{ id: 'TEST', label: 'TEST', detail: 'Continuous assessment' }, { id: 'UE', label: 'UE', detail: 'University examination' }, { id: 'SUPP', label: 'SUPP', detail: 'Supplementary examination' }] as const).map((item) => <button key={item.id} type="button" aria-pressed={category === item.id} onClick={() => { setCategory(item.id); setPaperFile(null); setMarkingSchemeFile(null); }} className={`min-h-16 rounded-lg border p-3 text-left ${category === item.id ? 'border-[var(--color-primary)] bg-[var(--color-active)] text-[var(--color-primary)]' : 'border-[var(--color-input-border)] text-[var(--color-text)]'}`}><span className="block text-sm font-bold">{item.label}</span><span className="text-xs">{item.detail}</span></button>)}
+              {([{ id: 'TEST', testNumber: 1, label: 'Test 1', detail: 'First continuous assessment' }, { id: 'TEST', testNumber: 2, label: 'Test 2', detail: 'Second continuous assessment' }, { id: 'UE', testNumber: undefined, label: 'UE', detail: 'University examination' }, { id: 'SUPP', testNumber: undefined, label: 'SUPP', detail: 'Supplementary examination' }] as const).map((item) => <button key={item.label} type="button" aria-pressed={category === item.id && (item.id !== 'TEST' || testNumber === item.testNumber)} onClick={() => { setCategory(item.id); setTestNumber(item.testNumber ?? ''); setPaperFile(null); setMarkingSchemeFile(null); }} className={`min-h-16 rounded-lg border p-3 text-left ${category === item.id && (item.id !== 'TEST' || testNumber === item.testNumber) ? 'border-[var(--color-primary)] bg-[var(--color-active)] text-[var(--color-primary)]' : 'border-[var(--color-input-border)] text-[var(--color-text)]'}`}><span className="block text-sm font-bold">{item.label}</span><span className="text-xs">{item.detail}</span></button>)}
             </div>
           </fieldset>
         )}
@@ -381,7 +388,7 @@ export const UploadPage: React.FC = () => {
               <Summary label="Academic year" value={academicYear} />
               <Summary label="Semester" value={semester ? `Semester ${semester}` : ''} />
               <Summary label="Module" value={selectedModule ? `${selectedModule.code} — ${selectedModule.name}` : ''} />
-              <Summary label="Category" value={category} />
+              <Summary label="Category" value={category === 'TEST' ? `Test ${testNumber}` : category} />
               <Summary label="Exam PDF" value={paperFile?.name} />
               <Summary label="Marking scheme" value={markingSchemeFile?.name || 'Not attached'} />
             </dl>
