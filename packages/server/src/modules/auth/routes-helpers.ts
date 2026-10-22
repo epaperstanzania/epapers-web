@@ -65,7 +65,7 @@ export function route<T>(name: string, schema: z.ZodType<T>, action: (data: T, r
             if (req.method !== 'GET' && !validMutation(req.headers.get('origin'), req.headers.get('x-epapers-client')))
                 fail(403, 'CSRF_FAILED', 'Invalid client origin');
             // Trust only the header overwritten by Cloudflare; restrict VPS ingress to Cloudflare in production.
-            await rateLimit('ip:' + name + ':' + ipHash(env.TRUST_PROXY ? req.headers.get('cf-connecting-ip') || 'unknown' : 'local'), name === 'login' ? 20 : 60, 900);
+            await rateLimit('ip:' + name + ':' + ipHash(env.TRUST_PROXY ? req.headers.get('cf-connecting-ip') || 'unknown' : 'local'), ['login','auth/login','auth/admin/login'].includes(name) ? 20 : 60, 900);
             const identity = typeof auth === 'object' ? await withAuth(auth)(req) : auth === true || (auth === 'optional' && req.headers.has('authorization')) ? await withAuth()(req) : undefined;
             if (identity && req.method !== 'GET') await rateLimit('account:' + name + ':' + identity.user.id, 60, 900);
             let raw: unknown;
