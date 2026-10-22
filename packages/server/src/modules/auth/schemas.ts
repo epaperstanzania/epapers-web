@@ -8,6 +8,8 @@ export const password = z.string().min(6, 'Password must contain at least 6 char
     if (message) context.addIssue({ code: 'custom', message });
 });
 export const schemas = {
+    portalGrant: z.strictObject({ redirectUri: z.string().url().max(300), challenge: z.string().regex(/^[A-Za-z0-9_-]{43}$/) }),
+    portalExchange: z.strictObject({ redirectUri: z.string().url().max(300), code: z.string().min(40).max(4096), verifier: z.string().regex(/^[A-Za-z0-9_-]{43}$/) }),
     register: z.strictObject({ username, email, password, fullName: z.string().trim().min(2).max(160) }),
     login: z.strictObject({ usernameOrEmail: z.string().trim().min(3).max(254), password: z.string().min(1).max(128) }),
     reauth: z.strictObject({ password: z.string().min(1).max(128) }),

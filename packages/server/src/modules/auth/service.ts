@@ -1,6 +1,7 @@
 import 'server-only';
-import { encrypt } from '@epapers/server/lib/encryption';
-import { randomUUID } from 'node:crypto';
+import { decrypt, encrypt } from '@epapers/server/lib/encryption';
+import { createHash, randomUUID } from 'node:crypto';
+import { portalOrigins } from '@epapers/config/portals';
 import type { User } from '@epapers/database/client';
 import { db, withTransactionRetry, type TransactionClient } from '@epapers/database';
 import { fail } from '@epapers/config/errors';
@@ -11,6 +12,58 @@ import { otpEmail, resetEmail, adminCodeEmail } from '@epapers/server/lib/email/
 import { privateUser } from '@epapers/server/modules/auth/dto';
 import { audit, challenge } from '@epapers/server/modules/auth/repository';
 const generic = { message: 'If eligible, an email will be sent. Delivery may be delayed.' };
+
+type PortalGrant = { token: string; challenge: string; redirectUri: string; expiresAt: number; sessionExpiresAt: string };
+function validatePortalCallback(redirectUri: string) {
+    if (![portalOrigins.contributor, portalOrigins.lecturer, portalOrigins.admin].some(origin => redirectUri === origin + '/auth/callback'))
+        fail(422, 'INVALID_CALLBACK', 'Unknown portal callback');
+}
+
+// The encrypted authorization code is bound to PKCE and an exact callback.
+// Its backing session expires in two minutes and is consumed transactionally.
+// Refresh credentials themselves never appear in a browser URL or storage.
+export async function createPortalGrant(userId: string, sessionId: string, input: { challenge: string; redirectUri: string }) {
+    validatePortalCallback(input.redirectUri);
+    const grant = await withTransactionRetry(async tx => {
+        await lockUser(tx, userId);
+        const parent = await tx.userSession.findFirst({ where: { id: sessionId, userId, revokedAt: null, rotatedAt: null, expiresAt: { gt: new Date() } } });
+        const user = await tx.user.findUnique({ where: { id: userId } });
+        active(user);
+        if (!parent || (user.role === 'ADMIN' && !parent.adminEmailVerifiedAt)) fail(401, 'UNAUTHORIZED', 'Please sign in again');
+        const issued = await issueSession(tx, user, parent.familyId);
+        const expiresAt = Math.min(Date.now() + 120000, parent.expiresAt.getTime());
+        await tx.userSession.update({ where: { id: issued.session.id }, data: { expiresAt: new Date(expiresAt) } });
+        return { token: issued.refreshToken, ...input, expiresAt, sessionExpiresAt: parent.expiresAt.toISOString() } satisfies PortalGrant;
+    });
+    return { code: Buffer.from(encrypt(grant, 'portal-grant')).toString('base64url') };
+}
+
+export async function exchangePortalGrant(input: { code: string; verifier: string; redirectUri: string }, origin: string | null) {
+    validatePortalCallback(input.redirectUri);
+    let grant: PortalGrant;
+    try { grant = decrypt<PortalGrant>(Buffer.from(input.code, 'base64url').toString('utf8'), 'portal-grant'); }
+    catch { fail(401, 'INVALID_GRANT', 'Sign-in link is invalid or expired'); }
+    const challenge = createHash('sha256').update(input.verifier).digest('base64url');
+    if (grant.expiresAt <= Date.now() || grant.redirectUri !== input.redirectUri || grant.challenge !== challenge || new URL(input.redirectUri).origin !== origin)
+        fail(401, 'INVALID_GRANT', 'Sign-in link is invalid or expired');
+    const result = await withTransactionRetry(async tx => {
+        const pending = await tx.userSession.findUnique({ where: { refreshTokenHash: tokenHash(grant.token) } });
+        if (!pending) fail(401, 'INVALID_GRANT', 'Sign-in link is invalid or expired');
+        await lockUser(tx, pending.userId);
+        const current = await tx.userSession.findUnique({ where: { id: pending.id } });
+        const user = await tx.user.findUnique({ where: { id: pending.userId } });
+        active(user);
+        if (!current || current.revokedAt || current.rotatedAt || current.expiresAt <= new Date() || (user.role === 'ADMIN' && !current.adminEmailVerifiedAt))
+            fail(401, 'INVALID_GRANT', 'Sign-in link is invalid or expired');
+        await tx.userSession.update({ where: { id: current.id }, data: { rotatedAt: new Date(), revokedAt: new Date() } });
+        const next = await issueSession(tx, user, current.familyId);
+        const expiresAt = new Date(grant.sessionExpiresAt);
+        await tx.userSession.update({ where: { id: next.session.id }, data: { expiresAt } });
+        return { ...next, session: { ...next.session, expiresAt }, user };
+    });
+    return { refreshToken: result.refreshToken, session: result.session, accessToken: await signAccess(result.user, result.session.id), user: privateUser(result.user) };
+}
+
 async function lockUser(tx: TransactionClient, id: string) { await tx.$queryRaw `SELECT id FROM users WHERE id=${id}::UUID FOR UPDATE`; }
 function active(user: User | null): asserts user is User { if (!user || user.deletedAt || user.status !== 'ACTIVE')
     fail(401, 'UNAUTHORIZED', 'Authentication required'); }

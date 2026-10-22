@@ -38,6 +38,7 @@ export const UploadPage: React.FC = () => {
   const submissionInFlight = useRef(false);
   const [uploadResult, setUploadResult] = useState<Awaited<ReturnType<typeof api.uploadPaper>> | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const selectedDepartment = departments.find((item) => item.id === selectedDeptId);
@@ -60,13 +61,14 @@ export const UploadPage: React.FC = () => {
 
   useEffect(() => {
     let active = true;
+    setLoadError(null);
     api.getDepartments().then((items) => {
       if (active) setDepartments(items);
     }).catch(() => {
       if (active) setLoadError('Departments could not be loaded. Retry to continue.');
     });
     return () => { active = false; };
-  }, []);
+  }, [loadAttempt]);
 
   useEffect(() => {
     let active = true;
@@ -79,12 +81,11 @@ export const UploadPage: React.FC = () => {
       if (active) setLoadError('Programs could not be loaded. Retry to continue.');
     });
     return () => { active = false; };
-  }, [selectedDeptId]);
+  }, [selectedDeptId, loadAttempt]);
 
   useEffect(() => {
     let active = true;
     setModules([]);
-    setSelectedModuleId('');
     setModuleSearch('');
     if (!selectedProgramId || !semester) {
       setIsLoadingModules(false);
@@ -100,7 +101,7 @@ export const UploadPage: React.FC = () => {
       if (active) setIsLoadingModules(false);
     });
     return () => { active = false; };
-  }, [selectedProgramId, selectedDeptId, semester]);
+  }, [selectedProgramId, selectedDeptId, semester, loadAttempt]);
 
   useEffect(() => {
     let active = true;
@@ -112,7 +113,7 @@ export const UploadPage: React.FC = () => {
       if (active) setLoadError('Duplicate status could not be checked. You can continue; moderation will review the submission.');
     });
     return () => { active = false; };
-  }, [selectedModuleId, category, testNumber, academicYear, semester]);
+  }, [selectedModuleId, category, testNumber, academicYear, semester, loadAttempt]);
 
   const resetFiles = () => {
     setPaperFile(null);
@@ -180,6 +181,10 @@ export const UploadPage: React.FC = () => {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
+    if (file.size === 0) {
+      setSubmitError('This file is empty. Choose a PDF that contains the examination paper.');
+      return;
+    }
     if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
       setSubmitError('Choose a PDF file.');
       return;
@@ -197,7 +202,7 @@ export const UploadPage: React.FC = () => {
       case 3: return Boolean(academicYear);
       case 4: return Boolean(semester);
       case 5: return Boolean(selectedModuleId);
-      case 6: return Boolean(category);
+      case 6: return Boolean(category && (category !== 'TEST' || testNumber));
       case 7: return Boolean(paperFile);
       default: return false;
     }
@@ -253,7 +258,7 @@ export const UploadPage: React.FC = () => {
       {!currentUser?.isEmailVerified && (
         <div className="flex items-center justify-between gap-4 rounded-lg border border-[var(--color-warning)]/40 bg-[var(--color-warning-soft)] p-4 text-sm text-[var(--color-warning-text)]">
           <span>Verify your Email address to confirm your contributor account.</span>
-          <Link to="/verify" className="min-h-11 shrink-0 rounded-lg bg-[var(--color-primary)] px-3 py-3 text-xs font-semibold text-[var(--color-surface)]">Verify email</Link>
+          <Link to={`/verify?email=${encodeURIComponent(currentUser?.email || '')}`} className="min-h-11 shrink-0 rounded-lg bg-[var(--color-primary)] px-3 py-3 text-xs font-semibold text-[var(--color-surface)]">Verify email</Link>
         </div>
       )}
 
@@ -303,7 +308,7 @@ export const UploadPage: React.FC = () => {
           <h2 id="upload-step-heading" className="mt-1 text-lg font-bold text-[var(--color-text)]">{stepTitles[step - 1]}</h2>
         </div>
 
-        {loadError && <p role="alert" className="rounded-lg bg-[var(--color-danger-soft)] p-3 text-sm text-[var(--color-danger)]">{loadError}</p>}
+        {loadError && <div role="alert" className="rounded-lg bg-[var(--color-danger-soft)] p-3 text-sm text-[var(--color-danger)]"><p>{loadError}</p><button type="button" onClick={() => setLoadAttempt(value => value + 1)} className="mt-2 min-h-11 rounded-lg border border-current px-4 font-semibold">Retry loading</button></div>}
 
         {step === 1 && (
           <label className="block space-y-1.5 text-sm font-semibold text-[var(--color-text)]">
@@ -368,7 +373,7 @@ export const UploadPage: React.FC = () => {
         {step === 6 && (
           <fieldset className="space-y-2">
             <legend className="text-sm font-semibold text-[var(--color-text)]">Assessment category</legend>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3">
               {([{ id: 'TEST', testNumber: 1, label: 'Test 1', detail: 'First continuous assessment' }, { id: 'TEST', testNumber: 2, label: 'Test 2', detail: 'Second continuous assessment' }, { id: 'UE', testNumber: undefined, label: 'UE', detail: 'University examination' }, { id: 'SUPP', testNumber: undefined, label: 'SUPP', detail: 'Supplementary examination' }] as const).map((item) => <button key={item.label} type="button" aria-pressed={category === item.id && (item.id !== 'TEST' || testNumber === item.testNumber)} onClick={() => { setCategory(item.id); setTestNumber(item.testNumber ?? ''); setPaperFile(null); setMarkingSchemeFile(null); }} className={`min-h-16 rounded-lg border p-3 text-left ${category === item.id && (item.id !== 'TEST' || testNumber === item.testNumber) ? 'border-[var(--color-primary)] bg-[var(--color-active)] text-[var(--color-primary)]' : 'border-[var(--color-input-border)] text-[var(--color-text)]'}`}><span className="block text-sm font-bold">{item.label}</span><span className="text-xs">{item.detail}</span></button>)}
             </div>
           </fieldset>
@@ -409,7 +414,7 @@ export const UploadPage: React.FC = () => {
 };
 
 function Summary({ label, value }: { label: string; value?: string | null }) {
-  return <div><dt className="text-xs text-[var(--color-text-muted)]">{label}</dt><dd className="font-semibold text-[var(--color-text)]">{value || '—'}</dd></div>;
+  return <div className="min-w-0"><dt className="text-xs text-[var(--color-text-muted)]">{label}</dt><dd className="break-words font-semibold text-[var(--color-text)]">{value || '—'}</dd></div>;
 }
 
 function FileChoice({ label, helper, file, onChoose, onRemove, optional = false }: {
@@ -429,11 +434,11 @@ function FileChoice({ label, helper, file, onChoose, onRemove, optional = false 
           <button type="button" aria-label={`Remove ${label}`} onClick={onRemove} className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-hover)]"><X aria-hidden="true" className="h-4 w-4" /></button>
         </div>
       ) : (
-        <label className="flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-[var(--color-input-border)] bg-[var(--color-input)] p-5 text-center hover:border-[var(--color-primary)]">
+        <label className="flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-[var(--color-input-border)] bg-[var(--color-input)] p-5 text-center hover:border-[var(--color-primary)] focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--color-primary)]">
           {optional ? <Paperclip aria-hidden="true" className="mb-2 h-5 w-5 text-[var(--color-primary)]" /> : <Upload aria-hidden="true" className="mb-2 h-5 w-5 text-[var(--color-primary)]" />}
           <span className="text-sm font-semibold text-[var(--color-text)]">Choose PDF</span>
           {helper && <span className="mt-1 text-xs text-[var(--color-text-muted)]">{helper}</span>}
-          <input type="file" accept="application/pdf,.pdf" required={!optional} className="sr-only" onChange={onChoose} />
+          <input type="file" aria-label={label} accept="application/pdf,.pdf" required={!optional} className="sr-only" onChange={onChoose} />
         </label>
       )}
     </div>

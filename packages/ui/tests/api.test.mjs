@@ -108,10 +108,12 @@ test('upload sends actual bytes to storage and only supported fields to paper su
       assert.equal('uploader' in body, false); assert.equal('departmentId' in body, false);
       return ok({ id: 'paper', status: 'pending', duplicateWarning: false, levelTitle: 'Scholar' });
     }
-    return ok({ items: [{ ...paper, status: 'pending' }], nextCursor: null });
+    throw new Error('Submission history is temporarily unavailable');
   };
   const result = await api.uploadPaper({ title: 'Real paper', moduleId: 'module', category: 'UE', academicYear: '2024/2025', semester: 1, examPeriod: 'UE', examFile: file });
+  assert.equal(result.paperId, 'paper');
   assert.equal(result.autoApproved, false); assert.equal(calls[2], '/api/v1/uploads/upload/complete');
+  assert.equal(calls.length, 4, 'A successful submission must not depend on a subsequent history request');
 });
 test('sensitive admin mutations attach reauthentication proof and uppercase status', async () => {
   setSession({ ...session('admin-token'), user: { id: 'admin', username: 'admin', role: 'admin' } });

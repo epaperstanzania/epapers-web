@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect } from 'react';
 import NextLink from 'next/link';
 import { usePathname, useRouter, useParams as nextParams, useSearchParams as nextSearchParams } from 'next/navigation';
-import { portalDestination, portalOrigins, type Portal } from '@epapers/config/portals';
+import { portalAuthMode, portalDestination, portalOrigins, type Portal } from '@epapers/config/portals';
 const current = (process.env.NEXT_PUBLIC_PORTAL || 'web') as Portal;
 type LinkProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & { to: string; state?: { message?: string }; replace?: boolean };
 export function Link({ to, state: _state, replace, ...props }: LinkProps) {
@@ -31,6 +31,10 @@ export function Navigate({ to, replace, state }: { to: string; replace?: boolean
   const navigate = useNavigate(), pathname = usePathname(), search = nextSearchParams();
   useEffect(() => {
     let destination = to;
+    if (to === '/login' && portalAuthMode === 'proxy' && current !== 'web') {
+      window.location.replace('/auth/start?returnTo=' + encodeURIComponent(pathname + (search.size ? '?' + search : '')));
+      return;
+    }
     if (to === '/login') { const url = new URL('/login', portalOrigins.web); url.searchParams.set('returnTo', new URL(pathname + (search.size ? '?' + search : ''), portalOrigins[current]).href); destination = url.href; }
     navigate(destination, { replace, state });
   }, [to, replace, state?.message, navigate, pathname, search]);

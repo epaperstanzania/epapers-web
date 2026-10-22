@@ -4,6 +4,7 @@
   "type": "module",
   "name": "@epapers/auth",
   "exports": {
+    "./portal-session": "./src/portal-session.ts",
     "./server": "./src/server.ts",
     "./jwt": "./src/jwt.ts",
     "./crypto": "./src/crypto.ts",

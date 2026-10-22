@@ -1,7 +1,6 @@
 import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { env } from '@epapers/config/server-env';
 import { ApiError, fail } from '@epapers/config/errors';
 import { securityHeaders } from '@/lib/http';
 import { verifyReauthentication } from '@epapers/auth/jwt';
@@ -10,7 +9,7 @@ import { rateLimit } from '@epapers/server/lib/rate-limit';
 import { ipHash } from '@epapers/auth/crypto';
 import { authenticate, authorize } from '@epapers/server/modules/auth/service';
 import { enforceWritePolicy } from '@epapers/server/lib/write-policy';
-import { trustedOrigin, validMutation, refreshCookieOptions } from '@epapers/auth/policy';
+import { clientIp, trustedOrigin, validMutation, refreshCookieOptions } from '@epapers/auth/policy';
 
 type Identity = Awaited<ReturnType<typeof authenticate>>;
 
@@ -94,9 +93,9 @@ export function route<T>(
             ) {
                 fail(403, 'CSRF_FAILED', 'Invalid client origin');
             }
-            // Trust only the header overwritten by Cloudflare; restrict VPS ingress to Cloudflare in production.
+            // Use the platform-overwritten IP header; never trust arbitrary forwarded headers.
             await rateLimit(
-                `ip:${name}:${ipHash(env.TRUST_PROXY ? req.headers.get('cf-connecting-ip') || 'unknown' : 'local')}`,
+                `ip:${name}:${ipHash(clientIp(req.headers))}`,
                 ['login', 'auth/login', 'auth/admin/login'].includes(name) ? 20 : 60,
                 900,
             );

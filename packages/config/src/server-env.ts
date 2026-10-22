@@ -10,9 +10,9 @@ const boolFromString = z.string().transform((value, ctx) => {
 });
 const schema = z.object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-    PORT: z.coerce.number().int().min(1).max(65535).default(3001),
+    PORT: z.coerce.number().int().min(1).max(65535).default(3000),
     APP_ORIGIN: z.string().url(),
-    API_ORIGIN: z.string().url().default('http://localhost:3001'),
+    API_ORIGIN: z.string().url().default('http://localhost:3000'),
     COOKIE_DOMAIN: z.string().default(''),
     PORTAL_ORIGINS: z.string().optional(),
     TRUST_PROXY: boolFromString.default(false),
@@ -48,10 +48,11 @@ const schema = z.object({
         try {
             const url = new URL(origin);
             if (url.origin !== origin || url.username || url.password || !['http:', 'https:'].includes(url.protocol) || (value.NODE_ENV === 'production' && url.protocol !== 'https:')) throw new Error();
-            if (value.NODE_ENV === 'production' && !['https://epapers.co.tz','https://contributor.epapers.co.tz','https://lecturer.epapers.co.tz','https://console.epapers.co.tz'].includes(origin)) throw new Error();
+            if (value.NODE_ENV === 'production' && !['https://epapers.co.tz','https://contributor.epapers.co.tz','https://lecturer.epapers.co.tz','https://console.epapers.co.tz','https://epapertz.vercel.app','https://epapertz-contributor.vercel.app','https://epapertz-lecturer.vercel.app','https://epapertz-admin.vercel.app'].includes(origin)) throw new Error();
         } catch { ctx.addIssue({ code: 'custom', path: ['PORTAL_ORIGINS'], message: 'Expected exact trusted portal origins' }); }
     }
     if (value.NODE_ENV === 'production' && !['', '.epapers.co.tz', 'epapers.co.tz'].includes(value.COOKIE_DOMAIN)) ctx.addIssue({ code: 'custom', path: ['COOKIE_DOMAIN'], message: 'Invalid cookie domain' });
+    if (origins.some(origin => origin.endsWith('.vercel.app')) && value.COOKIE_DOMAIN) ctx.addIssue({ code: 'custom', path: ['COOKIE_DOMAIN'], message: 'Vercel portals require host-only cookies' });
     if (value.EMAIL_PROVIDER === 'smtp') {
         for (const key of ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD', 'SMTP_FROM'] as const) {
             if (!value[key])
@@ -64,7 +65,7 @@ const schema = z.object({
 });
 const result = schema.safeParse(process.env);
 if (!result.success) {
-    const missing = result.error.issues.map((issue) => `${issue.path.join('@epapers/server/lib')}: invalid or missing value`).join('\n');
+    const missing = result.error.issues.map((issue) => `${issue.path.join('.')}: invalid or missing value`).join('\n');
     throw new Error(`Invalid backend environment configuration:\n${missing}`);
 }
 export const env = result.data;

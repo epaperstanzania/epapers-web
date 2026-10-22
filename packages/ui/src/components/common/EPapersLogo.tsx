@@ -5,12 +5,14 @@ interface EPapersLogoProps {
   collapsed?: boolean;
   className?: string;
   showContextLabel?: boolean;
+  contextLabel?: string;
 }
 
 export const EPapersLogo: React.FC<EPapersLogoProps> = ({
   collapsed = false,
   className = '',
   showContextLabel = true,
+  contextLabel = 'Exam Papers',
 }) => {
   return (
     <div className={`flex items-center gap-2.5 select-none ${className}`}>
@@ -31,11 +33,11 @@ export const EPapersLogo: React.FC<EPapersLogoProps> = ({
               EPapers
             </span>
           </div>
-          <span
+          {showContextLabel && <span
             className="text-[9.5px] font-medium tracking-wider uppercase mt-0.5 text-[var(--color-neutral)]"
           >
-            Exam Papers
-          </span>
+            {contextLabel}
+          </span>}
         </div>
       )}
     </div>

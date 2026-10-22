@@ -1,5 +1,6 @@
 export type Portal = 'web' | 'contributor' | 'lecturer' | 'admin';
 const production = process.env.NODE_ENV === 'production';
+export const portalAuthMode = process.env.NEXT_PUBLIC_AUTH_MODE === 'proxy' ? 'proxy' : 'bridge';
 export const portalOrigins = {
   web: process.env.NEXT_PUBLIC_WEB_ORIGIN || (production ? 'https://epapers.co.tz' : 'http://localhost:3000'),
   contributor: process.env.NEXT_PUBLIC_CONTRIBUTOR_ORIGIN || (production ? 'https://contributor.epapers.co.tz' : 'http://localhost:3002'),

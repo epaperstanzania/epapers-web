@@ -1,4 +1,4 @@
-import { portalOrigins } from '@epapers/config/portals';
+import { portalAuthMode, portalOrigins } from '@epapers/config/portals';
 export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string, public fields?: { path: string; message: string }[]) { super(message); }
 }
@@ -18,7 +18,7 @@ export function apiTask<Args extends unknown[]>(task: (...args: Args) => Promise
     } finally { settled?.(); }
   };
 }
-export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || (typeof window === 'undefined' ? '/api/v1' : portalOrigins.web + '/api/v1')).replace(/\/+$/, '');
+export const API_BASE_URL = (portalAuthMode === 'proxy' ? '/api/v1' : process.env.NEXT_PUBLIC_API_BASE_URL || (typeof window === 'undefined' ? '/api/v1' : portalOrigins.web + '/api/v1')).replace(/\/+$/, '');
 let token: string | null = null;
 let role: string | null = null;
 let version = 0;
@@ -98,7 +98,7 @@ export function restoreSession(): Promise<Session | null> {
   return refreshPromise;
 }
 async function coordinatedRefresh(): Promise<Session> {
-  if (typeof window !== 'undefined' && window.location.origin !== portalOrigins.web) return refreshThroughBridge();
+  if (portalAuthMode !== 'proxy' && typeof window !== 'undefined' && window.location.origin !== portalOrigins.web) return refreshThroughBridge();
   const refresh = () => request<Session>('/auth/refresh', { method: 'POST', retry: false });
   return typeof navigator !== 'undefined' && navigator.locks ? navigator.locks.request('epapers-refresh', refresh) : refresh();
 }

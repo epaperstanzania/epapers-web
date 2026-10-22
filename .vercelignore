@@ -1,0 +1,13 @@
+.git
+.cache
+.turbo
+**/node_modules
+**/.next
+**/.vercel
+**/.env
+**/.env.*
+**/env.txt
+**/*.tsbuildinfo
+test-results
+playwright-report
+coverage

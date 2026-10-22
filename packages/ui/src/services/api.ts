@@ -138,9 +138,7 @@ export const api = {
     const examUploadId = await uploadFile(input.examFile), markingSchemeUploadId = input.markingSchemeFile ? await uploadFile(input.markingSchemeFile) : undefined;
     const result = await request<{ id: string; status: string; duplicateWarning: boolean; levelTitle: string }>('/papers', { method: 'POST', auth: true,
       body: { title: input.title, moduleId: input.moduleId, category: input.category, testNumber: input.testNumber, academicYear: academicYearStart(input.academicYear), semester: input.semester, examPeriod: input.examPeriod, examUploadId, markingSchemeUploadId } });
-    const paper = (await api.getAllPapers()).find(p => p.id === result.id);
-    if (!paper) throw new Error('Paper submitted, but its details could not be loaded. Check your submissions before retrying.');
-    return { paper, autoApproved: result.status === 'approved', levelTitle: result.levelTitle };
+      return { paperId: result.id, autoApproved: result.status === 'approved', duplicateWarning: result.duplicateWarning, levelTitle: result.levelTitle };
   },
   async reviewPaper(paperId: string, action: 'approve' | 'approve_with_edits' | 'reject' | 'spam', reason = '', edits?: Partial<Paper>) {
     await request(`/admin/papers/${idPath(paperId)}/review`, { method: 'PATCH', auth: true, body: { action: action === 'approve' || action === 'approve_with_edits' ? 'approved' : action === 'reject' ? 'rejected' : 'marked_spam', reason, title: edits?.title, moduleId: edits?.moduleId } });

@@ -1,0 +1,6 @@
+{
+  "web": { "project": "epapertz", "root": "apps/web", "origin": "https://epapertz.vercel.app", "port": 3000 },
+  "contributor": { "project": "epapertz-contributor", "root": "apps/contributor", "origin": "https://epapertz-contributor.vercel.app", "port": 3002 },
+  "lecturer": { "project": "epapertz-lecturer", "root": "apps/lecturer", "origin": "https://epapertz-lecturer.vercel.app", "port": 3003 },
+  "admin": { "project": "epapertz-admin", "root": "apps/admin", "origin": "https://epapertz-admin.vercel.app", "port": 3004 }
+}

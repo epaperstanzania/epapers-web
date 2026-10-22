@@ -1,5 +1,79 @@
 # Deployment and operations
 
+## Current Vercel setup
+
+The selected hosting profile is four independent Vercel projects:
+
+| Portal | Project / production hostname | Root directory |
+| --- | --- | --- |
+| Public and API | `epapertz.vercel.app` | `apps/web` |
+| Contributor and uploads | `epapertz-contributor.vercel.app` | `apps/contributor` |
+| Lecturer | `epapertz-lecturer.vercel.app` | `apps/lecturer` |
+| Administrator | `epapertz-admin.vercel.app` | `apps/admin` |
+
+`deployment/portals.json` records these origins. Each app's `vercel.json` installs
+from the workspace root and builds only that portal's dependency graph. Enable
+source files outside the root directory, Node 24.x and
+`ENABLE_EXPERIMENTAL_COREPACK=1`. Migrations are not part of these build commands.
+
+All four projects use `NEXT_PUBLIC_AUTH_MODE=proxy` and
+`NEXT_PUBLIC_API_BASE_URL=/api/v1`. Set `NEXT_PUBLIC_WEB_ORIGIN` to
+`https://epapertz.vercel.app`, and the contributor, lecturer and admin origin
+variables to the three matching HTTPS addresses above. Web's `APP_ORIGIN` and
+`API_ORIGIN` are the public origin; `PORTAL_ORIGINS` contains those four exact
+origins separated by commas. `COOKIE_DOMAIN` must be empty.
+
+Separate `vercel.app` hosts cannot share a cookie domain. Portal requests to
+`/api/v1` are proxied to the canonical API. A portal without a session starts at
+`/auth/start`, stores a ten-minute HttpOnly state/PKCE cookie, and visits canonical
+`/auth/authorize`. The API creates an encrypted authorization code bound to a
+two-minute database session, an exact callback and an S256 challenge. The portal
+callback exchanges it server-to-server and sets a host-only refresh cookie.
+The grant is consumed transactionally using the existing session tables; no new
+migration is required. Its replacement session retains the original family and
+absolute expiry, so logout/revocation applies across linked portals. Access tokens
+remain in memory. Callback responses are uncached and use `Referrer-Policy:
+no-referrer`; neither tokens nor codes belong in application logs.
+
+Use the stable production hostnames for sign-in. Arbitrary preview/deployment
+URLs are intentionally not trusted callbacks. Preview UI links point to the
+stable portals; full authenticated staging needs its own explicitly configured
+origins and isolated backend.
+
+Add these secrets to **Production** in the public project's Vercel settings:
+
+- `DATABASE_URL`, `DATA_ENCRYPTION_KEY`, `JWT_ACCESS_SECRET`,
+  `REFRESH_TOKEN_PEPPER`, `IP_HASH_SALT`.
+- `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ENDPOINT`,
+  `R2_INCOMING_BUCKET`, `R2_PUBLISHED_BUCKET`.
+- `EMAIL_PROVIDER` and the corresponding SMTP credentials/settings or
+  `RESEND_API_KEY`; set the verified sender using `EMAIL_FROM`/`SMTP_FROM`.
+
+Use real, independently generated keys; templates are not production values.
+Do not add backend secrets to the other three projects. Vercel deployment does
+not provision a database, run migrations, configure bucket CORS, or start the
+long-running worker. Keep the worker running on a suitable process host with
+matching backend credentials: email delivery and PDF scan/publication need it.
+Allow the four selected HTTPS origins in private incoming-bucket PUT CORS.
+
+On Vercel, rate limiting uses the platform-overwritten `x-vercel-forwarded-for`
+header. Keep `TRUST_PROXY=false` there; that option is for restricted Cloudflare
+ingress on other hosts.
+
+## Local development
+
+`pnpm dev` supplies nonsecret localhost origins for ports 3000, 3002, 3003 and
+3004, uses the same proxy sign-in flow, and leaves backend secrets to your own
+local environment. It does not read or copy secret files. Vercel's Development
+environment uses the same localhost profile; Production uses HTTPS hostnames.
+Root `.env.local` is not automatically loaded by each Next app: configure the
+web backend's secrets in `apps/web/.env.local` yourself or inject them into the
+process. See `.env.example` for required keys.
+
+The shared custom-domain configuration below remains available when
+`epapers.co.tz` is registered and its DNS is ready. Replace all public and backend
+origins together and redeploy all portals when switching profiles.
+
 ## Four independent deployments
 
 Install from the repository root with `pnpm install --frozen-lockfile`. Build a

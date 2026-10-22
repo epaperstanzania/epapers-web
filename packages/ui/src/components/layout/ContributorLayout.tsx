@@ -69,12 +69,7 @@ export const ContributorLayout: React.FC<{ children: React.ReactNode }> = ({ chi
         {/* Brand Header */}
         <div className="h-14 flex items-center justify-between px-4 border-b border-[var(--color-sidebar-border)]">
           <Link to="/dashboard" className="truncate flex items-center gap-2">
-            <EPapersLogo collapsed={collapsed} showContextLabel={false} />
-            {!collapsed && (
-              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[var(--color-active)] text-[var(--color-primary)]">
-                CONTRIBUTOR
-              </span>
-            )}
+            <EPapersLogo collapsed={collapsed} contextLabel="Contributor" />
           </Link>
           <button
             onClick={() => setCollapsed(!collapsed)}
@@ -221,7 +216,7 @@ export const ContributorLayout: React.FC<{ children: React.ReactNode }> = ({ chi
 
         {/* Bottom Contributor Status Card - NO XP numbers */}
         {!collapsed && currentUser && (
-          <div className="p-2.5 m-2 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-between gap-2">
+          <div className="p-2.5 m-2 rounded-lg bg-[var(--color-active)] border border-[var(--color-sidebar-border)] flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <UsernameTile
                 username={currentUser.username}
