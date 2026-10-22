@@ -18,7 +18,7 @@ export async function authenticate(token: string) {
         fail(401, 'UNAUTHORIZED', 'Authentication required');
     const session = await db.userSession.findUnique({ where: { id: claims.sid }, include: { user: true } });
     if (!session || session.revokedAt || session.rotatedAt || session.expiresAt <= new Date() || session.userId !== claims.sub)
-        fail(401, 'UNAUTHORIZED', 'Authentication required');
+        fail(401, 'UNAUTHORIZED', 'Authentication is required');
     active(session.user);
     if (session.user.role === 'ADMIN' && !session.adminEmailVerifiedAt)
         fail(401, 'UNAUTHORIZED', 'Verify your administrator sign-in by email');
