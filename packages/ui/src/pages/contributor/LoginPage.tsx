@@ -32,8 +32,10 @@ export function LoginPage() {
     catch (reason) { setError(reason instanceof Error ? reason.message : 'Verification failed.'); }
     finally { setPending(false); }
   };
-  return <div className="flex min-h-[85vh] items-center justify-center p-4">
-    <div className="w-full max-w-md space-y-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm sm:p-8">
+  return <div className="relative isolate flex min-h-[85vh] items-center justify-center overflow-hidden rounded-2xl p-4">
+    <div aria-hidden="true" className="absolute inset-0 -z-10 scale-105 bg-cover bg-center blur-sm" style={{ backgroundImage: "url('/images/A-balck-book.jpg')" }} />
+    <div aria-hidden="true" className="absolute inset-0 -z-10 bg-slate-950/45" />
+    <div className="w-full max-w-md space-y-6 rounded-xl border border-white/70 bg-[var(--color-surface)]/95 p-6 shadow-sm backdrop-blur-sm sm:p-8">
       <div className="space-y-2 text-center"><EPapersLogo className="justify-center" />
         <h1 className="pt-2 font-heading text-2xl font-extrabold">{challenge ? 'Verify your sign-in' : 'Sign in to Epapers'}</h1>
         <p className="text-xs text-[var(--color-text-muted)]">{challenge ? 'An email code is required to access your administrator account.' : 'Sign in with your username or email and password.'}</p>

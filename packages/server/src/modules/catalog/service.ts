@@ -47,7 +47,7 @@ export async function papers(q: PaperQuery) {
     const where: Prisma.PaperWhereInput = { ...publicPaper, moduleId: q.moduleId, category: q.category, testNumber: q.testNumber, academicYearStart: q.academicYear, semester: q.semester, ...(q.hasMarkingScheme ? { markingSchemeFileId: q.hasMarkingScheme === 'true' ? { not: null } : null } : {}), module: { ...activeModule, programId: q.programId, program: { ...activeProgram, departmentId: q.departmentId } } };
     if (q.q)
         where.OR = [{ title: { contains: q.q, mode: 'insensitive' } }, { module: { codeNormalized: { startsWith: q.q.toLowerCase() } } }, { module: { nameNormalized: { startsWith: q.q.toLowerCase() } } }];
-    const orderBy: Prisma.PaperOrderByWithRelationInput[] = q.sortBy === 'popular' ? [{ downloadsCount: 'desc' }, { id: 'desc' }] : q.sortBy.startsWith('year_') ? [{ academicYearStart: q.sortBy === 'year_asc' ? 'asc' : 'desc' }, { id: 'desc' }] : [{ createdAt: 'desc' }, { id: 'desc' }];
+    const orderBy: Prisma.PaperOrderByWithRelationInput[] = q.sortBy === 'popular' ? [{ downloadsCount: 'desc' }, { viewsCount: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }] : q.sortBy.startsWith('year_') ? [{ academicYearStart: q.sortBy === 'year_asc' ? 'asc' : 'desc' }, { id: 'desc' }] : [{ createdAt: 'desc' }, { id: 'desc' }];
     return page(await db.paper.findMany({ where, orderBy, include: paperInclude, take: q.limit + 1, ...seek(q.cursor) }), q.limit, paperDto);
 }
 export async function paper(id: string) { const p = await db.paper.findFirst({ where: { id, ...publicPaper }, include: paperInclude }); if (!p)

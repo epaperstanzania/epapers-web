@@ -13,7 +13,6 @@ import {
 export const HomePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [recentPapers, setRecentPapers] = useState<Paper[]>([]);
   const [popularPapers, setPopularPapers] = useState<Paper[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,13 +22,11 @@ export const HomePage: React.FC = () => {
     async function loadData() {
       setLoading(true);
       try {
-        const [depts, recentRes, popRes] = await Promise.all([
+        const [depts, popRes] = await Promise.all([
           api.getDepartments(),
-          api.searchPapers({ sortBy: 'recent' }),
           api.searchPapers({ sortBy: 'popular' }),
         ]);
         setDepartments(depts);
-        setRecentPapers(recentRes.papers.slice(0, 6));
         setPopularPapers(popRes.papers.slice(0, 6));
       } catch {
         setError('The repository could not be loaded. Please refresh and try again.');
@@ -171,7 +168,7 @@ export const HomePage: React.FC = () => {
               Frequently Downloaded Examination Papers
             </h2>
             <p className="text-xs text-[var(--color-text-muted)]">
-              Browse by download count
+              Ranked by downloads and views
             </p>
           </div>
           <Link
@@ -193,36 +190,6 @@ export const HomePage: React.FC = () => {
             ))}
           </div>
         )}
-      </section>
-
-      {/* Recent Uploads */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-bold text-lg text-[var(--color-text)]">
-              Recently Uploaded Papers
-            </h2>
-            <p className="text-xs text-[var(--color-text-muted)]">
-              Latest examination papers added to the epars repository
-            </p>
-          </div>
-          <Link
-            to="/recent"
-            className="text-xs font-semibold text-[var(--color-primary)] hover:underline flex items-center gap-1"
-          >
-            <span>View All</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {recentPapers.map((paper) => (
-            <PaperCard
-              key={paper.id}
-              paper={paper}
-            />
-          ))}
-        </div>
       </section>
 
     </div>

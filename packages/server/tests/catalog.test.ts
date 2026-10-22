@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
 import { cors } from '@/lib/routes-helpers';
 import { catalogSchemas } from '@epapers/server/modules/catalog/schemas';
-import { modules, cursorId } from '@epapers/server/modules/catalog/service';
+import { modules, cursorId, papers } from '@epapers/server/modules/catalog/service';
 import { db } from '@epapers/database';
 describe('catalog filtering and caching', () => {
     it('filters active ancestors and program/semester together', async () => {
@@ -16,6 +16,17 @@ describe('catalog filtering and caching', () => {
         expect(() => catalogSchemas.papers.parse({ status: 'PENDING' })).toThrow();
         expect(() => catalogSchemas.papers.parse({ limit: 101 })).toThrow();
         expect(() => cursorId('broken')).toThrow();
+    });
+    it('ranks popular papers by downloads, views, and recency', async () => {
+        const read = vi.spyOn(db.paper, 'findMany').mockResolvedValue([]);
+        await papers(catalogSchemas.papers.parse({ sortBy: 'popular' }));
+        expect(read.mock.calls[0][0]?.orderBy).toEqual([
+            { downloadsCount: 'desc' },
+            { viewsCount: 'desc' },
+            { createdAt: 'desc' },
+            { id: 'desc' },
+        ]);
+        read.mockRestore();
     });
     it('only caches successful public responses', () => {
         const req = new NextRequest('https://api.example.com/api/v1/papers');

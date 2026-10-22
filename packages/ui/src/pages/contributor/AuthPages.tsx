@@ -25,8 +25,10 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl p-6 sm:p-8 shadow-sm space-y-6">
+    <div className="relative isolate flex min-h-[85vh] items-center justify-center overflow-hidden rounded-2xl p-4">
+      <div aria-hidden="true" className="absolute inset-0 -z-10 scale-105 bg-cover bg-center blur-sm" style={{ backgroundImage: "url('/images/A-balck-book.jpg')" }} />
+      <div aria-hidden="true" className="absolute inset-0 -z-10 bg-slate-950/45" />
+      <div className="w-full max-w-md space-y-6 rounded-xl border border-white/70 bg-[var(--color-surface)]/95 p-6 shadow-sm backdrop-blur-sm sm:p-8">
         <div className="text-center space-y-2">
           <EPapersLogo className="justify-center" />
           <h1 className="font-heading font-extrabold text-xl sm:text-2xl text-[var(--color-text)]  pt-2">

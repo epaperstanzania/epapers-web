@@ -22,52 +22,58 @@ import {
 
 export const HowItWorksPage: React.FC = () => (
   <div className="max-w-4xl mx-auto space-y-8">
-    <div className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl p-6 sm:p-10">
-      <h1 className="font-bold text-2xl sm:text-3xl text-[var(--color-text)] ">
-        How EPapers Works
-      </h1>
-      <p className="text-xs sm:text-sm text-[var(--color-text-muted)]  mt-1">
-        A past examination paper repository for DIT.
-      </p>
+    <section
+      className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-cover bg-center shadow-sm"
+      style={{ backgroundImage: "linear-gradient(105deg,rgba(0,31,78,.9),rgba(0,51,122,.72)),url('/images/tusome.jpg')" }}
+    >
+      <div className="p-6 text-white sm:p-10">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-200">EPapers · DIT</p>
+        <h1 className="mt-2 font-bold text-2xl sm:text-3xl">
+          How EPapers Works
+        </h1>
+        <p className="mt-1 text-xs text-blue-100 sm:text-sm">
+          A past examination paper repository for DIT.
+        </p>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-        <div className="p-5 rounded-lg bg-[var(--color-canvas)]  border border-[var(--color-border)]  space-y-2">
+      <div className="grid grid-cols-1 gap-4 p-4 pt-0 md:grid-cols-3 sm:p-6 sm:pt-0">
+        <div className="space-y-2 rounded-lg border border-white/70 bg-white/95 p-5 text-[var(--color-text)] shadow-sm backdrop-blur-sm">
           <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-primary)]  block">
             Step 1
           </span>
           <h3 className="font-bold text-base text-[var(--color-text)] ">
             Instant Access
           </h3>
-          <p className="text-xs text-[var(--color-text-muted)]  leading-normal">
-            No registration wall for students. Search module codes (e.g. &apos;COE07201&apos;), preview PDFs in data-saver mode, and download files directly.
+          <p className="text-xs text-[var(--color-text-muted)] leading-normal">
+            No registration wall for students. Search module codes (e.g. &apos;COE07201&apos;) and download available papers directly.
           </p>
         </div>
 
-        <div className="p-5 rounded-lg bg-[var(--color-canvas)]  border border-[var(--color-border)]  space-y-2">
+        <div className="space-y-2 rounded-lg border border-white/70 bg-white/95 p-5 text-[var(--color-text)] shadow-sm backdrop-blur-sm">
           <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-primary)]  block">
             Step 2
           </span>
           <h3 className="font-bold text-base text-[var(--color-text)] ">
             Source Archives
           </h3>
-          <p className="text-xs text-[var(--color-text-muted)]  leading-normal">
+          <p className="text-xs text-[var(--color-text-muted)] leading-normal">
             Registered contributors upload continuous assessments (Test I, Test II), UE papers, and marking keys. Submissions are reviewed before publishing.
           </p>
         </div>
 
-        <div className="p-5 rounded-lg bg-[var(--color-canvas)]  border border-[var(--color-border)]  space-y-2">
+        <div className="space-y-2 rounded-lg border border-white/70 bg-white/95 p-5 text-[var(--color-text)] shadow-sm backdrop-blur-sm">
           <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-primary)]  block">
             Step 3
           </span>
           <h3 className="font-bold text-base text-[var(--color-text)] ">
             Special Recognition
           </h3>
-          <p className="text-xs text-[var(--color-text-muted)]  leading-normal">
+          <p className="text-xs text-[var(--color-text-muted)] leading-normal">
             Contributors earn recognized archivist standing and advance tiers from Novice Archivist to Master Archivist on the DIT leaderboard.
           </p>
         </div>
       </div>
-    </div>
+    </section>
   </div>
 );
 

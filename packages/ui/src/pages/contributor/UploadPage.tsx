@@ -236,7 +236,8 @@ export const UploadPage: React.FC = () => {
 
   if (uploadResult) {
     return (
-      <div className="mx-auto max-w-2xl rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 text-center space-y-4">
+      <div className="mx-auto max-w-5xl rounded-2xl bg-cover bg-center p-4 sm:p-8" style={{ backgroundImage: "linear-gradient(120deg,rgba(0,31,78,.58),rgba(0,51,122,.78)),url('/images/Shelf-book.jpg')" }}>
+      <div className="mx-auto max-w-2xl space-y-4 rounded-xl border border-white/70 bg-[var(--color-surface)]/95 p-6 text-center shadow-sm backdrop-blur-sm">
         <h1 className="text-xl font-bold text-[var(--color-text)]">Submission received</h1>
         <p className="text-sm text-[var(--color-text-muted)]">{uploadResult.autoApproved ? 'The paper was approved and will become available after scanning and publication finish.' : 'The paper is pending moderation. You will receive a notification when it is reviewed.'}</p>
         <div className="flex justify-center gap-3">
@@ -244,10 +245,11 @@ export const UploadPage: React.FC = () => {
           <button onClick={() => { selectDepartment(''); setStep(1); }} className="min-h-11 rounded-lg border border-[var(--color-input-border)] px-4 text-sm font-semibold text-[var(--color-text)]">Upload another</button>
         </div>
       </div>
+      </div>
     );
   }
 
-  return (<BusyScope busy={isSubmitting}><div className="mx-auto max-w-3xl space-y-5">
+  return (<BusyScope busy={isSubmitting}><div className="mx-auto max-w-5xl rounded-2xl bg-cover bg-center p-4 sm:p-8" style={{ backgroundImage: "linear-gradient(120deg,rgba(0,31,78,.58),rgba(0,51,122,.78)),url('/images/Shelf-book.jpg')" }}><div className="mx-auto max-w-3xl space-y-5">
       {!currentUser?.isEmailVerified && (
         <div className="flex items-center justify-between gap-4 rounded-lg border border-[var(--color-warning)]/40 bg-[var(--color-warning-soft)] p-4 text-sm text-[var(--color-warning-text)]">
           <span>Verify your Email address to confirm your contributor account.</span>
@@ -255,7 +257,7 @@ export const UploadPage: React.FC = () => {
         </div>
       )}
 
-      <header className="space-y-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6">
+      <header className="space-y-4 rounded-xl border border-white/70 bg-[var(--color-surface)]/95 p-5 shadow-sm backdrop-blur-sm sm:p-6">
         <div>
           <h1 className="text-xl font-bold text-[var(--color-text)] sm:text-2xl">Upload examination paper</h1>
           <p className="mt-1 text-sm text-[var(--color-text-muted)]">
@@ -295,7 +297,7 @@ export const UploadPage: React.FC = () => {
         </ol>
       </header>
 
-      <section className="space-y-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-7" aria-labelledby="upload-step-heading">
+      <section className="space-y-5 rounded-xl border border-white/70 bg-[var(--color-surface)]/95 p-5 shadow-sm backdrop-blur-sm sm:p-7" aria-labelledby="upload-step-heading">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-primary)]">Step {step} of 8</p>
           <h2 id="upload-step-heading" className="mt-1 text-lg font-bold text-[var(--color-text)]">{stepTitles[step - 1]}</h2>
@@ -403,7 +405,7 @@ export const UploadPage: React.FC = () => {
           {step < 8 && <button type="button" disabled={!canAdvance()} onClick={() => setStep((current) => Math.min(8, current + 1))} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-surface)] disabled:opacity-50">Continue<ArrowRight aria-hidden="true" className="h-4 w-4" /></button>}
         </div>
       </section>
-    </div></BusyScope>);
+    </div></div></BusyScope>);
 };
 
 function Summary({ label, value }: { label: string; value?: string | null }) {
