@@ -5,7 +5,6 @@ import { useSearchParams } from '@epapers/ui/navigation';
 import { api } from '../../services/api';
 import { Department, Program, Paper, ExamCategory, PaperFilters } from '../../types';
 import { PaperCard } from '../../components/common/PaperCard';
-import { PdfViewer } from '../../components/common/PdfViewer';
 import {
   Search,
   Filter,
@@ -41,7 +40,6 @@ export const SearchPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [mobileFilterOpen, setMobileFilterOpen] = useState<boolean>(false);
-  const [previewPaper, setPreviewPaper] = useState<Paper | null>(null);
 
   // Load departments and programs once
   useEffect(() => {
@@ -405,7 +403,6 @@ export const SearchPage: React.FC = () => {
                 <PaperCard
                   key={paper.id}
                   paper={paper}
-                  onPreview={(p) => setPreviewPaper(p)}
                 />
               ))}
             </div>
@@ -413,33 +410,6 @@ export const SearchPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick Preview Modal */}
-      {previewPaper && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-[var(--color-text)]/20 animate-in fade-in">
-          <div className="relative w-full max-w-4xl bg-[var(--color-surface)]  rounded-xl overflow-hidden shadow-sm flex flex-col max-h-[92vh]">
-            <div className="px-5 py-3 border-b border-[var(--color-border)]  flex items-center justify-between bg-[var(--color-input)] ">
-              <div>
-                <h3 className="font-heading font-bold text-sm text-[var(--color-text)] ">
-                  {previewPaper.moduleCode} — {previewPaper.title}
-                </h3>
-                <span className="text-xs text-[var(--color-neutral)]">
-                  {previewPaper.academicYear} · {previewPaper.departmentName}
-                </span>
-              </div>
-              <button
-                aria-label="Close preview"
-                onClick={() => setPreviewPaper(null)}
-                className="min-h-11 min-w-11 p-1.5 rounded-lg text-[var(--color-neutral)] hover:text-[var(--color-text-muted)]  cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-4 overflow-y-auto">
-              <PdfViewer paper={previewPaper} />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

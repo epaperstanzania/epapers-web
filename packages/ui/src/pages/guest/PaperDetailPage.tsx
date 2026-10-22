@@ -5,7 +5,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from '@epapers/ui/navigation';
 import { api } from '../../services/api';
 import { Paper, FlaggedReport } from '../../types';
-import { PdfViewer } from '../../components/common/PdfViewer';
 import { ApiForm } from '../../components/common/ApiForm';
 import { CategoryChip, StatusChip, LecturerBadge } from '../../components/common/Chips';
 import { UsernameTile } from '../../components/common/UsernameTile';
@@ -30,7 +29,6 @@ export const PaperDetailPage: React.FC = () => {
   const [paper, setPaper] = useState<Paper | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isMarkingSchemeActive, setIsMarkingSchemeActive] = useState(false);
   const [flagModalOpen, setFlagModalOpen] = useState(false);
   const [flagReason, setFlagReason] = useState<FlaggedReport['reason']>('blurry_scan');
   const [flagDetails, setFlagDetails] = useState('');
@@ -145,44 +143,6 @@ export const PaperDetailPage: React.FC = () => {
             </button>
           </div>
         </div>
-      </div>
-
-      {/* Main Document Viewer Canvas */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="font-heading font-bold text-base text-[var(--color-text)] ">
-            Examination Document Preview
-          </h2>
-          {paper.hasMarkingScheme && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setIsMarkingSchemeActive(false)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${
-                  !isMarkingSchemeActive
-                    ? 'bg-[var(--color-primary)] text-[var(--color-surface)] shadow-xs'
-                    : 'bg-[var(--color-sidebar)]  text-[var(--color-text-muted)] '
-                }`}
-              >
-                Exam Paper
-              </button>
-              <button
-                onClick={() => setIsMarkingSchemeActive(true)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${
-                  isMarkingSchemeActive
-                    ? 'bg-[var(--color-success)] text-[var(--color-surface)] shadow-xs'
-                    : 'bg-[var(--color-sidebar)]  text-[var(--color-text-muted)] '
-                }`}
-              >
-                Marking Scheme Key
-              </button>
-            </div>
-          )}
-        </div>
-
-        <PdfViewer
-          paper={paper}
-          isMarkingSchemeActive={isMarkingSchemeActive}
-        />
       </div>
 
       {/* Uploader Attribution Card */}

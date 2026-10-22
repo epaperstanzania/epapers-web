@@ -5,8 +5,7 @@ import { useParams, Link } from '@epapers/ui/navigation';
 import { api } from '../../services/api';
 import { Module, Paper, ExamCategory } from '../../types';
 import { PaperCard } from '../../components/common/PaperCard';
-import { PdfViewer } from '../../components/common/PdfViewer';
-import { Upload, BookOpen, Layers, CheckCircle2, FileText, ArrowLeft, X } from 'lucide-react';
+import { Upload, BookOpen, Layers, CheckCircle2, FileText, ArrowLeft } from 'lucide-react';
 
 export const ModuleDetailPage: React.FC = () => {
   const { code } = useParams<{ code: string }>();
@@ -14,7 +13,6 @@ export const ModuleDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<ExamCategory | 'ALL'>('ALL');
-  const [previewPaper, setPreviewPaper] = useState<Paper | null>(null);
 
   useEffect(() => {
     async function fetchMod() {
@@ -155,38 +153,11 @@ export const ModuleDetailPage: React.FC = () => {
             <PaperCard
               key={paper.id}
               paper={paper}
-              onPreview={(p) => setPreviewPaper(p)}
             />
           ))}
         </div>
       )}
 
-      {/* Quick Preview Modal */}
-      {previewPaper && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-[var(--color-text)]/20 animate-in fade-in">
-          <div className="relative w-full max-w-4xl bg-[var(--color-surface)]  rounded-xl overflow-hidden shadow-sm flex flex-col max-h-[92vh]">
-            <div className="px-5 py-3 border-b border-[var(--color-border)]  flex items-center justify-between bg-[var(--color-input)] ">
-              <div>
-                <h3 className="font-heading font-bold text-sm text-[var(--color-text)] ">
-                  {previewPaper.moduleCode} — {previewPaper.title}
-                </h3>
-                <span className="text-xs text-[var(--color-neutral)]">
-                  {previewPaper.academicYear} · {previewPaper.departmentName}
-                </span>
-              </div>
-              <button
-                onClick={() => setPreviewPaper(null)}
-                className="p-1.5 rounded-lg text-[var(--color-neutral)] hover:text-[var(--color-text-muted)]  cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-4 overflow-y-auto">
-              <PdfViewer paper={previewPaper} />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

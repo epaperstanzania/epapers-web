@@ -40,4 +40,12 @@ describe('PDF validation and signed URLs', () => {
         expect(sign).toHaveBeenCalledTimes(3);
     });
     it('rejects upload spoofing and moderation without reasons', () => { expect(() => uploadSchemas.presign.parse({ filename: 'avatar.png', sizeBytes: 12, contentType: 'image/png' })).toThrow(); expect(() => uploadSchemas.create.parse({ status: 'APPROVED' })).toThrow(); expect(() => moderationSchemas.review.parse({ action: 'rejected' })).toThrow(); expect(() => moderationSchemas.review.parse({ action: 'approved', xp: -50 })).toThrow(); });
+    it('requires a valid test number only for test papers', () => {
+        const input = { moduleId: crypto.randomUUID(), academicYear: 2024, semester: 1 };
+        expect(uploadSchemas.duplicate.parse({ ...input, category: 'TEST', testNumber: 1 }).testNumber).toBe(1);
+        expect(uploadSchemas.duplicate.parse({ ...input, category: 'TEST', testNumber: 2 }).testNumber).toBe(2);
+        expect(() => uploadSchemas.duplicate.parse({ ...input, category: 'TEST' })).toThrow();
+        expect(() => uploadSchemas.duplicate.parse({ ...input, category: 'TEST', testNumber: 3 })).toThrow();
+        expect(() => uploadSchemas.duplicate.parse({ ...input, category: 'UE', testNumber: 1 })).toThrow();
+    });
 });

@@ -2,17 +2,16 @@
 import React, { useState } from 'react';
 import { Paper } from '../../types';
 import { CategoryChip, StatusChip, LecturerBadge } from './Chips';
-import { Download, Eye, Link as LinkIcon } from 'lucide-react';
+import { Download, Link as LinkIcon } from 'lucide-react';
 import { Link } from '@epapers/ui/navigation';
 import { api } from '../../services/api';
 
 interface PaperCardProps {
   paper: Paper;
-  onPreview?: (paper: Paper) => void;
   showStatus?: boolean;
 }
 
-export const PaperCard: React.FC<PaperCardProps> = ({ paper, onPreview, showStatus = false }) => {
+export const PaperCard: React.FC<PaperCardProps> = ({ paper, showStatus = false }) => {
   const [downloading, setDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const [downloadError, setDownloadError] = useState('');
@@ -99,16 +98,6 @@ export const PaperCard: React.FC<PaperCardProps> = ({ paper, onPreview, showStat
         </div>
 
         <div className="flex items-center gap-2">
-          {onPreview && (
-            <button
-              onClick={() => onPreview(paper)}
-              className="p-1.5 rounded-lg border border-[var(--color-input-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-input)] transition-colors cursor-pointer"
-              title="Quick Preview"
-            >
-              <Eye className="w-4 h-4 text-[var(--color-primary)]" />
-            </button>
-          )}
-
           <button
             onClick={handleDownload}
             disabled={downloading}

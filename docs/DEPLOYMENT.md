@@ -14,7 +14,10 @@ Argon2 native binaries. A Windows build is not a Linux deployment artifact.
 
 Do not run migrations from app build/start hooks. A single release job owns
 `pnpm db:migrate` once per environment. Roll out compatible application versions
-after that job succeeds. All portals use the same schema and API version.
+after that job succeeds. Migration 0011 stores Test 1/Test 2 separately and only
+backfills legacy papers whose title or exam period explicitly identifies a
+number; ambiguous legacy tests remain unnumbered. All portals use the same
+schema and API version.
 
 ## Environment ownership
 
