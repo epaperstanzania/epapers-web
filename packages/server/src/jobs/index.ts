@@ -17,7 +17,7 @@ const payloadSchema = z.object({ fileId: z.string().uuid().optional(), paperId: 
 let stopping = false, lastMaintenance = 0, lastCleanup = 0, lastXpDay = '';
 process.on('SIGTERM', () => { stopping = true; });
 process.on('SIGINT', () => { stopping = true; });
-export async function tick() {
+export async function tick(): Promise<boolean> {
     const token = randomUUID();
     const job = await withTransactionRetry(async (tx) => {
         const candidate = await tx.job.findFirst({ where: { type: 'email_otp', runAt: { lte: new Date() }, status: 'pending' }, orderBy: { runAt: 'asc' } })
@@ -30,7 +30,7 @@ export async function tick() {
         return claim.count ? candidate : null;
     });
     if (!job)
-        return;
+        return false;
     try {
         const p = payloadSchema.parse(job.payload);
         if (job.type === 'email_broadcast') {
@@ -39,12 +39,12 @@ export async function tick() {
             const message = decrypt<EmailMessage>(p.encrypted!, 'email');
             if (!announcement || !announcement.isActive || announcement.deletedAt || (announcement.endsAt && announcement.endsAt <= new Date()) || !recipient || recipient.emailNormalized !== message.to.toLowerCase()) {
                 await withTransactionRetry(tx => tx.job.updateMany({ where: { id: job.id, leaseToken: token }, data: { status: 'expired', leaseToken: null } }));
-                return;
+                return true;
             }
             const retryAt = await reserveBroadcastSlot(recipient.id);
             if (retryAt) {
                 await withTransactionRetry(tx => tx.job.updateMany({ where: { id: job.id, leaseToken: token }, data: { status: 'pending', leaseToken: null, attempts: { decrement: 1 }, runAt: retryAt } }));
-                return;
+                return true;
             }
         }
         if (job.type.startsWith('email')) {
@@ -53,7 +53,7 @@ export async function tick() {
                 const allowed = await reserveDailyEmail(job.type === 'email_broadcast' ? Math.max(1, Math.floor(env.SMTP_DAILY_LIMIT * .8)) : env.SMTP_DAILY_LIMIT);
                 if (!allowed) {
                     await withTransactionRetry(tx => tx.job.updateMany({ where: { id: job.id, leaseToken: token }, data: { status: 'pending', leaseToken: null, attempts: { decrement: 1 }, runAt: new Date(Date.now() + 3600000) } }));
-                    return;
+                    return true;
                 }
             }
             const expired = !['email_notice', 'email_broadcast'].includes(job.type) && Date.now() - job.createdAt.getTime() > (job.type === 'email_otp' ? 600000 : 1800000);
@@ -64,14 +64,14 @@ export async function tick() {
             }
             if (expired) {
                 await withTransactionRetry(tx => tx.job.updateMany({ where: { id: job.id, leaseToken: token }, data: { status: 'expired', leaseToken: null } }));
-                return;
+                return true;
             }
         }
         else if (job.type === 'broadcast_notifications') {
             const retryAt = await deliverBroadcast(p.announcementId!, p.sendEmail ?? false, p.cursor);
             if (retryAt) {
                 await withTransactionRetry(tx => tx.job.updateMany({ where: { id: job.id, leaseToken: token }, data: { status: 'pending', leaseToken: null, attempts: { decrement: 1 }, runAt: retryAt } }));
-                return;
+                return true;
             }
         }
         else if (job.type === 'scan_file')
@@ -92,29 +92,73 @@ export async function tick() {
     catch {
         await withTransactionRetry(tx => tx.job.updateMany({ where: { id: job.id, leaseToken: token }, data: { status: job.attempts + 1 >= 8 ? 'failed' : 'pending', leaseToken: null, runAt: new Date(Date.now() + Math.min(3600000, 1000 * 2 ** job.attempts)), lastError: 'Job processing failed' } }));
     }
+    return true;
 }
-async function run() {
-    while (!stopping) {
-        if (Date.now() - lastMaintenance > 60000) {
-            await withTransactionRetry(async (tx) => { await tx.job.updateMany({ where: { status: 'running', type: { in: types }, runAt: { lt: new Date() } }, data: { status: 'pending', leaseToken: null } }); await tx.$executeRaw `DELETE FROM rate_limit_counters WHERE expires_at < now()`; });
-            await db.appSetting.upsert({ where: { key: 'workerHeartbeat' }, create: { key: 'workerHeartbeat', value: { timestamp: new Date().toISOString() } }, update: { value: { timestamp: new Date().toISOString() }, updatedAt: new Date() } });
-            await rollupEvents();
-            lastMaintenance = Date.now();
-        }
-        if (Date.now() - lastCleanup > 3600000) {
-            await cleanAbandoned();
-            await expireSecurityRecords();
-            try { await purgeExpiredPapers(); } catch { logger.error('Retention cleanup failed; retrying on next maintenance cycle'); }
-            lastCleanup = Date.now();
-        }
-        const day = new Date().toISOString().slice(0, 10);
-        if (day !== lastXpDay) {
-            await verifyXpLedger();
-            lastXpDay = day;
-        }
-        await tick();
-        await new Promise(resolve => setTimeout(resolve, 1000));
+
+async function maintain(): Promise<void> {
+    if (Date.now() - lastMaintenance > 60000) {
+        await withTransactionRetry(async (tx) => {
+            await tx.job.updateMany({ where: { status: 'running', type: { in: types }, runAt: { lt: new Date() } }, data: { status: 'pending', leaseToken: null } });
+            await tx.$executeRaw `DELETE FROM rate_limit_counters WHERE expires_at < now()`;
+        });
+        await db.appSetting.upsert({ where: { key: 'workerHeartbeat' }, create: { key: 'workerHeartbeat', value: { timestamp: new Date().toISOString() } }, update: { value: { timestamp: new Date().toISOString() }, updatedAt: new Date() } });
+        await rollupEvents();
+        lastMaintenance = Date.now();
     }
-    await db.$disconnect();
+    if (Date.now() - lastCleanup > 3600000) {
+        await cleanAbandoned();
+        await expireSecurityRecords();
+        try {
+            await purgeExpiredPapers();
+        } catch {
+            logger.error('Retention cleanup failed; retrying on next maintenance cycle');
+        }
+        lastCleanup = Date.now();
+    }
+    const day = new Date().toISOString().slice(0, 10);
+    if (day !== lastXpDay) {
+        await verifyXpLedger();
+        lastXpDay = day;
+    }
 }
-run().catch(() => { logger.error('Worker failed'); process.exitCode = 1; });
+
+export async function processBatch(options: { maxJobs?: number; maxRuntimeMs?: number } = {}): Promise<number> {
+    const maxJobs = options.maxJobs ?? 20;
+    const maxRuntimeMs = options.maxRuntimeMs ?? 45_000;
+    if (!Number.isInteger(maxJobs) || maxJobs < 1 || maxJobs > 100) {
+        throw new RangeError('maxJobs must be an integer between 1 and 100');
+    }
+    if (!Number.isInteger(maxRuntimeMs) || maxRuntimeMs < 1_000 || maxRuntimeMs > 840_000) {
+        throw new RangeError('maxRuntimeMs must be an integer between 1000 and 840000');
+    }
+
+    await maintain();
+    const deadline = Date.now() + maxRuntimeMs;
+    let processed = 0;
+    while (processed < maxJobs && !stopping && Date.now() < deadline) {
+        if (!await tick()) {
+            break;
+        }
+        processed += 1;
+    }
+    return processed;
+}
+
+async function run(): Promise<void> {
+    try {
+        while (!stopping) {
+            await maintain();
+            await tick();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+    } finally {
+        await db.$disconnect();
+    }
+}
+
+if (process.env.EPAPERS_WORKER_MODE !== 'lambda') {
+    run().catch(() => {
+        logger.error('Worker failed');
+        process.exitCode = 1;
+    });
+}

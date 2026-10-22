@@ -9,16 +9,13 @@
   "scripts": {
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint index.ts cloudflare.ts --max-warnings=0",
+    "lint": "eslint index.ts lambda.mjs --max-warnings=0",
     "start": "node --conditions=react-server --import tsx index.ts",
-    "deploy:cloudflare": "wrangler deploy --config ../../wrangler.worker.jsonc"
+    "build:lambda": "powershell -NoProfile -ExecutionPolicy Bypass -File ./package-lambda.ps1"
   },
   "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.1156.0",
     "@epapers/server": "workspace:*",
     "tsx": "4.21.0"
-  },
-  "devDependencies": {
-    "@cloudflare/workers-types": "5.20261022.1",
-    "wrangler": "4.152.0"
   }
 }

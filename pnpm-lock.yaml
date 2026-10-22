@@ -275,16 +275,19 @@ importers:
 
   worker:
     dependencies:
+      '@aws-sdk/client-secrets-manager':
+        specifier: ^3.1156.0
+        version: 3.1156.0
       '@epapers/server':
         specifier: workspace:*
         version: link:../packages/server
+      tsx:
+        specifier: 4.21.0
+        version: 4.21.0
     devDependencies:
       '@cloudflare/workers-types':
         specifier: 5.20261022.1
         version: 5.20261022.1
-      tsx:
-        specifier: 4.21.0
-        version: 4.21.0
       wrangler:
         specifier: 4.152.0
         version: 4.152.0(@cloudflare/workers-types@5.20261022.1)(@types/node@22.19.15)
@@ -301,6 +304,10 @@ packages:
 
   '@aws-sdk/client-s3@3.1155.0':
     resolution: {integrity: sha512-l3uMeIlzWVgj/RTJTh5sKYKtQz1la3cvWLUPn1cwFH4UZpcqTH66SgJHCeB2FOE9bEAjOdbmCyPKt9aw867Fng==}
+    engines: {node: '>=20.0.0'}
+
+  '@aws-sdk/client-secrets-manager@3.1156.0':
+    resolution: {integrity: sha512-poP++IuNmZZ6e79fesFn9qTy/IScNiH9I9bCWyevlOFQMI+ZfZQ0Sfz3dsc+c0uMtYVpofRIAd1WO7lCAKhxxg==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/core@3.978.5':
@@ -2498,6 +2505,17 @@ snapshots:
       '@aws-sdk/credential-provider-node': 3.972.88
       '@aws-sdk/middleware-sdk-s3': 3.972.81
       '@aws-sdk/signature-v4-multi-region': 3.996.49
+      '@aws-sdk/types': 3.975.0
+      '@smithy/core': 3.36.2
+      '@smithy/fetch-http-handler': 5.8.0
+      '@smithy/node-http-handler': 4.12.1
+      '@smithy/types': 4.19.0
+      tslib: 2.8.1
+
+  '@aws-sdk/client-secrets-manager@3.1156.0':
+    dependencies:
+      '@aws-sdk/core': 3.978.5
+      '@aws-sdk/credential-provider-node': 3.972.88
       '@aws-sdk/types': 3.975.0
       '@smithy/core': 3.36.2
       '@smithy/fetch-http-handler': 5.8.0

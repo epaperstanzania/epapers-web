@@ -70,6 +70,84 @@ On Vercel, rate limiting uses the platform-overwritten `x-vercel-forwarded-for`
 header. Keep `TRUST_PROXY=false` there; that option is for restricted Cloudflare
 ingress on other hosts.
 
+## AWS Lambda background worker
+
+The background processor now runs as a bounded AWS Lambda invocation, scheduled
+by Amazon EventBridge Scheduler. Each invocation runs maintenance, processes a
+bounded batch of due jobs, then returns; it does not start the old persistent
+polling loop. The four Vercel portal projects are unchanged.
+
+The target function is
+`arn:aws:lambda:eu-north-1:172083943921:function:epapers-background-worker`.
+Deploying requires AWS credentials with permission to update that Lambda,
+create the EventBridge Scheduler resources/IAM roles, and update its execution
+role. The AWS CLI must be installed and authenticated.
+
+Build a standalone workspace package and ZIP from the repository root:
+
+```powershell
+pnpm install --frozen-lockfile
+pnpm --filter @epapers/worker build:lambda
+```
+
+The script generates Prisma for both the local platform and AWS Lambda's
+Amazon Linux OpenSSL 3 runtime, then creates
+`worker/dist/epapers-background-worker.zip`. In the Lambda console configure
+runtime `nodejs24.x`, architecture `x86_64`, handler `lambda.handler`, memory
+1024 MB, timeout 300 seconds, and these environment variables:
+
+```text
+EPAPERS_SECRET_ARN=<Secrets Manager secret ARN>
+EPAPERS_WORKER_MAX_JOBS=20
+NODE_OPTIONS=--conditions=react-server --import=tsx
+```
+
+Create a Secrets Manager secret as a JSON object. It must include the server
+environment values from `worker/.env.example` (including portal origins,
+CockroachDB `DATABASE_URL`, encryption/signing keys, R2 credentials and
+bucket settings, and the email provider credentials). Every value must be a
+JSON string. Keep this secret out of source control. Attach the secret ARN to
+`EPAPERS_SECRET_ARN`; the function loads it with the AWS SDK at cold start.
+Its execution role needs `secretsmanager:GetSecretValue` on that specific
+secret, plus `kms:Decrypt` only if the secret uses a customer-managed KMS key.
+`worker/template.yaml` grants the Secrets Manager permission to the existing
+Lambda execution role and creates a least-privilege Scheduler invoke role.
+
+Upload the generated code package:
+
+```powershell
+aws lambda update-function-code `
+  --region eu-north-1 `
+  --function-name arn:aws:lambda:eu-north-1:172083943921:function:epapers-background-worker `
+  --zip-file fileb://worker/dist/epapers-background-worker.zip
+```
+
+Deploy the schedule and IAM resources after finding the existing Lambda role
+name with `aws lambda get-function-configuration`. Replace `<ROLE_NAME>` and
+`<SECRET_ARN>` with the actual values:
+
+```powershell
+aws cloudformation deploy `
+  --region eu-north-1 `
+  --template-file worker/template.yaml `
+  --stack-name epapers-background-worker-schedule `
+  --capabilities CAPABILITY_IAM `
+  --parameter-overrides FunctionName=epapers-background-worker LambdaExecutionRoleName=<ROLE_NAME> WorkerSecretArn=<SECRET_ARN>
+```
+
+The schedule defaults to one invocation per minute. Lambda processes no more
+than 20 jobs per invocation and reserves time before the 300-second function
+timeout. Job claims remain transactional, so duplicate or retried scheduler
+invocations do not claim the same pending job concurrently. Verify the
+EventBridge schedule is enabled, inspect Lambda CloudWatch logs, and confirm
+the database `workerHeartbeat` setting advances. AWS service usage may incur
+charges; check the current Lambda, EventBridge Scheduler, and Secrets Manager
+pricing and account free-tier eligibility before enabling production traffic.
+
+Do not run database migrations from the Lambda handler. Keep schema changes in
+the existing release process and keep the four portal projects on their current
+Vercel configuration.
+
 ## Local development
 
 `pnpm dev` supplies nonsecret localhost origins for ports 3000, 3002, 3003 and
