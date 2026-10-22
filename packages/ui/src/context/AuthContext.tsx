@@ -21,7 +21,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [flashMessage, setFlashMessage] = useState<string | null>(null);
   useEffect(() => {
-    try { localStorage.removeItem('epapers_dit_active_user'); } catch { /* Storage can be unavailable. */ }
     const unsubscribe = subscribeSession(session => {
       setAccessToken(session?.accessToken || null);
       setCurrentUser(session ? profileFromDto(session.user as Parameters<typeof profileFromDto>[0]) : null);

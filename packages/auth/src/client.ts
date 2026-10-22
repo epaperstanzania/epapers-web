@@ -1,3 +1,4 @@
+import { portalOrigins } from '@epapers/config/portals';
 export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string, public fields?: { path: string; message: string }[]) { super(message); }
 }
@@ -17,7 +18,7 @@ export function apiTask<Args extends unknown[]>(task: (...args: Args) => Promise
     } finally { settled?.(); }
   };
 }
-export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1').replace(/\/+$/, '');
+export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || (typeof window === 'undefined' && process.env.NODE_ENV === 'test' ? '/api/v1' : portalOrigins.web + '/api/v1')).replace(/\/+$/, '');
 let token: string | null = null;
 let role: string | null = null;
 let version = 0;
@@ -75,7 +76,7 @@ async function performRequest<T>(endpoint: string, options: Options = {}): Promi
   const result = await response.json().catch(() => null);
   if (response.status === 401 && options.auth && options.retry !== false && result?.error?.code !== 'REAUTH_REQUIRED') {
     const session = usedToken !== token && token ? { accessToken: token } : await restoreSession();
-    if (session) return request<T>(endpoint, { ...options, retry: false });
+    if (session) return performRequest<T>(endpoint, { ...options, retry: false });
   }
   if (!response.ok || result?.error) {
     const error = result?.error;
@@ -90,11 +91,37 @@ async function performRequest<T>(endpoint: string, options: Options = {}): Promi
 export function restoreSession(): Promise<Session | null> {
   if (refreshPromise) return refreshPromise;
   const previousVersion = version;
-  refreshPromise = request<Session>('/auth/refresh', { method: 'POST', retry: false })
+  refreshPromise = coordinatedRefresh()
     .then(session => { if (previousVersion !== version) return null; setSession(session); return session; })
     .catch(() => { if (previousVersion === version) setSession(null); return null; })
     .finally(() => { refreshPromise = null; });
   return refreshPromise;
+}
+async function coordinatedRefresh(): Promise<Session> {
+  if (typeof window !== 'undefined' && window.location.origin !== portalOrigins.web) return refreshThroughBridge();
+  const refresh = () => request<Session>('/auth/refresh', { method: 'POST', retry: false });
+  return typeof navigator !== 'undefined' && navigator.locks ? navigator.locks.request('epapers-refresh', refresh) : refresh();
+}
+let bridge: Promise<HTMLIFrameElement> | undefined;
+function refreshThroughBridge(): Promise<Session> {
+  bridge ??= new Promise((resolve, reject) => {
+    const frame = document.createElement('iframe'); frame.hidden = true; frame.title = 'EPapers secure session'; frame.src = portalOrigins.web + '/auth/session-bridge';
+    const timer = setTimeout(() => { frame.remove(); bridge = undefined; reject(new Error('Session service timed out')); }, 20000);
+    frame.onload = () => { clearTimeout(timer); resolve(frame); };
+    frame.onerror = () => { clearTimeout(timer); frame.remove(); bridge = undefined; reject(new Error('Session service unavailable')); };
+    document.body.appendChild(frame);
+  });
+  return bridge.then(frame => new Promise<Session>((resolve, reject) => {
+    const id = crypto.randomUUID();
+    const done = () => { clearTimeout(timer); window.removeEventListener('message', onMessage); };
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== portalOrigins.web || event.source !== frame.contentWindow || event.data?.id !== id || event.data?.type !== 'epapers:session') return;
+      done(); if (event.data.session?.accessToken) resolve(event.data.session); else reject(new Error('Sign in to continue'));
+    };
+    const timer = setTimeout(() => { done(); reject(new Error('Session service timed out')); }, 20000);
+    window.addEventListener('message', onMessage);
+    frame.contentWindow?.postMessage({ type: 'epapers:refresh', id }, portalOrigins.web);
+  }));
 }
 export async function listAll<T>(endpoint: string, query: Record<string, unknown> = {}, auth = false): Promise<T[]> {
   const items: T[] = []; const seen = new Set<string>(); let cursor: string | null = null;

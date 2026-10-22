@@ -6,6 +6,7 @@ import { EPapersLogo } from '../../components/common/EPapersLogo';
 import { PasswordInput } from '../../components/common/PasswordInput';
 import { EmailCodeInput } from '../../components/common/EmailCodeInput';
 import { needsEmailVerification, type EmailChallenge } from '../../services/auth';
+import { safeReturnUrl, roleHome } from '@epapers/config/portals';
 
 export function LoginPage() {
   const [username, setUsername] = useState(''), [password, setPassword] = useState('');
@@ -20,14 +21,14 @@ export function LoginPage() {
     try {
       const result = await login(username, password);
       if (needsEmailVerification(result)) { setChallenge(result); setCode(''); }
-      else { setPassword(''); navigate(result.user.role === 'admin' ? '/admin' : '/dashboard'); }
+      else { setPassword(''); navigate(safeReturnUrl(searchParams.get('returnTo'), roleHome(result.user.role))); }
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'Sign-in failed. Please try again.'); }
     finally { setPending(false); }
   };
   const verify = async () => {
     if (!challenge || pending) return;
     setPending(true); setError('');
-    try { await verifyAdminLogin(challenge.challengeToken, code); setPassword(''); setCode(''); setChallenge(null); navigate('/admin'); }
+    try { await verifyAdminLogin(challenge.challengeToken, code); setPassword(''); setCode(''); setChallenge(null); navigate(safeReturnUrl(searchParams.get('returnTo'), roleHome('admin'))); }
     catch (reason) { setError(reason instanceof Error ? reason.message : 'Verification failed.'); }
     finally { setPending(false); }
   };

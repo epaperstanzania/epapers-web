@@ -1,3 +1,4 @@
+process.env.NODE_ENV = 'test';
 import { getSystemHealth } from '../src/services/system-health.ts';
 import assert from 'node:assert/strict';
 import { test, afterEach } from 'node:test';

@@ -1,5 +1,6 @@
 'use client';
 import { BusyScope, useApiAction } from '../../components/common/BusyScope';
+import { AccountSecurity } from '../../components/common/AccountSecurity';
 import { PageLoader } from '../../components/common/PageLoader';
 import { ChangePasswordForm } from '../../components/common/ChangePasswordForm';
 import React, { useState, useEffect } from 'react';
@@ -199,5 +200,6 @@ export const SettingsPage: React.FC = () => {
         </form>
       </div>
       <ChangePasswordForm />
+      <AccountSecurity />
     </div></BusyScope>);
 };

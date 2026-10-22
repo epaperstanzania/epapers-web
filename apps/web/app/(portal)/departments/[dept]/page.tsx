@@ -1,3 +1,3 @@
-import { DepartmentDetailPage } from '@epapers/ui/pages/guest/DepartmentDetailPage';
-export const metadata = { title: 'Department Detail' };
-export default function Page(){return <DepartmentDetailPage />;}
+import { CataloguePage } from '../../../../components/catalogue';
+export const metadata={title:'Department'};
+export default async function Page({params,searchParams}:{params:Promise<Record<string,string>>;searchParams:Promise<Record<string,string|string[]|undefined>>}){return <CataloguePage kind="department" params={await params} query={await searchParams}/>;}

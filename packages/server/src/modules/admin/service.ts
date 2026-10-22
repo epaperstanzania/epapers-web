@@ -125,3 +125,5 @@ else {
     await audit(tx, admin.id, id ? 'ANNOUNCEMENT_UPDATED' : 'ANNOUNCEMENT_CREATED', 'announcement', a.id, input.reason); return announcementDto(a); }); }
 export async function deleteAnnouncement(admin: User, id: string, reason: string, proof?: AdminProof) { authorize(admin, { roles: ['admin'] }); await withTransactionRetry(async (tx) => { await adminGuard(tx, admin, requireProof(proof)); if (!await tx.announcement.findUnique({ where: { id } }))
     fail(404, 'NOT_FOUND', 'Announcement not found'); await tx.announcement.update({ where: { id }, data: { deletedAt: new Date(), deletedById: admin.id } }); await audit(tx, admin.id, 'ANNOUNCEMENT_DELETED', 'announcement', id, reason); }); return { message: 'Announcement deleted' }; }
+
+export async function ownVerifications(user: User, q: z.infer<typeof adminSchemas.queue>) { authorize(user,{roles:['lecturer'],requireVerifiedEmail:true}); return page(await db.lecturerVerification.findMany({where:{userId:user.id,...(q.status?{status:q.status}:{})},...paging(q)}),q.limit,verificationDto); }

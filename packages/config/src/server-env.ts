@@ -13,7 +13,9 @@ const schema = z.object({
     PORT: z.coerce.number().int().min(1).max(65535).default(3001),
     APP_ORIGIN: z.string().url(),
     API_ORIGIN: z.string().url().default('http://localhost:3001'),
-    COOKIE_DOMAIN: z.string().min(1),
+    COOKIE_DOMAIN: z.string().default(''),
+    PORTAL_ORIGINS: z.string().optional(),
+    TRUST_PROXY: boolFromString.default(false),
     DATA_ENCRYPTION_KEY: z.string().refine(value => Buffer.from(value, 'base64').length === 32, 'Must be a base64-encoded 32-byte key'),
     DATABASE_URL: z.string().min(1),
     R2_ACCOUNT_ID: z.string().min(1),
@@ -41,6 +43,15 @@ const schema = z.object({
     SIGNED_URL_TTL_SECONDS: z.coerce.number().int().min(600).max(600).default(600),
     LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 }).superRefine((value, ctx) => {
+    const origins = (value.PORTAL_ORIGINS || value.APP_ORIGIN).split(',').map(origin => origin.trim());
+    for (const origin of origins) {
+        try {
+            const url = new URL(origin);
+            if (url.origin !== origin || url.username || url.password || !['http:', 'https:'].includes(url.protocol) || (value.NODE_ENV === 'production' && url.protocol !== 'https:')) throw new Error();
+            if (value.NODE_ENV === 'production' && !['https://epapers.co.tz','https://contributor.epapers.co.tz','https://lecturer.epapers.co.tz','https://console.epapers.co.tz'].includes(origin)) throw new Error();
+        } catch { ctx.addIssue({ code: 'custom', path: ['PORTAL_ORIGINS'], message: 'Expected exact trusted portal origins' }); }
+    }
+    if (value.NODE_ENV === 'production' && !['', '.epapers.co.tz', 'epapers.co.tz'].includes(value.COOKIE_DOMAIN)) ctx.addIssue({ code: 'custom', path: ['COOKIE_DOMAIN'], message: 'Invalid cookie domain' });
     if (value.EMAIL_PROVIDER === 'smtp') {
         for (const key of ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD', 'SMTP_FROM'] as const) {
             if (!value[key])

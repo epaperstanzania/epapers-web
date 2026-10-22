@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/plus-jakarta-sans";
+@source "./";
+@source "../../../apps";
 
 .epapers-error-toast { animation: epapers-toast-in 180ms ease-out; }
 @keyframes epapers-toast-in {
@@ -164,3 +168,9 @@
 .epapers-request-progress { animation: epapers-request-progress 1.1s ease-in-out infinite; }
 @keyframes epapers-request-progress { from { transform: translateX(-100%); } to { transform: translateX(400%); } }
 @media (prefers-reduced-motion: reduce) { .epapers-request-progress { animation: none; width: 100%; } }
+
+.skip-link { position: fixed; top: -100px; left: 1rem; z-index: 100; padding: 1rem; background: white; color: #0049A4; }
+.skip-link:focus { top: 1rem; }
+h1,h2,h3,.font-heading { font-family: "Plus Jakarta Sans Variable", Inter, sans-serif; }
+body { font-family: "Inter Variable", Inter, sans-serif; }
+[data-portal="admin"] aside { background-color: #0B1B33; }

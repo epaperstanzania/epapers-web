@@ -5,3 +5,5 @@ import { adminSchemas as schemas } from '@epapers/server/modules/admin/schemas';
 import * as service from '@epapers/server/modules/admin/service';
 export const OPTIONS=preflight;
 export const POST=route('lecturer/verifications',schemas.verification,async (data, _request, identity)=>service.submitVerification(identity!.user,data),true,false);
+
+export const GET=route('lecturer/verifications/list',schemas.queue,async(data,_request,identity)=>service.ownVerifications(identity!.user,data),{roles:['lecturer']});

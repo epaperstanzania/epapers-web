@@ -10,6 +10,7 @@ import { rateLimit } from '@epapers/server/lib/rate-limit';
 import { ipHash } from '@epapers/auth/crypto';
 import { authenticate, authorize } from '@epapers/server/modules/auth/service';
 import { enforceWritePolicy } from '@epapers/server/lib/write-policy';
+import { trustedOrigin, validMutation, refreshCookieOptions } from '@epapers/auth/policy';
 type Identity = Awaited<ReturnType<typeof authenticate>>;
 export function withAuth(options: {
     roles?: string[];
@@ -42,14 +43,15 @@ export function cors(req: NextRequest, response: NextResponse, publicCache = fal
     securityHeaders(response.headers);
     response.headers.set('Cache-Control', publicCache && response.ok ? 'public, max-age=60, s-maxage=300' : 'no-store');
     response.headers.set('Vary', 'Origin');
-    if (req.headers.get('origin') === env.APP_ORIGIN) {
-        response.headers.set('Access-Control-Allow-Origin', env.APP_ORIGIN);
+    const origin = req.headers.get('origin');
+    if (trustedOrigin(origin)) {
+        response.headers.set('Access-Control-Allow-Origin', origin);
         response.headers.set('Access-Control-Allow-Credentials', 'true');
     }
     return response;
 }
 export function preflight(req: NextRequest) {
-    const response = cors(req, new NextResponse(null, { status: req.headers.get('origin') === env.APP_ORIGIN ? 204 : 403 }));
+    const response = cors(req, new NextResponse(null, { status: trustedOrigin(req.headers.get('origin')) ? 204 : 403 }));
     response.headers.set('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
     response.headers.set('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-EPapers-Client,X-EPapers-Reauth');
     return response;
@@ -60,10 +62,10 @@ export function route<T>(name: string, schema: z.ZodType<T>, action: (data: T, r
         const requestId = crypto.randomUUID();
         let response: NextResponse;
         try {
-            if (req.method !== 'GET' && (req.headers.get('origin') !== env.APP_ORIGIN || req.headers.get('x-epapers-client') !== 'web'))
+            if (req.method !== 'GET' && !validMutation(req.headers.get('origin'), req.headers.get('x-epapers-client')))
                 fail(403, 'CSRF_FAILED', 'Invalid client origin');
             // Trust only the header overwritten by Cloudflare; restrict VPS ingress to Cloudflare in production.
-            await rateLimit('ip:' + name + ':' + ipHash(req.headers.get('cf-connecting-ip') || 'local'), name === 'login' ? 20 : 60, 900);
+            await rateLimit('ip:' + name + ':' + ipHash(env.TRUST_PROXY ? req.headers.get('cf-connecting-ip') || 'unknown' : 'local'), name === 'login' ? 20 : 60, 900);
             const identity = typeof auth === 'object' ? await withAuth(auth)(req) : auth === true || (auth === 'optional' && req.headers.has('authorization')) ? await withAuth()(req) : undefined;
             if (identity && req.method !== 'GET') await rateLimit('account:' + name + ':' + identity.user.id, 60, 900);
             let raw: unknown;
@@ -130,7 +132,7 @@ export function sessionResponse(result: {
     };
 }) {
     const response = NextResponse.json({ data: { accessToken: result.accessToken, user: result.user } });
-    response.cookies.set('epapers_refresh', result.refreshToken, { httpOnly: true, secure: true, sameSite: 'lax', path: '/api/v1/auth', domain: env.COOKIE_DOMAIN, maxAge: Math.max(0, Math.floor((result.session.expiresAt.getTime() - Date.now()) / 1000)) });
+    response.cookies.set('epapers_refresh', result.refreshToken, { ...refreshCookieOptions(), maxAge: Math.max(0, Math.floor((result.session.expiresAt.getTime() - Date.now()) / 1000)) });
     return response;
 }
-export function clearSession(message = 'Logged out') { const response = NextResponse.json({ data: { message } }); response.cookies.set('epapers_refresh', '', { httpOnly: true, secure: true, sameSite: 'lax', path: '/api/v1/auth', domain: env.COOKIE_DOMAIN, maxAge: 0 }); return response; }
+export function clearSession(message = 'Logged out') { const response = NextResponse.json({ data: { message } }); response.cookies.set('epapers_refresh', '', { ...refreshCookieOptions(), maxAge: 0 }); return response; }
