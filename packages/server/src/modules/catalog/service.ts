@@ -44,7 +44,7 @@ export async function moduleDetail(codeOrId: string) {
     return { ...moduleDto(m), papers: await papers(catalogSchemas.papers.parse({ moduleId: m.id })) };
 }
 export async function papers(q: PaperQuery) {
-    const where: Prisma.PaperWhereInput = { ...publicPaper, moduleId: q.moduleId, category: q.category, academicYearStart: q.academicYear, semester: q.semester, ...(q.hasMarkingScheme ? { markingSchemeFileId: q.hasMarkingScheme === 'true' ? { not: null } : null } : {}), module: { ...activeModule, programId: q.programId, program: { ...activeProgram, departmentId: q.departmentId } } };
+    const where: Prisma.PaperWhereInput = { ...publicPaper, moduleId: q.moduleId, category: q.testNumber !== undefined ? 'TEST' : q.category, testNumber: q.testNumber, academicYearStart: q.academicYear, semester: q.semester, ...(q.hasMarkingScheme ? { markingSchemeFileId: q.hasMarkingScheme === 'true' ? { not: null } : null } : {}), module: { ...activeModule, programId: q.programId, program: { ...activeProgram, departmentId: q.departmentId } } };
     if (q.q)
         where.OR = [{ title: { contains: q.q, mode: 'insensitive' } }, { module: { codeNormalized: { startsWith: q.q.toLowerCase() } } }, { module: { nameNormalized: { startsWith: q.q.toLowerCase() } } }];
     const orderBy: Prisma.PaperOrderByWithRelationInput[] = q.sortBy === 'popular' ? [{ downloadsCount: 'desc' }, { id: 'desc' }] : q.sortBy.startsWith('year_') ? [{ academicYearStart: q.sortBy === 'year_asc' ? 'asc' : 'desc' }, { id: 'desc' }] : [{ createdAt: 'desc' }, { id: 'desc' }];

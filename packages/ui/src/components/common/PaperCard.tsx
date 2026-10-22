@@ -47,7 +47,7 @@ export const PaperCard: React.FC<PaperCardProps> = ({ paper, onPreview, showStat
         {/* Top Header metadata */}
         <div className="flex items-start justify-between gap-2 mb-2.5">
           <div className="flex items-center gap-2 flex-wrap">
-            <CategoryChip category={paper.category} size="sm" />
+            <CategoryChip category={paper.category} testNumber={paper.testNumber} size="sm" />
             <span className="text-xs font-mono font-medium text-[var(--color-text-muted)]">
               {paper.academicYear}
             </span>

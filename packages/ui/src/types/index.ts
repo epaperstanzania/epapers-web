@@ -53,6 +53,7 @@ export interface Paper {
   programId: string;
   programName: string;
   category: ExamCategory;
+  testNumber?: 1 | 2 | null;
   academicYear: string; // e.g. "2023/2024"
   semester: 1 | 2;
   examPeriod: string; // "Test I", "Test II", "Main University Examination (UE)", "Special Supplementary"

@@ -15,7 +15,7 @@ export function academicYearStart(value: string) {
 type DepartmentDto = Pick<Department, 'id' | 'code' | 'name' | 'description' | 'icon'>;
 type ProgramDto = Pick<Program, 'id' | 'departmentId' | 'code' | 'name' | 'level'> & { campus: string; awardTitle: string };
 type ModuleDto = Pick<Module, 'id' | 'programId' | 'code' | 'name' | 'semester'> & { levelYear: number | null; credits: number | null };
-export type PaperDto = Pick<Paper, 'id' | 'title' | 'category' | 'semester' | 'examPeriod' | 'hasMarkingScheme' | 'pageCount' | 'viewsCount' | 'downloadsCount'> & {
+export type PaperDto = Pick<Paper, 'id' | 'title' | 'category' | 'testNumber' | 'semester' | 'examPeriod' | 'hasMarkingScheme' | 'pageCount' | 'viewsCount' | 'downloadsCount'> & {
   academicYear: number; module: ModuleDto; program: ProgramDto; department: DepartmentDto;
   uploader: { username: string; avatarId?: string; isLecturerVerified: boolean } | null;
   createdAt: string; downloadAvailable: boolean; status?: string; rejectionReason?: string; duplicateWarning?: boolean;
@@ -36,7 +36,7 @@ export function paperFromDto(p: PaperDto): Paper {
   return {
     id: p.id, title: p.title, moduleId: p.module.id, moduleCode: p.module.code, moduleName: p.module.name,
     departmentId: p.department.id, departmentName: p.department.name, programId: p.program.id, programName: p.program.name,
-    category: p.category, academicYear: `${p.academicYear}/${p.academicYear + 1}`, semester: p.semester, examPeriod: p.examPeriod,
+    category: p.category, testNumber: p.testNumber, academicYear: `${p.academicYear}/${p.academicYear + 1}`, semester: p.semester, examPeriod: p.examPeriod,
     hasMarkingScheme: p.hasMarkingScheme, pdfUrl: '', fileSize: '', pageCount: p.pageCount ?? 0, viewsCount: p.viewsCount, downloadsCount: p.downloadsCount,
     status: (p.status || 'approved').toUpperCase() as Paper['status'], uploadedAt: p.createdAt,
     uploadedBy: { username: p.uploader?.username || 'Deleted account', role: p.uploader?.isLecturerVerified ? 'lecturer' : 'contributor', avatarId: p.uploader?.avatarId, isLecturerVerified: p.uploader?.isLecturerVerified },
@@ -130,13 +130,13 @@ export const api = {
       return { module: { ...modules.find(x => x.id === m.id)!, papersCount: rows.length }, papers: rows.map(paperFromDto) };
     });
   },
-  async hasDuplicatePaper(input: { moduleId: string; category: 'TEST' | 'UE' | 'SUPP'; academicYear: string; semester: 1 | 2 }) {
+  async hasDuplicatePaper(input: { moduleId: string; category: 'TEST' | 'UE' | 'SUPP'; testNumber?: 1 | 2; academicYear: string; semester: 1 | 2 }) {
     return (await request<{ duplicateWarning: boolean }>('/papers/duplicate-check', { method: 'POST', auth: true, body: { ...input, academicYear: academicYearStart(input.academicYear) } })).duplicateWarning;
   },
-  async uploadPaper(input: { title: string; moduleId: string; category: 'TEST' | 'UE' | 'SUPP'; academicYear: string; semester: 1 | 2; examPeriod: string; examFile: File; markingSchemeFile?: File }) {
+  async uploadPaper(input: { title: string; moduleId: string; category: 'TEST' | 'UE' | 'SUPP'; testNumber?: 1 | 2; academicYear: string; semester: 1 | 2; examPeriod: string; examFile: File; markingSchemeFile?: File }) {
     const examUploadId = await uploadFile(input.examFile), markingSchemeUploadId = input.markingSchemeFile ? await uploadFile(input.markingSchemeFile) : undefined;
     const result = await request<{ id: string; status: string; duplicateWarning: boolean; levelTitle: string }>('/papers', { method: 'POST', auth: true,
-      body: { title: input.title, moduleId: input.moduleId, category: input.category, academicYear: academicYearStart(input.academicYear), semester: input.semester, examPeriod: input.examPeriod, examUploadId, markingSchemeUploadId } });
+      body: { title: input.title, moduleId: input.moduleId, category: input.category, testNumber: input.testNumber, academicYear: academicYearStart(input.academicYear), semester: input.semester, examPeriod: input.examPeriod, examUploadId, markingSchemeUploadId } });
     const paper = (await api.getAllPapers()).find(p => p.id === result.id);
     if (!paper) throw new Error('Paper submitted, but its details could not be loaded. Check your submissions before retrying.');
     return { paper, autoApproved: result.status === 'approved', levelTitle: result.levelTitle };

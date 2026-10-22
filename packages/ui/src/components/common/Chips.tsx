@@ -5,11 +5,12 @@ import { Check } from 'lucide-react';
 
 interface CategoryChipProps {
   category: ExamCategory;
+  testNumber?: 1 | 2 | null;
   className?: string;
   size?: 'sm' | 'md';
 }
 
-export const CategoryChip: React.FC<CategoryChipProps> = ({ category, className = '', size = 'md' }) => {
+export const CategoryChip: React.FC<CategoryChipProps> = ({ category, testNumber, className = '', size = 'md' }) => {
   const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-[11px]' : 'px-2.5 py-1 text-xs';
 
   if (category === 'TEST') {
@@ -17,7 +18,7 @@ export const CategoryChip: React.FC<CategoryChipProps> = ({ category, className 
       <span
         className={`inline-flex items-center font-semibold uppercase rounded ${sizeClasses} bg-[var(--color-sidebar)] text-[var(--color-primary)] border border-[var(--color-sidebar-border)] ${className}`}
       >
-        TEST
+        {testNumber ? `Test ${testNumber}` : 'Test'}
       </span>
     );
   }

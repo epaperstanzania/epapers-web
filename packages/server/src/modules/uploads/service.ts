@@ -65,7 +65,7 @@ export async function complete(user: User, id: string) {
     }
     return { uploadId: id, scanStatus: valid ? 'pending' : 'rejected', completed: valid };
 }
-export async function duplicateCheck(user: User, input: z.infer<typeof uploadSchemas.duplicate>) { uploader(user); return { duplicateWarning: !!await db.paper.findFirst({ where: { moduleId: input.moduleId, category: input.category, academicYearStart: input.academicYear, semester: input.semester, status: { in: ['PENDING', 'APPROVED'] } } }) }; }
+export async function duplicateCheck(user: User, input: z.infer<typeof uploadSchemas.duplicate>) { uploader(user); return { duplicateWarning: !!await db.paper.findFirst({ where: { moduleId: input.moduleId, category: input.category, testNumber: input.testNumber, academicYearStart: input.academicYear, semester: input.semester, status: { in: ['PENDING', 'APPROVED'] } } }) }; }
 export async function createPaper(user: User, input: z.infer<typeof uploadSchemas.create>) {
     uploader(user);
     return withTransactionRetry(async (tx) => {
@@ -83,9 +83,9 @@ export async function createPaper(user: User, input: z.infer<typeof uploadSchema
             fail(422, 'INVALID_UPLOAD', 'Uploads must be completed and owned by you');
         if (files.some(f => f.examPaper || f.markingPapers.length))
             fail(409, 'UPLOAD_USED', 'Upload has already been submitted');
-        const duplicateWarning = !!await tx.paper.findFirst({ where: { moduleId: m.id, category: input.category, academicYearStart: input.academicYear, semester: input.semester, status: { in: ['PENDING', 'APPROVED'] } } }) || !!await tx.storedFile.findFirst({ where: { id: { notIn: ids }, sha256Hex: { in: files.flatMap(f => f.sha256Hex ? [f.sha256Hex] : []) }, examPaper: { status: { in: ['PENDING', 'APPROVED'] }, deletedAt: null } } });
+        const duplicateWarning = !!await tx.paper.findFirst({ where: { moduleId: m.id, category: input.category, testNumber: input.testNumber, academicYearStart: input.academicYear, semester: input.semester, status: { in: ['PENDING', 'APPROVED'] } } }) || !!await tx.storedFile.findFirst({ where: { id: { notIn: ids }, sha256Hex: { in: files.flatMap(f => f.sha256Hex ? [f.sha256Hex] : []) }, examPaper: { status: { in: ['PENDING', 'APPROVED'] }, deletedAt: null } } });
         const auto = current.role === 'LECTURER' && !!current.lecturerVerifiedAt && current.homeDepartmentId === m.program.departmentId;
-        const p = await tx.paper.create({ data: { moduleId: m.id, uploadedByUserId: current.id, title: input.title, category: input.category, academicYearStart: input.academicYear, semester: input.semester, examPeriod: input.examPeriod, examFileId: input.examUploadId, markingSchemeFileId: input.markingSchemeUploadId, status: auto ? 'APPROVED' : 'PENDING', duplicateWarning } });
+        const p = await tx.paper.create({ data: { moduleId: m.id, uploadedByUserId: current.id, title: input.title, category: input.category, testNumber: input.testNumber, academicYearStart: input.academicYear, semester: input.semester, examPeriod: input.examPeriod, examFileId: input.examUploadId, markingSchemeFileId: input.markingSchemeUploadId, status: auto ? 'APPROVED' : 'PENDING', duplicateWarning } });
         if (auto)
             await tx.job.create({ data: { type: 'finalize_approval', payload: { paperId: p.id } } });
         return { id: p.id, status: p.status.toLowerCase(), duplicateWarning, levelTitle: levelTitleForXp(current.xp) };

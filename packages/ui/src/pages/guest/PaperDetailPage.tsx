@@ -92,7 +92,7 @@ export const PaperDetailPage: React.FC = () => {
       <div className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl p-6 shadow-xs flex flex-col md:flex-row md:items-start justify-between gap-6">
         <div className="space-y-2.5 max-w-2xl">
           <div className="flex items-center gap-2 flex-wrap">
-            <CategoryChip category={paper.category} />
+            <CategoryChip category={paper.category} testNumber={paper.testNumber} />
             <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-[var(--color-sidebar)]  text-[var(--color-text)] ">
               {paper.academicYear}
             </span>

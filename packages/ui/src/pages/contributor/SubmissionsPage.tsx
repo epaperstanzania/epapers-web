@@ -132,7 +132,7 @@ export const SubmissionsPage: React.FC = () => {
             >
               <div className="space-y-1.5 max-w-2xl">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <CategoryChip category={paper.category} size="sm" />
+                  <CategoryChip category={paper.category} testNumber={paper.testNumber} size="sm" />
                   <span className="font-mono text-xs font-bold text-[var(--color-text)] ">
                     {paper.moduleCode}
                   </span>

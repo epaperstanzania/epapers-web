@@ -354,7 +354,7 @@ export const AdminReviewPage: React.FC = () => {
                   </div>
                   <div className="flex justify-between py-1 border-b border-[var(--color-border)]">
                     <span className="text-[var(--color-text-muted)]">Category:</span>
-                    <CategoryChip category={currentPaper.category} size="sm" />
+                    <CategoryChip category={currentPaper.category} testNumber={currentPaper.testNumber} size="sm" />
                   </div>
                   <div className="flex justify-between py-1 border-b border-[var(--color-border)]">
                     <span className="text-[var(--color-text-muted)]">Academic Session:</span>
