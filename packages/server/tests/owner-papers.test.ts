@@ -10,7 +10,7 @@ it('owner submissions include display metadata while retaining the owner filter 
   const department = { id: crypto.randomUUID(), name: 'Computing', code: 'CST', description: '', icon: 'Building2' };
   const program = { id: crypto.randomUUID(), departmentId: department.id, name: 'Computing', code: 'BCS', level: 'BACHELOR', campus: 'MAIN', awardTitle: 'BSc', department };
   const module = { id: crypto.randomUUID(), programId: program.id, name: 'Computing', code: 'COE07201', semester: 1, levelYear: 2, credits: 10, program };
-  const row = { id: crypto.randomUUID(), title: 'Pending paper', category: 'UE', academicYearStart: 2024, semester: 1, examPeriod: 'UE',
+  const row = { id: crypto.randomUUID(), title: 'Pending paper', category: 'UE', testNumber: null, academicYearStart: 2024, semester: 1, examPeriod: 'UE',
     module, uploader: { ...owner, username: 'owner', avatarId: null, xp: 50, lecturerVerifiedAt: null, email: 'private@example.com', passwordHash: 'secret' },
     examFile: { scanStatus: 'PENDING', publishedAt: null }, markingSchemeFileId: null, pageCount: null, downloadsCount: 0n, viewsCount: 0n,
     createdAt: new Date(), status: 'PENDING', rejectionReason: null, duplicateWarning: false };
