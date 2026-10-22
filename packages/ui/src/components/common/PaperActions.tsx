@@ -1,9 +1,10 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { request } from '../../services/client';
 import { Link } from '../../navigation';
 export function PaperActions({id,hasMarkingScheme,available}:{id:string;hasMarkingScheme:boolean;available:boolean}) {
  const [error,setError]=useState(''),[busy,setBusy]=useState(false),[preview,setPreview]=useState<string|null>(null);
+ useEffect(()=>{void request('/papers/'+encodeURIComponent(id)+'/view',{method:'POST'}).catch(()=>undefined);},[id]);
  const open=async(kind:'exam'|'marking_scheme',download:boolean)=>{setBusy(true);setError('');try{const result=await request<{url:string}>('/papers/'+encodeURIComponent(id)+'/download-url',{method:'POST',body:{kind}});if(download){const a=document.createElement('a');a.href=result.url;a.rel='noopener noreferrer';a.click();}else setPreview(result.url);}catch(e){setError(e instanceof Error?e.message:'The PDF could not be loaded');}finally{setBusy(false);}};
  return <div className="space-y-4">{error&&<p role="alert" className="text-red-800">{error}</p>}{!available&&<p>PDF processing is still in progress. Please check again later.</p>}<div className="flex flex-wrap gap-3"><button className="rounded bg-blue-800 px-4 py-3 text-white disabled:opacity-50" disabled={busy||!available} onClick={()=>open('exam',false)}>Preview PDF</button><button className="rounded border px-4 py-3 disabled:opacity-50" disabled={busy||!available} onClick={()=>open('exam',true)}>Download paper</button>{hasMarkingScheme&&<button className="rounded border px-4 py-3 disabled:opacity-50" disabled={busy||!available} onClick={()=>open('marking_scheme',true)}>Download marking scheme</button>}<Link className="p-3 underline" to={'/takedown?paperId='+encodeURIComponent(id)}>Report a concern</Link></div>{busy&&<p role="status">Preparing your PDF…</p>}{preview&&<div><button className="mb-2 rounded border p-3" onClick={()=>setPreview(null)}>Close preview</button><iframe title="Examination paper preview" src={preview} referrerPolicy="no-referrer" className="h-[75vh] w-full rounded border" /></div>}</div>;
 }

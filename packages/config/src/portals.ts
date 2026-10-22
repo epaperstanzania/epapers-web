@@ -24,7 +24,7 @@ export function portalDestination(path: string, current: Portal = 'web'): string
   return owner === current ? target : portalOrigins[owner] + target;
 }
 export function safeReturnUrl(input: string | null | undefined, fallback = portalOrigins.contributor + '/dashboard'): string {
-  if (!input || input.startsWith('//') || input.includes('\\') || /[\u0000-\u001f]/.test(input)) return fallback;
+  if (!input || input.startsWith('//') || input.includes('\\') || [...input].some(character => character.charCodeAt(0) < 32)) return fallback;
   try {
     const url = new URL(input, portalOrigins.web);
     if (url.username || url.password || !Object.values(portalOrigins).includes(url.origin)) return fallback;

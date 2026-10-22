@@ -18,7 +18,7 @@ export function apiTask<Args extends unknown[]>(task: (...args: Args) => Promise
     } finally { settled?.(); }
   };
 }
-export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || (typeof window === 'undefined' && process.env.NODE_ENV === 'test' ? '/api/v1' : portalOrigins.web + '/api/v1')).replace(/\/+$/, '');
+export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || (typeof window === 'undefined' ? '/api/v1' : portalOrigins.web + '/api/v1')).replace(/\/+$/, '');
 let token: string | null = null;
 let role: string | null = null;
 let version = 0;

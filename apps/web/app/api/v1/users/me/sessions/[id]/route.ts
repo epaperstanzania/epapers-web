@@ -1,2 +1,2 @@
 export const runtime = 'nodejs';
-export { DELETE, OPTIONS } from '@epapers/server/../app/api/v1/auth/sessions/[id]/route';
+export { DELETE, OPTIONS } from '../../../../auth/sessions/[id]/route';

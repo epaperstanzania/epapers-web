@@ -1,0 +1,25 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { NextRequest } from 'next/server';
+import type { User } from '@epapers/database/client';
+import { trustedOrigins, refreshCookieOptions } from '@epapers/auth/policy';
+import { authenticate, authorize } from '@epapers/auth/server';
+import { signAccess } from '@epapers/auth/jwt';
+import { preflight, route, sessionResponse, clearSession } from '@epapers/server/modules/auth/routes-helpers';
+import { safeReturnUrl, portalOrigins, portalDestination } from '@epapers/config/portals';
+import { z } from 'zod';
+const mocked=vi.hoisted(()=>({findUnique:vi.fn()}));
+vi.mock('@epapers/database',()=>({db:{userSession:{findUnique:mocked.findUnique}}}));
+vi.mock('@epapers/server/lib/rate-limit',()=>({rateLimit:vi.fn()}));
+vi.mock('@epapers/server/lib/write-policy',()=>({enforceWritePolicy:vi.fn()}));
+const origins=Object.values(portalOrigins);
+beforeEach(()=>{trustedOrigins.clear();origins.forEach(origin=>trustedOrigins.add(origin));mocked.findUnique.mockReset();});
+describe('portal identity boundary',()=>{
+ it.each(origins)('allows credentialed CORS and CSRF from %s',async origin=>{const req=new NextRequest('http://localhost:3000/api/v1/test',{method:'OPTIONS',headers:{origin}});const pre=preflight(req);expect(pre.status).toBe(204);expect(pre.headers.get('access-control-allow-origin')).toBe(origin);expect(pre.headers.get('access-control-allow-credentials')).toBe('true');const response=await route('test',z.strictObject({}),async()=>({ok:true}))(new NextRequest(req.url,{method:'POST',headers:{origin,'x-epapers-client':'web'},body:'{}'}));expect(response.status).toBe(200);});
+ it.each(['https://evil.epapers.co.tz','https://epapers.co.tz.attacker.test','null',''])('rejects untrusted origin %s before any action',async origin=>{const action=vi.fn();const response=await route('test',z.strictObject({}),action)(new NextRequest('http://localhost:3000/api/v1/test',{method:'POST',headers:{origin,'x-epapers-client':'web'},body:'{}'}));expect(response.status).toBe(403);expect(action).not.toHaveBeenCalled();expect(response.headers.has('access-control-allow-origin')).toBe(false);});
+ it('rejects missing CSRF client marker even for trusted origins',async()=>{const response=await route('test',z.strictObject({}),vi.fn())(new NextRequest('http://localhost:3000/api/v1/test',{method:'POST',headers:{origin:origins[0]},body:'{}'}));expect(response.status).toBe(403);});
+ it('clears exactly the same cookie scope that it sets',()=>{const set=sessionResponse({accessToken:'access',refreshToken:'opaque',user:{id:'u'},session:{expiresAt:new Date(Date.now()+60000)}}).headers.get('set-cookie');const clear=clearSession().headers.get('set-cookie');for(const value of ['HttpOnly','Secure','Path=/api/v1/auth','SameSite=lax','Domain=example.com']){expect(set).toContain(value);expect(clear).toContain(value);}expect(clear).toContain('Max-Age=0');expect(refreshCookieOptions().httpOnly).toBe(true);});
+ it('rejects contributor access to admin and verified department operations',()=>{const user={role:'CONTRIBUTOR',status:'ACTIVE',deletedAt:null,emailVerifiedAt:new Date()} as User;expect(()=>authorize(user,{roles:['admin']})).toThrow('Access denied');expect(()=>authorize(user,{scope:{departmentId:'dept'}})).toThrow('Department access denied');});
+ it('checks current database session revocation and role rather than trusting JWT role',async()=>{const token=await signAccess({id:'u',role:'ADMIN'},'s');mocked.findUnique.mockResolvedValue({id:'s',userId:'u',expiresAt:new Date(Date.now()+60000),revokedAt:new Date(),user:{role:'ADMIN',status:'ACTIVE'}});await expect(authenticate(token)).rejects.toThrow();mocked.findUnique.mockResolvedValue({id:'s',userId:'u',expiresAt:new Date(Date.now()+60000),revokedAt:null,rotatedAt:null,adminEmailVerifiedAt:new Date(),user:{role:'CONTRIBUTOR',status:'ACTIVE',deletedAt:null}});await expect(authenticate(token)).rejects.toThrow('Please log in again');});
+ it('rejects arbitrary return URLs including deceptive same-domain hosts',()=>{for(const target of ['https://evil.test','//evil.test','https://epapers.co.tz.evil.test','javascript:alert(1)','https://user:pass@epapers.co.tz','/\\evil.test','/login'])expect(safeReturnUrl(target,'fallback')).toBe('fallback');for(const origin of origins)expect(safeReturnUrl(origin+'/papers?id=1','fallback')).toBe(origin+'/papers?id=1');});
+ it('routes legacy links to their owner portal',()=>{expect(portalDestination('/admin/review','web')).toBe(portalOrigins.admin+'/review');expect(portalDestination('/admin/review','admin')).toBe('/review');expect(portalDestination('/lecturer/papers','contributor')).toBe(portalOrigins.lecturer+'/papers');expect(portalDestination('/papers/123','admin')).toBe(portalOrigins.web+'/papers/123');expect(portalDestination('/dashboard/settings','lecturer')).toBe('/dashboard/settings');});
+});
