@@ -94,7 +94,7 @@ The script generates Prisma for both the local platform and AWS Lambda's
 Amazon Linux OpenSSL 3 runtime, then creates
 `worker/dist/epapers-background-worker.zip`. In the Lambda console configure
 runtime `nodejs24.x`, architecture `x86_64`, handler `lambda.handler`, memory
-1024 MB, timeout 300 seconds, and these environment variables:
+1024 MB, and timeout 300 seconds. Set these environment variables:
 
 ```text
 EPAPERS_SECRET_ARN=<Secrets Manager secret ARN>

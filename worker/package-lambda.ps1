@@ -15,24 +15,46 @@ try {
     if (Test-Path -LiteralPath $packageDirectory) {
         Remove-Item -LiteralPath $packageDirectory -Recurse -Force
     }
-    pnpm --filter @epapers/worker deploy --prod $packageDirectory
+    pnpm --filter @epapers/worker deploy --prod --legacy $packageDirectory
     if ($LASTEXITCODE -ne 0) {
         throw 'Creating the isolated Lambda package failed.'
     }
 
+    $workspaceLinks = @(
+        (Join-Path $packageDirectory 'node_modules\@epapers\worker'),
+        (Join-Path $packageDirectory 'node_modules\.pnpm\node_modules\@epapers\worker')
+    )
+    foreach ($workspaceLink in $workspaceLinks) {
+        $link = Get-Item -LiteralPath $workspaceLink -Force -ErrorAction SilentlyContinue
+        if ($link -and $link.LinkType) {
+            [System.IO.Directory]::Delete($workspaceLink, $false)
+        }
+    }
+
     Copy-Item -LiteralPath (Join-Path $workerDirectory 'lambda.mjs') -Destination $packageDirectory
 
-    $generatedClient = Join-Path $repositoryRoot 'node_modules\.pnpm\node_modules\.prisma\client'
-    if (-not (Test-Path -LiteralPath $generatedClient)) {
-        $generatedClient = Join-Path $repositoryRoot 'node_modules\.prisma\client'
-    }
-    if (-not (Test-Path -LiteralPath $generatedClient)) {
+    $generatedPrismaDirectory = Get-ChildItem `
+        -Path (Join-Path $repositoryRoot 'node_modules\.pnpm') `
+        -Directory `
+        -Filter '.prisma' `
+        -Recurse |
+        Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'client') } |
+        Select-Object -First 1
+    if (-not $generatedPrismaDirectory) {
         throw 'Generated Prisma client was not found after generation.'
     }
 
     $packagePrismaDirectory = Join-Path $packageDirectory 'node_modules\.prisma'
     New-Item -ItemType Directory -Path $packagePrismaDirectory -Force | Out-Null
-    Copy-Item -LiteralPath $generatedClient -Destination (Join-Path $packagePrismaDirectory 'client') -Recurse -Force
+    Copy-Item `
+        -LiteralPath (Join-Path $generatedPrismaDirectory.FullName 'client') `
+        -Destination (Join-Path $packagePrismaDirectory 'client') `
+        -Recurse `
+        -Force
+    Remove-Item `
+        -LiteralPath (Join-Path $packagePrismaDirectory 'client\query_engine-windows.dll.node') `
+        -Force `
+        -ErrorAction SilentlyContinue
 
     $distributionDirectory = Split-Path -Parent $archivePath
     New-Item -ItemType Directory -Path $distributionDirectory -Force | Out-Null

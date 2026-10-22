@@ -85,7 +85,7 @@ export async function handler(_event, context) {
     const configuredMaxJobs = Number(process.env.EPAPERS_WORKER_MAX_JOBS ?? 20);
     const maxRuntimeMs = Math.max(
         1_000,
-        Math.min(45_000, context.getRemainingTimeInMillis() - 10_000),
+        Math.min(270_000, context.getRemainingTimeInMillis() - 30_000),
     );
     const processed = await processBatch({
         maxJobs: configuredMaxJobs,

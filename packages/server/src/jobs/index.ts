@@ -97,29 +97,66 @@ export async function tick(): Promise<boolean> {
 
 async function maintain(): Promise<void> {
     if (Date.now() - lastMaintenance > 60000) {
-        await withTransactionRetry(async (tx) => {
-            await tx.job.updateMany({ where: { status: 'running', type: { in: types }, runAt: { lt: new Date() } }, data: { status: 'pending', leaseToken: null } });
-            await tx.$executeRaw `DELETE FROM rate_limit_counters WHERE expires_at < now()`;
-        });
-        await db.appSetting.upsert({ where: { key: 'workerHeartbeat' }, create: { key: 'workerHeartbeat', value: { timestamp: new Date().toISOString() } }, update: { value: { timestamp: new Date().toISOString() }, updatedAt: new Date() } });
-        await rollupEvents();
+        const persistedHeartbeat = await settingTimestamp('workerHeartbeat');
+        if (Date.now() - persistedHeartbeat > 60000) {
+            await withTransactionRetry(async (tx) => {
+                await tx.job.updateMany({ where: { status: 'running', type: { in: types }, runAt: { lt: new Date() } }, data: { status: 'pending', leaseToken: null } });
+                await tx.$executeRaw `DELETE FROM rate_limit_counters WHERE expires_at < now()`;
+            });
+            await rollupEvents();
+            await recordSetting('workerHeartbeat', { timestamp: new Date().toISOString() });
+        }
         lastMaintenance = Date.now();
     }
     if (Date.now() - lastCleanup > 3600000) {
-        await cleanAbandoned();
-        await expireSecurityRecords();
-        try {
-            await purgeExpiredPapers();
-        } catch {
-            logger.error('Retention cleanup failed; retrying on next maintenance cycle');
+        const persistedCleanup = await settingTimestamp('workerCleanup');
+        if (Date.now() - persistedCleanup > 3600000) {
+            await cleanAbandoned();
+            await expireSecurityRecords();
+            try {
+                await purgeExpiredPapers();
+            } catch {
+                logger.error('Retention cleanup failed; retrying on next maintenance cycle');
+            }
+            await recordSetting('workerCleanup', { timestamp: new Date().toISOString() });
         }
         lastCleanup = Date.now();
     }
     const day = new Date().toISOString().slice(0, 10);
     if (day !== lastXpDay) {
-        await verifyXpLedger();
+        if (await settingValue('workerXpLedgerCheck', 'day') !== day) {
+            await verifyXpLedger();
+            await recordSetting('workerXpLedgerCheck', { day });
+        }
         lastXpDay = day;
     }
+}
+
+async function settingValue(key: string, field: string): Promise<string | undefined> {
+    const setting = await db.appSetting.findUnique({ where: { key } });
+    const value = setting?.value;
+    if (value && typeof value === 'object' && !Array.isArray(value) && field in value) {
+        const fieldValue = value[field];
+        return typeof fieldValue === 'string' ? fieldValue : undefined;
+    }
+    return undefined;
+}
+
+async function settingTimestamp(key: string): Promise<number> {
+    const timestamp = await settingValue(key, 'timestamp');
+    if (!timestamp) {
+        return 0;
+    }
+    const parsed = Date.parse(timestamp);
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+async function recordSetting(key: string, value: { timestamp: string } | { day: string }): Promise<void> {
+    await db.appSetting.upsert({
+        where: { key },
+        create: { key, value },
+        update: { value, updatedAt: new Date() },
+    });
 }
 
 export async function processBatch(options: { maxJobs?: number; maxRuntimeMs?: number } = {}): Promise<number> {
@@ -132,8 +169,8 @@ export async function processBatch(options: { maxJobs?: number; maxRuntimeMs?: n
         throw new RangeError('maxRuntimeMs must be an integer between 1000 and 840000');
     }
 
-    await maintain();
     const deadline = Date.now() + maxRuntimeMs;
+    await maintain();
     let processed = 0;
     while (processed < maxJobs && !stopping && Date.now() < deadline) {
         if (!await tick()) {
