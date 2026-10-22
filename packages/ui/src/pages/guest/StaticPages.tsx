@@ -554,7 +554,7 @@ export const NotFoundPage: React.FC = () => (
       Archived Resource Not Found
     </h2>
     <p className="text-xs text-[var(--color-text-muted)] max-w-md">
-      The examination paper, module catalog, or route you requested does not exist in the DIT system.
+      The examination paper, module catalog, or route you requested does not exist in the epapers system.
     </p>
     <Link
       to="/"

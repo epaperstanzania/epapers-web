@@ -9,10 +9,16 @@
   "scripts": {
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint index.ts --max-warnings=0",
-    "start": "node --conditions=react-server --import tsx index.ts"
+    "lint": "eslint index.ts cloudflare.ts --max-warnings=0",
+    "start": "node --conditions=react-server --import tsx index.ts",
+    "deploy:cloudflare": "wrangler deploy --config ../../wrangler.worker.jsonc"
   },
   "dependencies": {
-    "@epapers/server": "workspace:*"
+    "@epapers/server": "workspace:*",
+    "tsx": "4.21.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261022.1",
+    "wrangler": "4.152.0"
   }
 }

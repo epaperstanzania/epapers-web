@@ -1,0 +1,11 @@
+.git
+**/node_modules
+**/.next
+**/.turbo
+**/coverage
+**/.cache
+**/.vercel
+**/.env*
+**/.dev.vars*
+images
+*.log
