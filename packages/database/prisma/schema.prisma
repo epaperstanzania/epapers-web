@@ -255,6 +255,7 @@ model Paper {
   uploadedByUserId     String        @map("uploaded_by_user_id") @db.Uuid
   title                String
   category             PaperCategory
+  testNumber           Int?          @map("test_number") @db.Int2
   academicYearStart    Int           @map("academic_year_start") @db.Int2
   semester             Int           @db.Int2
   examPeriod           String        @default("") @map("exam_period")
@@ -276,7 +277,7 @@ model Paper {
   uploader             User          @relation(fields: [uploadedByUserId], references: [id], onDelete: Restrict)
   examFile             StoredFile    @relation("ExamFile", fields: [examFileId], references: [id], onDelete: Restrict)
   markingSchemeFile    StoredFile?   @relation("MarkingFile", fields: [markingSchemeFileId], references: [id], onDelete: Restrict)
-  @@index([moduleId, category, academicYearStart, semester, status])
+  @@index([moduleId, category, testNumber, academicYearStart, semester, status])
   @@index([status, createdAt])
   @@index([uploadedByUserId, createdAt])
   @@map("papers")
