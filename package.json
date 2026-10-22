@@ -1,38 +1,40 @@
 {
-  "private": true,
-  "version": "2.0.0",
-  "type": "module",
-  "name": "epapers-v2",
-  "packageManager": "pnpm@10.33.4",
-  "engines": {
-    "node": "24.x",
-    "pnpm": "10.x"
-  },
-  "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
-    "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck",
-    "test": "turbo run test",
-    "db:generate": "pnpm --filter @epapers/database generate",
-    "db:migrate": "pnpm --filter @epapers/database migrate",
-    "db:seed": "pnpm --filter @epapers/database seed",
-    "worker": "pnpm --filter @epapers/worker start",
-    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
-  },
-  "devDependencies": {
-    "@eslint/js": "9.39.5",
-    "@playwright/test": "1.58.2",
-    "@types/node": "22.19.15",
-    "@types/react": "19.2.14",
-    "@types/react-dom": "19.2.3",
-    "@typescript-eslint/eslint-plugin": "8.71.1",
-    "@typescript-eslint/parser": "8.71.1",
-    "eslint": "9.39.5",
-    "globals": "16.5.0",
-    "tsx": "4.21.0",
-    "turbo": "2.11.10",
-    "typescript": "5.9.3",
-    "vitest": "4.1.0"
-  }
+    "private":  true,
+    "version":  "2.0.0",
+    "type":  "module",
+    "name":  "epapers-v2",
+    "packageManager":  "pnpm@10.33.4",
+    "engines":  {
+                    "node":  "24.x",
+                    "pnpm":  "10.x"
+                },
+    "scripts":  {
+                    "dev":  "turbo run dev",
+                    "build":  "turbo run build",
+                    "lint":  "turbo run lint",
+                    "typecheck":  "turbo run typecheck",
+                    "test":  "turbo run test",
+                    "db:generate":  "pnpm --filter @epapers/database generate",
+                    "db:migrate":  "pnpm --filter @epapers/database migrate",
+                    "db:seed":  "pnpm --filter @epapers/database seed",
+                    "worker":  "pnpm --filter @epapers/worker start",
+                    "check":  "pnpm lint \u0026\u0026 pnpm typecheck \u0026\u0026 pnpm test \u0026\u0026 pnpm build",
+                    "test:browser":  "playwright test",
+                    "verify:build":  "node scripts/verify-build.mjs"
+                },
+    "devDependencies":  {
+                            "@eslint/js":  "9.39.5",
+                            "@playwright/test":  "1.58.2",
+                            "@types/node":  "22.19.15",
+                            "@types/react":  "19.2.14",
+                            "@types/react-dom":  "19.2.3",
+                            "@typescript-eslint/eslint-plugin":  "8.71.1",
+                            "@typescript-eslint/parser":  "8.71.1",
+                            "eslint":  "9.39.5",
+                            "globals":  "16.5.0",
+                            "tsx":  "4.21.0",
+                            "turbo":  "2.11.10",
+                            "typescript":  "5.9.3",
+                            "vitest":  "4.1.0"
+                        }
 }
