@@ -1,11 +1,26 @@
 export type Portal = 'web' | 'contributor' | 'lecturer' | 'admin';
 const production = process.env.NODE_ENV === 'production';
-export const portalAuthMode = process.env.NEXT_PUBLIC_AUTH_MODE === 'proxy' ? 'proxy' : 'bridge';
+const vercel = process.env.VERCEL === '1';
+export const vercelPortalOrigins = {
+  web: 'https://epapertz.vercel.app',
+  contributor: 'https://epapertz-contributor.vercel.app',
+  lecturer: 'https://epapertz-lecturer.vercel.app',
+  admin: 'https://epapertz-admin.vercel.app',
+} satisfies Record<Portal, string>;
+export const vercelPublicEnv = {
+  NEXT_PUBLIC_API_BASE_URL: '/api/v1',
+  NEXT_PUBLIC_AUTH_MODE: 'proxy',
+  NEXT_PUBLIC_WEB_ORIGIN: vercelPortalOrigins.web,
+  NEXT_PUBLIC_CONTRIBUTOR_ORIGIN: vercelPortalOrigins.contributor,
+  NEXT_PUBLIC_LECTURER_ORIGIN: vercelPortalOrigins.lecturer,
+  NEXT_PUBLIC_ADMIN_ORIGIN: vercelPortalOrigins.admin,
+};
+export const portalAuthMode = vercel || process.env.NEXT_PUBLIC_AUTH_MODE === 'proxy' ? 'proxy' : 'bridge';
 export const portalOrigins = {
-  web: process.env.NEXT_PUBLIC_WEB_ORIGIN || (production ? 'https://epapers.co.tz' : 'http://localhost:3000'),
-  contributor: process.env.NEXT_PUBLIC_CONTRIBUTOR_ORIGIN || (production ? 'https://contributor.epapers.co.tz' : 'http://localhost:3002'),
-  lecturer: process.env.NEXT_PUBLIC_LECTURER_ORIGIN || (production ? 'https://lecturer.epapers.co.tz' : 'http://localhost:3003'),
-  admin: process.env.NEXT_PUBLIC_ADMIN_ORIGIN || (production ? 'https://console.epapers.co.tz' : 'http://localhost:3004'),
+  web: vercel ? vercelPortalOrigins.web : process.env.NEXT_PUBLIC_WEB_ORIGIN || (production ? 'https://epapers.co.tz' : 'http://localhost:3000'),
+  contributor: vercel ? vercelPortalOrigins.contributor : process.env.NEXT_PUBLIC_CONTRIBUTOR_ORIGIN || (production ? 'https://contributor.epapers.co.tz' : 'http://localhost:3002'),
+  lecturer: vercel ? vercelPortalOrigins.lecturer : process.env.NEXT_PUBLIC_LECTURER_ORIGIN || (production ? 'https://lecturer.epapers.co.tz' : 'http://localhost:3003'),
+  admin: vercel ? vercelPortalOrigins.admin : process.env.NEXT_PUBLIC_ADMIN_ORIGIN || (production ? 'https://console.epapers.co.tz' : 'http://localhost:3004'),
 } satisfies Record<Portal, string>;
 for (const [portal, origin] of Object.entries(portalOrigins)) {
   const url = new URL(origin);

@@ -1,5 +1,6 @@
 import 'server-only';
 import { z } from 'zod';
+import { vercelPortalOrigins } from './portals';
 const boolFromString = z.string().transform((value, ctx) => {
     if (value === 'true')
         return true;
@@ -63,7 +64,16 @@ const schema = z.object({
         ctx.addIssue({ code: 'custom', path: ['RESEND_API_KEY'], message: 'Required when EMAIL_PROVIDER=resend' });
     }
 });
-const result = schema.safeParse(process.env);
+const vercelEnv = process.env.VERCEL === '1';
+const runtimeEnv = vercelEnv ? {
+    ...process.env,
+    APP_ORIGIN: vercelPortalOrigins.web,
+    API_ORIGIN: vercelPortalOrigins.web,
+    PORTAL_ORIGINS: Object.values(vercelPortalOrigins).join(','),
+    COOKIE_DOMAIN: '',
+    TRUST_PROXY: 'false',
+} : process.env;
+const result = schema.safeParse(runtimeEnv);
 if (!result.success) {
     const missing = result.error.issues.map((issue) => `${issue.path.join('.')}: invalid or missing value`).join('\n');
     throw new Error(`Invalid backend environment configuration:\n${missing}`);

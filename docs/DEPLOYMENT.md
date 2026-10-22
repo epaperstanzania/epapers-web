@@ -15,13 +15,17 @@ The selected hosting profile is four independent Vercel projects:
 from the workspace root and builds only that portal's dependency graph. Enable
 source files outside the root directory, Node 24.x and
 `ENABLE_EXPERIMENTAL_COREPACK=1`. Migrations are not part of these build commands.
+Keep each Vercel project's Root Directory set to the matching `apps/<portal>`
+folder; the root install/build commands depend on the monorepo files being
+included in the build step.
 
-All four projects use `NEXT_PUBLIC_AUTH_MODE=proxy` and
-`NEXT_PUBLIC_API_BASE_URL=/api/v1`. Set `NEXT_PUBLIC_WEB_ORIGIN` to
-`https://epapertz.vercel.app`, and the contributor, lecturer and admin origin
-variables to the three matching HTTPS addresses above. Web's `APP_ORIGIN` and
-`API_ORIGIN` are the public origin; `PORTAL_ORIGINS` contains those four exact
-origins separated by commas. `COOKIE_DOMAIN` must be empty.
+On Vercel, the application config pins `NEXT_PUBLIC_AUTH_MODE=proxy`,
+`NEXT_PUBLIC_API_BASE_URL=/api/v1`, and the four exact public origins from
+`deployment/portals.json`. The server config similarly pins `APP_ORIGIN`,
+`API_ORIGIN`, `PORTAL_ORIGINS`, host-only cookies, and `TRUST_PROXY=false`.
+This prevents local `.env.local` values or stale Vercel overrides from breaking
+the Vercel deployment profile. Do not add conflicting origin/cookie overrides
+to the Vercel projects.
 
 Separate `vercel.app` hosts cannot share a cookie domain. Portal requests to
 `/api/v1` are proxied to the canonical API. A portal without a session starts at
@@ -55,6 +59,12 @@ not provision a database, run migrations, configure bucket CORS, or start the
 long-running worker. Keep the worker running on a suitable process host with
 matching backend credentials: email delivery and PDF scan/publication need it.
 Allow the four selected HTTPS origins in private incoming-bucket PUT CORS.
+
+Do not copy `.env.local`, `.env.example`, or `VERCEL_OIDC_TOKEN` into Vercel.
+The code sets the public Vercel profile itself. Add only the actual backend
+secrets to the public/API project's Production Environment Variables; do not
+add backend secrets to the other three projects. Keep migrations in the
+release job, not the build command.
 
 On Vercel, rate limiting uses the platform-overwritten `x-vercel-forwarded-for`
 header. Keep `TRUST_PROXY=false` there; that option is for restricted Cloudflare
