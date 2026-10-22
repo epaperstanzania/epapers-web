@@ -11,7 +11,7 @@ import { changePassword } from '@epapers/server/modules/auth/service';
 import { schemas } from '@epapers/server/modules/auth/schemas';
 import { verifyPassword } from '@epapers/auth/crypto';
 import { POST } from '../../../apps/web/app/api/v1/auth/change-password/route';
-import { clearSession } from '@epapers/server/modules/auth/routes-helpers';
+import { clearSession } from '@/lib/routes-helpers';
 let user: User;
 beforeEach(() => {
     vi.clearAllMocks();

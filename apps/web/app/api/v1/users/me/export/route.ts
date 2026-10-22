@@ -1,5 +1,5 @@
 export const runtime = 'nodejs';
-import { route, preflight } from '@epapers/server/modules/auth/routes-helpers';
+import { route, preflight } from '@/lib/routes-helpers';
 import { exportSchema } from '@epapers/server/modules/accounts/service';
 
 import * as service from '@epapers/server/modules/accounts/service';

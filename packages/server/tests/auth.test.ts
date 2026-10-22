@@ -5,7 +5,7 @@ import { signAccess, verifyAccess, signReauthentication, verifyReauthentication 
 import { schemas } from '@epapers/server/modules/auth/schemas';
 import { tokenHash, hashPassword, verifyPassword, verifyTotp } from '@epapers/auth/crypto';
 import { privateUser } from '@epapers/server/modules/auth/dto';
-import { route, sessionResponse, preflight } from '@epapers/server/modules/auth/routes-helpers';
+import { route, sessionResponse, preflight } from '@/lib/routes-helpers';
 import type { User } from '@epapers/database/client';
 import { passwordError } from '@epapers/config/password-policy';
 vi.mock('@epapers/server/lib/rate-limit', () => ({ rateLimit: vi.fn() }));

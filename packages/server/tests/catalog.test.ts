@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
-import { cors } from '@epapers/server/modules/auth/routes-helpers';
+import { cors } from '@/lib/routes-helpers';
 import { catalogSchemas } from '@epapers/server/modules/catalog/schemas';
 import { modules, cursorId } from '@epapers/server/modules/catalog/service';
 import { db } from '@epapers/database';

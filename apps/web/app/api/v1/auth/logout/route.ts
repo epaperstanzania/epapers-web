@@ -1,4 +1,4 @@
-import { route, preflight, clearSession } from '@epapers/server/modules/auth/routes-helpers';
+import { route, preflight, clearSession } from '@/lib/routes-helpers';
 import { schemas } from '@epapers/server/modules/auth/schemas';
 import { logout } from '@epapers/server/modules/auth/service';
 export const runtime = 'nodejs';

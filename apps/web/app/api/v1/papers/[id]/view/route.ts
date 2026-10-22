@@ -1,6 +1,6 @@
 import { clientIp } from '@epapers/auth/policy';
 export const runtime = 'nodejs';
-import { route, preflight } from '@epapers/server/modules/auth/routes-helpers';
+import { route, preflight } from '@/lib/routes-helpers';
 import { empty } from '@epapers/server/modules/catalog/schemas';
 import * as service from '@epapers/server/modules/uploads/service';
 import { ipHash } from '@epapers/auth/crypto';

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import type { User } from '@epapers/database/client';
 import { authenticate, authorize } from '@epapers/server/modules/auth/service';
-import { route } from '@epapers/server/modules/auth/routes-helpers';
+import { route } from '@/lib/routes-helpers';
 import { signReauthentication } from '@epapers/auth/jwt';
 import { adminSchemas } from '@epapers/server/modules/admin/schemas';
 import { adminUser } from '@epapers/server/modules/admin/dto';

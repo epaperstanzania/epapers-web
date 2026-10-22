@@ -4,7 +4,7 @@ import type { User } from '@epapers/database/client';
 import { trustedOrigins, refreshCookieOptions } from '@epapers/auth/policy';
 import { authenticate, authorize } from '@epapers/auth/server';
 import { signAccess } from '@epapers/auth/jwt';
-import { preflight, route, sessionResponse, clearSession } from '@epapers/server/modules/auth/routes-helpers';
+import { preflight, route, sessionResponse, clearSession } from '@/lib/routes-helpers';
 import { safeReturnUrl, portalOrigins, portalDestination } from '@epapers/config/portals';
 import { z } from 'zod';
 const mocked=vi.hoisted(()=>({findUnique:vi.fn()}));

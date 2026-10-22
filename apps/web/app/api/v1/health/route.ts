@@ -1,6 +1,6 @@
 import { db } from '@epapers/database';
 import { logger } from '@epapers/server/lib/logger';
-import { errorResponse, json, securityHeaders } from '@epapers/server/lib/http';
+import { errorResponse, json, securityHeaders } from '@/lib/http';
 export const runtime = 'nodejs';
 export async function GET() {
     try {

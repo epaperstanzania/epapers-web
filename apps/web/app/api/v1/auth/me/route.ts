@@ -1,4 +1,4 @@
-import { route, preflight } from '@epapers/server/modules/auth/routes-helpers';
+import { route, preflight } from '@/lib/routes-helpers';
 import { schemas } from '@epapers/server/modules/auth/schemas';
 import { privateUser } from '@epapers/server/modules/auth/dto';
 export const runtime = 'nodejs';

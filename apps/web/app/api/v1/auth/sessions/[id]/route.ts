@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { route, preflight } from '@epapers/server/modules/auth/routes-helpers';
+import { route, preflight } from '@/lib/routes-helpers';
 import { schemas } from '@epapers/server/modules/auth/schemas';
 import { revokeSession } from '@epapers/server/modules/auth/service';
 export const runtime = 'nodejs';

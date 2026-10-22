@@ -10,7 +10,7 @@
                     "dev":  "next dev -p 3000",
                     "build":  "next build --webpack",
                     "start":  "next start -p 3000",
-                    "lint":  "eslint app components instrumentation.ts --max-warnings=0",
+                    "lint":  "eslint app components instrumentation.ts lib --max-warnings=0",
                     "typecheck":  "next typegen \u0026\u0026 tsc --noEmit"
                 },
     "dependencies":  {
