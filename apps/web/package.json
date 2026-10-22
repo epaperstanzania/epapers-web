@@ -1,0 +1,30 @@
+{
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "name": "@epapers/web",
+  "exports": {
+    ".": "./app/layout.tsx"
+  },
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build --webpack",
+    "start": "next start -p 3000",
+    "lint": "eslint app --max-warnings=0",
+    "typecheck": "next typegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "16.4.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "@epapers/ui": "workspace:*",
+    "@epapers/auth": "workspace:*",
+    "@epapers/config": "workspace:*",
+    "@epapers/server": "workspace:*",
+    "@epapers/database": "workspace:*",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3"
+  }
+}

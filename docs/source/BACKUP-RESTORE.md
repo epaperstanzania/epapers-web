@@ -1,0 +1,17 @@
+# Backups and restore exercises
+
+Native database backups and private R2 object backups must be managed separately. Database replicas alone do not recover accidental deletion. Choose a backup location/plan permitted by the CockroachDB Cloud account, independent credentials and retention, and record operator ownership, schedule, backup age and recovery objectives. Back up DATA_ENCRYPTION_KEY separately; database ciphertext is unusable without it. Do not put access secrets in SQL examples, logs or this repository.
+
+CockroachDB native BACKUP creates a timestamp-consistent database/cluster snapshot and RESTORE can recover it into a separate target. Current syntax uses backup collections; the legacy `BACKUP ... TO` syntax was removed. Verify privileges and version/plan restrictions before configuring a schedule. R2 is S3-compatible but is not one of Cockroach Labs' tested backup providers, so do not assume compatibility: perform a native backup/restore using a supported destination or verify custom-endpoint support separately. Sources: [BACKUP](https://docs.cockroachlabs.com/docs/stable/backup), [RESTORE](https://docs.cockroachlabs.com/docs/stable/restore).
+
+An operator recovery drill should:
+
+1. Record the last successful full/incremental backup and object-copy timestamps. Stop writes and the worker during the drill's recovery cutover; retain the original database.
+2. Restore the native backup to a new database/cluster, with no application traffic. Restore incoming/published object copies for matching stored_file keys. Use a dedicated test origin and SMTP-disabled worker so restored jobs cannot email real users.
+3. Verify migrations, enum/check/foreign-key constraints and partial indexes, curriculum/paper/file counts, account status and deletion flags, username history, positive ledger sums vs user totals, audit continuity, and retryable worker intents. Sample file hashes and real PDF downloads. Check that deleted/unclean/unapproved files are denied.
+4. Restore encryption keys through a secure channel. Revoke all restored sessions and challenge records; regenerate signing/refresh secrets before reopening traffic. Check that stale pending email/publication jobs are expired or safely replayable.
+5. Run the authorization/privacy suite against an isolated copied target, a migration compatibility check, EXPLAIN and search/download load checks. Record measured RPO (data lost) and RTO (time to usable service); get the deployment owner's cutover approval. Keep old target read-only for rollback under the retention policy.
+
+`npm run test:restore` refuses production and uses TEST_DATABASE_URL. It serializes a synthetic department/program/module snapshot, restores three related rows in a serializable transaction, checks a SHA-256 checksum and removes the fixture. `docs/RESTORE-DRILL.json` records its scope/time/result. This verifies a logical relation/serialization round-trip only. It never exports user data or copies R2 objects and cannot validate native backup files, operator privileges, full-database disaster recovery or RPO/RTO.
+
+Native managed backup/restore, external object replication and a full isolated recovery remain manual and unverified with the current credentials. No production backup schedule or automatic backup-trigger job is claimed. Establish and prove these before launch; the application must not be given broad cluster backup administration permissions merely to serve requests.

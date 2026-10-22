@@ -1,0 +1,7 @@
+import type { Metadata } from 'next';
+import { Suspense } from 'react';
+import { Providers } from '@epapers/ui/providers';
+import '@epapers/ui/styles.css';
+export const dynamic = 'force-dynamic';
+export const metadata: Metadata = {title:{default:'EPapers — DIT examination archive',template:'%s | EPapers'},description:'Discover and contribute DIT examination papers.',};
+export default function Layout({children}:{children:React.ReactNode}){return <html lang="en"><body data-portal="web"><a className="skip-link" href="#main-content">Skip to content</a><Suspense fallback={<p role="status">Loading EPapers…</p>}><Providers><div id="main-content">{children}</div></Providers></Suspense></body></html>;}

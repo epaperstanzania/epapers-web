@@ -1,0 +1,18 @@
+{
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "name": "@epapers/worker",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint index.ts --max-warnings=0",
+    "start": "node --conditions=react-server --import tsx index.ts"
+  },
+  "dependencies": {
+    "@epapers/server": "workspace:*"
+  }
+}

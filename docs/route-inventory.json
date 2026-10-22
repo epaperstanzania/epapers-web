@@ -1,0 +1,267 @@
+[
+  {
+    "app": "web",
+    "route": "/",
+    "component": "HomePage"
+  },
+  {
+    "app": "web",
+    "route": "/search",
+    "component": "SearchPage"
+  },
+  {
+    "app": "web",
+    "route": "/departments",
+    "component": "DepartmentsListPage"
+  },
+  {
+    "app": "web",
+    "route": "/departments/[dept]",
+    "component": "DepartmentDetailPage"
+  },
+  {
+    "app": "web",
+    "route": "/modules/[code]",
+    "component": "ModuleDetailPage"
+  },
+  {
+    "app": "web",
+    "route": "/papers/[id]",
+    "component": "PaperDetailPage"
+  },
+  {
+    "app": "web",
+    "route": "/recent",
+    "component": "RecentPage"
+  },
+  {
+    "app": "web",
+    "route": "/popular",
+    "component": "PopularPage"
+  },
+  {
+    "app": "web",
+    "route": "/how-it-works",
+    "component": "HowItWorksPage"
+  },
+  {
+    "app": "web",
+    "route": "/faq",
+    "component": "FaqPage"
+  },
+  {
+    "app": "web",
+    "route": "/about",
+    "component": "AboutPage"
+  },
+  {
+    "app": "web",
+    "route": "/contact",
+    "component": "ContactPage"
+  },
+  {
+    "app": "web",
+    "route": "/privacy",
+    "component": "PrivacyPage"
+  },
+  {
+    "app": "web",
+    "route": "/terms",
+    "component": "TermsPage"
+  },
+  {
+    "app": "web",
+    "route": "/takedown",
+    "component": "TakedownPage"
+  },
+  {
+    "app": "web",
+    "route": "/request-module",
+    "component": "RequestModulePage"
+  },
+  {
+    "app": "web",
+    "route": "/offline",
+    "component": "OfflinePage"
+  },
+  {
+    "app": "web",
+    "route": "/rate-limit",
+    "component": "RateLimitPage"
+  },
+  {
+    "app": "web",
+    "route": "/login",
+    "component": "LoginPage"
+  },
+  {
+    "app": "web",
+    "route": "/register",
+    "component": "RegisterPage"
+  },
+  {
+    "app": "web",
+    "route": "/verify",
+    "component": "VerifyOtpPage"
+  },
+  {
+    "app": "web",
+    "route": "/forgot-password",
+    "component": "ForgotPasswordPage"
+  },
+  {
+    "app": "web",
+    "route": "/reset-password",
+    "component": "ResetPasswordPage"
+  },
+  {
+    "app": "contributor",
+    "route": "/dashboard",
+    "component": "DashboardPage"
+  },
+  {
+    "app": "contributor",
+    "route": "/upload",
+    "component": "UploadPage"
+  },
+  {
+    "app": "contributor",
+    "route": "/dashboard/submissions",
+    "component": "SubmissionsPage"
+  },
+  {
+    "app": "contributor",
+    "route": "/dashboard/achievements",
+    "component": "AchievementsPage"
+  },
+  {
+    "app": "contributor",
+    "route": "/leaderboard",
+    "component": "LeaderboardPage"
+  },
+  {
+    "app": "contributor",
+    "route": "/dashboard/notifications",
+    "component": "NotificationsPage"
+  },
+  {
+    "app": "contributor",
+    "route": "/dashboard/settings",
+    "component": "SettingsPage"
+  },
+  {
+    "app": "web",
+    "route": "/u/[username]",
+    "component": "UserProfilePage"
+  },
+  {
+    "app": "contributor",
+    "route": "/u/[username]",
+    "component": "UserProfilePage"
+  },
+  {
+    "app": "contributor",
+    "route": "/dashboard/request-module",
+    "component": "RequestModulePage"
+  },
+  {
+    "app": "contributor",
+    "route": "/help",
+    "component": "HowItWorksPage"
+  },
+  {
+    "app": "lecturer",
+    "route": "/",
+    "component": "DashboardPage"
+  },
+  {
+    "app": "lecturer",
+    "route": "/papers",
+    "component": "LecturerPapersPage"
+  },
+  {
+    "app": "lecturer",
+    "route": "/bulk-upload",
+    "component": "BulkUploadPage"
+  },
+  {
+    "app": "lecturer",
+    "route": "/dashboard/settings",
+    "component": "SettingsPage"
+  },
+  {
+    "app": "lecturer",
+    "route": "/verification",
+    "component": "VerificationPage"
+  },
+  {
+    "app": "admin",
+    "route": "/",
+    "component": "AdminOverviewPage"
+  },
+  {
+    "app": "admin",
+    "route": "/review",
+    "component": "AdminReviewPage"
+  },
+  {
+    "app": "admin",
+    "route": "/flags",
+    "component": "AdminFlagsPage"
+  },
+  {
+    "app": "admin",
+    "route": "/takedowns",
+    "component": "AdminTakedownsPage"
+  },
+  {
+    "app": "admin",
+    "route": "/structure",
+    "component": "AdminCurriculumStructurePage"
+  },
+  {
+    "app": "admin",
+    "route": "/users",
+    "component": "AdminUsersPage"
+  },
+  {
+    "app": "admin",
+    "route": "/module-requests",
+    "component": "AdminModuleRequestsPage"
+  },
+  {
+    "app": "admin",
+    "route": "/papers",
+    "component": "AdminPapersDirectoryPage"
+  },
+  {
+    "app": "admin",
+    "route": "/lecturers",
+    "component": "AdminLecturersPage"
+  },
+  {
+    "app": "admin",
+    "route": "/audit",
+    "component": "AdminAuditLogPage"
+  },
+  {
+    "app": "admin",
+    "route": "/health",
+    "component": "AdminSystemHealthPage"
+  },
+  {
+    "app": "admin",
+    "route": "/communications",
+    "component": "AdminCommunicationsPage"
+  },
+  {
+    "app": "admin",
+    "route": "/settings",
+    "component": "AdminSettingsPage"
+  },
+  {
+    "app": "admin",
+    "route": "/notifications",
+    "component": "NotificationsPage"
+  }
+]

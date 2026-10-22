@@ -1,0 +1,363 @@
+{
+  "version": 1,
+  "departments": [
+    {
+      "code": "D01",
+      "name": "Civil Engineering"
+    },
+    {
+      "code": "D02",
+      "name": "Computer Studies"
+    },
+    {
+      "code": "D03",
+      "name": "Electrical Engineering"
+    },
+    {
+      "code": "D04",
+      "name": "Electronics and Telecommunication Engineering"
+    },
+    {
+      "code": "D05",
+      "name": "Mechanical Engineering"
+    },
+    {
+      "code": "D06",
+      "name": "Science and Laboratory Technology"
+    },
+    {
+      "code": "D07",
+      "name": "Leather Products Technology"
+    },
+    {
+      "code": "D08",
+      "name": "General Studies"
+    }
+  ],
+  "programs": [
+    {
+      "departmentCode": "D01",
+      "code": "P0101MA",
+      "name": "Ordinary Diploma in Civil Engineering",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false
+    },
+    {
+      "departmentCode": "D01",
+      "code": "P0101SO",
+      "name": "Ordinary Diploma in Civil Engineering",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "SONGWE",
+      "assignmentNeedsVerification": false
+    },
+    {
+      "departmentCode": "D01",
+      "code": "P0102MA",
+      "name": "Bachelor of Engineering (B.Eng) in Civil Engineering",
+      "level": "BACHELOR",
+      "awardTitle": "B.Eng",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false
+    },
+    {
+      "departmentCode": "D02",
+      "code": "P0201MA",
+      "name": "Ordinary Diploma in Computer Engineering",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false
+    },
+    {
+      "departmentCode": "D02",
+      "code": "P0202MA",
+      "name": "Ordinary Diploma in Information Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true
+    },
+    {
+      "departmentCode": "D02",
+      "code": "P0203MA",
+      "name": "Ordinary Diploma in Multimedia and Film Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true
+    },
+    {
+      "departmentCode": "D02",
+      "code": "P0204MA",
+      "name": "Bachelor of Engineering (B.Eng) in Computer Engineering",
+      "level": "BACHELOR",
+      "awardTitle": "B.Eng",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false
+    },
+    {
+      "departmentCode": "D03",
+      "code": "P0301MA",
+      "name": "Ordinary Diploma in Electrical Engineering",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false
+    },
+    {
+      "departmentCode": "D03",
+      "code": "P0302MA",
+      "name": "Ordinary Diploma in Electrical and Renewable Energy Engineering",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true
+    },
+    {
+      "departmentCode": "D03",
+      "code": "P0303MA",
+      "name": "Ordinary Diploma in Industrial Automation Engineering",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true
+    },
+    {
+      "departmentCode": "D03",
+      "code": "P0304MA",
+      "name": "Bachelor of Engineering (B.Eng) in Electrical Engineering",
+      "level": "BACHELOR",
+      "awardTitle": "B.Eng",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false
+    },
+    {
+      "departmentCode": "D04",
+      "code": "P0401MA",
+      "name": "Ordinary Diploma in Electronics and Telecommunications Engineering",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false
+    },
+    {
+      "departmentCode": "D04",
+      "code": "P0402MA",
+      "name": "Ordinary Diploma in Communication System Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true
+    },
+    {
+      "departmentCode": "D04",
+      "code": "P0403MA",
+      "name": "Ordinary Diploma in Biomedical Equipment Engineering",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true
+    },
+    {
+      "departmentCode": "D04",
+      "code": "P0404MA",
+      "name": "Bachelor of Engineering (B.Eng) in Electronics and Telecommunications Engineering",
+      "level": "BACHELOR",
+      "awardTitle": "B.Eng",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false
+    },
+    {
+      "departmentCode": "D04",
+      "code": "P0405MA",
+      "name": "Bachelor of Engineering (B.Eng) in Biomedical Engineering",
+      "level": "BACHELOR",
+      "awardTitle": "B.Eng",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true
+    },
+    {
+      "departmentCode": "D05",
+      "code": "P0501MA",
+      "name": "Ordinary Diploma in Mechanical Engineering",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false
+    },
+    {
+      "departmentCode": "D05",
+      "code": "P0502MA",
+      "name": "Ordinary Diploma in Mining Engineering",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true
+    },
+    {
+      "departmentCode": "D05",
+      "code": "P0503MA",
+      "name": "Bachelor of Engineering (B.Eng) in Mechanical Engineering",
+      "level": "BACHELOR",
+      "awardTitle": "B.Eng",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false
+    },
+    {
+      "departmentCode": "D05",
+      "code": "P0504MA",
+      "name": "Bachelor of Engineering (B.Eng) in Oil and Gas Engineering",
+      "level": "BACHELOR",
+      "awardTitle": "B.Eng",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true
+    },
+    {
+      "departmentCode": "D05",
+      "code": "P0505MA",
+      "name": "Bachelor of Engineering (B.Eng) in Mining Engineering",
+      "level": "BACHELOR",
+      "awardTitle": "B.Eng",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true
+    },
+    {
+      "departmentCode": "D06",
+      "code": "P0601MA",
+      "name": "Ordinary Diploma in Science and Laboratory Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false
+    },
+    {
+      "departmentCode": "D06",
+      "code": "P0601MW",
+      "name": "Ordinary Diploma in Science and Laboratory Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MWANZA",
+      "assignmentNeedsVerification": false
+    },
+    {
+      "departmentCode": "D06",
+      "code": "P0602MA",
+      "name": "Ordinary Diploma in Biotechnology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true
+    },
+    {
+      "departmentCode": "D06",
+      "code": "P0603MA",
+      "name": "Ordinary Diploma in Food Science and Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true
+    },
+    {
+      "departmentCode": "D06",
+      "code": "P0604MA",
+      "name": "Bachelor of Technology (B.Tech) in Laboratory Sciences",
+      "level": "BACHELOR",
+      "awardTitle": "B.Tech",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false
+    },
+    {
+      "departmentCode": "D06",
+      "code": "P0604MW",
+      "name": "Bachelor of Technology (B.Tech) in Laboratory Sciences",
+      "level": "BACHELOR",
+      "awardTitle": "B.Tech",
+      "campus": "MWANZA",
+      "assignmentNeedsVerification": false
+    },
+    {
+      "departmentCode": "D07",
+      "code": "P0701MW",
+      "name": "Ordinary Diploma in Leather Processing Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MWANZA",
+      "assignmentNeedsVerification": true
+    },
+    {
+      "departmentCode": "D07",
+      "code": "P0702MW",
+      "name": "Ordinary Diploma in Leather Products Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MWANZA",
+      "assignmentNeedsVerification": true
+    },
+    {
+      "departmentCode": "D07",
+      "code": "P0703MW",
+      "name": "Ordinary Diploma in Food Processing Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MWANZA",
+      "assignmentNeedsVerification": true
+    },
+    {
+      "departmentCode": "D07",
+      "code": "P0704MW",
+      "name": "Ordinary Diploma in Textile Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MWANZA",
+      "assignmentNeedsVerification": true
+    },
+    {
+      "departmentCode": "D07",
+      "code": "P0705MW",
+      "name": "Ordinary Diploma in Agricultural Post-Harvest Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MWANZA",
+      "assignmentNeedsVerification": true
+    },
+    {
+      "departmentCode": "D07",
+      "code": "P0706MW",
+      "name": "Ordinary Diploma in Fashion and Design Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MWANZA",
+      "assignmentNeedsVerification": true
+    },
+    {
+      "departmentCode": "D07",
+      "code": "P0707MW",
+      "name": "Ordinary Diploma in Agro Bioprocess Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MWANZA",
+      "assignmentNeedsVerification": true
+    },
+    {
+      "departmentCode": "D08",
+      "code": "P0801MA",
+      "name": "Common Modules",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false
+    },
+    {
+      "departmentCode": "D08",
+      "code": "P0802MA",
+      "name": "Common Modules",
+      "level": "BACHELOR",
+      "awardTitle": "B.Eng",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false
+    }
+  ]
+}

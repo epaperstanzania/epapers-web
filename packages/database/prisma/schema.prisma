@@ -1,0 +1,657 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "cockroachdb"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountRole {
+  CONTRIBUTOR
+  LECTURER
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  BANNED
+}
+
+enum ProgramLevel {
+  ORDINARY_DIPLOMA
+  BACHELOR
+}
+
+enum Campus {
+  MAIN
+  MWANZA
+  SONGWE
+}
+
+enum PaperCategory {
+  TEST
+  UE
+  SUPP
+}
+
+enum PaperStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SPAM
+}
+
+enum ScanStatus {
+  PENDING
+  CLEAN
+  REJECTED
+}
+
+model Department {
+  lecturerVerifications LecturerVerification[]
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code          String
+  codeNormalized String   @map("code_normalized")
+  name          String
+  description   String    @default("")
+  icon          String    @default("Building2")
+  isActive      Boolean   @default(true) @map("is_active")
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz
+  deletedById   String?   @map("deleted_by_user_id") @db.Uuid
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  programs      Program[]
+  users         User[]
+  @@map("departments")
+  relatedDeletedById User? @relation("DepartmentDeletedById", fields: [deletedById], references: [id], onDelete: Restrict)
+
+}
+
+model Program {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  departmentId   String       @map("department_id") @db.Uuid
+  code           String
+  codeNormalized String       @map("code_normalized")
+  name           String
+  level          ProgramLevel
+  awardTitle     String       @map("award_title")
+  campus         Campus       @default(MAIN)
+  isActive       Boolean      @default(true) @map("is_active")
+  deletedAt      DateTime?    @map("deleted_at") @db.Timestamptz
+  deletedById    String?      @map("deleted_by_user_id") @db.Uuid
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+  department     Department   @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  modules        Module[]
+  @@index([departmentId, isActive])
+  @@map("programs")
+  relatedDeletedById User? @relation("ProgramDeletedById", fields: [deletedById], references: [id], onDelete: Restrict)
+
+  moduleRequestProgramId ModuleRequest[] @relation("ModuleRequestProgramId")
+
+}
+
+model Module {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  programId      String    @map("program_id") @db.Uuid
+  code           String
+  codeNormalized String    @map("code_normalized")
+  name           String
+  nameNormalized String    @map("name_normalized")
+  semester       Int       @db.Int2
+  levelYear      Int?      @map("level_year") @db.Int2
+  credits        Decimal?  @db.Decimal(5, 2)
+  isActive       Boolean   @default(true) @map("is_active")
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz
+  deletedById    String?   @map("deleted_by_user_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  program        Program   @relation(fields: [programId], references: [id], onDelete: Restrict)
+  papers         Paper[]
+  @@unique([id, programId])
+  @@index([programId, semester, isActive])
+  @@index([codeNormalized])
+  @@index([nameNormalized])
+  @@map("modules")
+  relatedDeletedById User? @relation("ModuleDeletedById", fields: [deletedById], references: [id], onDelete: Restrict)
+
+}
+
+model User {
+  lecturerVerifications LecturerVerification[] @relation("VerificationApplicant")
+  verificationReviews LecturerVerification[] @relation("VerificationReviewer")
+  id                  String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username            String
+  usernameNormalized String        @unique @map("username_normalized")
+  email               String
+  emailNormalized    String        @unique @map("email_normalized")
+  fullName            String        @map("full_name")
+  totpSecret          String?       @map("totp_secret")
+  passwordHash        String        @map("password_hash")
+  role                AccountRole   @default(CONTRIBUTOR)
+  status              AccountStatus @default(ACTIVE)
+  emailVerifiedAt     DateTime?     @map("email_verified_at") @db.Timestamptz
+  lecturerVerifiedAt  DateTime?     @map("lecturer_verified_at") @db.Timestamptz
+  homeDepartmentId    String?       @map("home_department_id") @db.Uuid
+  bio                 String        @default("") @db.String(1000)
+  avatarId            String?       @map("avatar_id") @db.String(32)
+  xp                  Int           @default(0)
+  allTimeXp           Int           @default(0) @map("all_time_xp")
+  usernameChangedAt   DateTime?     @map("username_changed_at") @db.Timestamptz
+  deletedAt           DateTime?     @map("deleted_at") @db.Timestamptz
+  deletedById         String?       @map("deleted_by_user_id") @db.Uuid
+  joinedAt            DateTime      @default(now()) @map("joined_at") @db.Timestamptz
+  updatedAt           DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+  homeDepartment      Department?   @relation(fields: [homeDepartmentId], references: [id], onDelete: SetNull)
+  papers              Paper[]
+  sessions            UserSession[]
+  @@index([role, status])
+  @@index([homeDepartmentId])
+  @@map("users")
+  relatedDeletedById User? @relation("UserDeletedById", fields: [deletedById], references: [id], onDelete: Restrict)
+
+  userDeletedById User[] @relation("UserDeletedById")
+
+  departmentDeletedById Department[] @relation("DepartmentDeletedById")
+
+  programDeletedById Program[] @relation("ProgramDeletedById")
+
+  moduleDeletedById Module[] @relation("ModuleDeletedById")
+
+  paperDeletedById Paper[] @relation("PaperDeletedById")
+
+  paperReviewedByUserId Paper[] @relation("PaperReviewedByUserId")
+
+  storedFileOwnerUserId StoredFile[] @relation("StoredFileOwnerUserId")
+
+  usernameRegistryUserId UsernameRegistry[] @relation("UsernameRegistryUserId")
+
+  authChallengeUserId AuthChallenge[] @relation("AuthChallengeUserId")
+  adminAuthChallenges AdminAuthChallenge[]
+
+  appSettingUpdatedByUserId AppSetting[] @relation("AppSettingUpdatedByUserId")
+
+  auditLogActorUserId AuditLog[] @relation("AuditLogActorUserId")
+
+  xpLedgerUserId XpLedger[] @relation("XpLedgerUserId")
+
+  notificationUserId Notification[] @relation("NotificationUserId")
+
+  announcementCreatedByUserId Announcement[] @relation("AnnouncementCreatedByUserId")
+
+  announcementDeletedById Announcement[] @relation("AnnouncementDeletedById")
+
+  moduleRequestRequestedByUserId ModuleRequest[] @relation("ModuleRequestRequestedByUserId")
+
+  moduleRequestReviewedByUserId ModuleRequest[] @relation("ModuleRequestReviewedByUserId")
+
+  moduleRequestDeletedById ModuleRequest[] @relation("ModuleRequestDeletedById")
+
+  paperReviewReviewerUserId PaperReview[] @relation("PaperReviewReviewerUserId")
+
+  flaggedReportReportedByUserId FlaggedReport[] @relation("FlaggedReportReportedByUserId")
+
+  flaggedReportResolvedByUserId FlaggedReport[] @relation("FlaggedReportResolvedByUserId")
+
+  takedownRequestRequesterUserId TakedownRequest[] @relation("TakedownRequestRequesterUserId")
+
+  takedownRequestReviewedByUserId TakedownRequest[] @relation("TakedownRequestReviewedByUserId")
+
+  userAchievementUserId UserAchievement[] @relation("UserAchievementUserId")
+
+  contactMessageSenderUserId ContactMessage[] @relation("ContactMessageSenderUserId")
+
+}
+
+model UserSession {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  refreshTokenHash String    @unique @map("refresh_token_hash")
+  familyId         String    @map("family_id") @db.Uuid
+  rotatedAt        DateTime? @map("rotated_at") @db.Timestamptz
+  userAgent        String?   @map("user_agent")
+  ipHash           String?   @map("ip_hash")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  expiresAt        DateTime  @map("expires_at") @db.Timestamptz
+  revokedAt        DateTime? @map("revoked_at") @db.Timestamptz
+  adminEmailVerifiedAt DateTime? @map("admin_email_verified_at") @db.Timestamptz
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adminAuthChallenges AdminAuthChallenge[]
+  @@index([userId, expiresAt])
+  @@map("user_sessions")
+  @@index([familyId])
+
+}
+
+model StoredFile {
+  id               String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerUserId      String?    @map("owner_user_id") @db.Uuid
+  bucketName       String     @map("bucket_name")
+  objectKey        String     @unique @map("object_key")
+  originalFilename String    @map("original_filename")
+  contentType      String     @map("content_type")
+  sizeBytes        BigInt     @map("size_bytes")
+  sha256Hex        String?    @map("sha256_hex") @db.Char(64)
+  scanStatus       ScanStatus @default(PENDING) @map("scan_status")
+  scannedAt        DateTime?  @map("scanned_at") @db.Timestamptz
+  completedAt      DateTime?  @map("completed_at") @db.Timestamptz
+  publishedAt      DateTime?  @map("published_at") @db.Timestamptz
+  pageCount        Int?       @map("page_count")
+  createdAt        DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  examPaper        Paper?     @relation("ExamFile")
+  markingPapers    Paper[]    @relation("MarkingFile")
+  @@index([sha256Hex])
+  @@map("stored_files")
+  relatedOwnerUserId User? @relation("StoredFileOwnerUserId", fields: [ownerUserId], references: [id], onDelete: Restrict)
+
+}
+
+model Paper {
+  purgeStartedAt DateTime? @map("purge_started_at") @db.Timestamptz
+  id                   String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  moduleId             String        @map("module_id") @db.Uuid
+  uploadedByUserId     String        @map("uploaded_by_user_id") @db.Uuid
+  title                String
+  category             PaperCategory
+  academicYearStart    Int           @map("academic_year_start") @db.Int2
+  semester             Int           @db.Int2
+  examPeriod           String        @default("") @map("exam_period")
+  examFileId           String        @unique @map("exam_file_id") @db.Uuid
+  markingSchemeFileId  String?       @unique @map("marking_scheme_file_id") @db.Uuid
+  status               PaperStatus   @default(PENDING)
+  duplicateWarning     Boolean       @default(false) @map("duplicate_warning")
+  pageCount            Int?          @map("page_count")
+  rejectionReason      String?       @map("rejection_reason")
+  reviewedByUserId     String?       @map("reviewed_by_user_id") @db.Uuid
+  reviewedAt           DateTime?     @map("reviewed_at") @db.Timestamptz
+  viewsCount           BigInt        @default(0) @map("views_count")
+  downloadsCount       BigInt        @default(0) @map("downloads_count")
+  deletedAt            DateTime?     @map("deleted_at") @db.Timestamptz
+  deletedById          String?       @map("deleted_by_user_id") @db.Uuid
+  createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+  module               Module        @relation(fields: [moduleId], references: [id], onDelete: Restrict)
+  uploader             User          @relation(fields: [uploadedByUserId], references: [id], onDelete: Restrict)
+  examFile             StoredFile    @relation("ExamFile", fields: [examFileId], references: [id], onDelete: Restrict)
+  markingSchemeFile    StoredFile?   @relation("MarkingFile", fields: [markingSchemeFileId], references: [id], onDelete: Restrict)
+  @@index([moduleId, category, academicYearStart, semester, status])
+  @@index([status, createdAt])
+  @@index([uploadedByUserId, createdAt])
+  @@map("papers")
+  relatedDeletedById User? @relation("PaperDeletedById", fields: [deletedById], references: [id], onDelete: Restrict)
+
+  relatedReviewedByUserId User? @relation("PaperReviewedByUserId", fields: [reviewedByUserId], references: [id], onDelete: Restrict)
+
+  xpLedgerPaperId XpLedger[] @relation("XpLedgerPaperId")
+
+  paperDownloadEventPaperId PaperDownloadEvent[] @relation("PaperDownloadEventPaperId")
+
+  paperViewEventPaperId PaperViewEvent[] @relation("PaperViewEventPaperId")
+
+  paperReviewPaperId PaperReview[] @relation("PaperReviewPaperId")
+
+  flaggedReportPaperId FlaggedReport[] @relation("FlaggedReportPaperId")
+
+  takedownRequestPaperId TakedownRequest[] @relation("TakedownRequestPaperId")
+
+}
+
+model Job {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type      String
+  payload   Json
+  status    String    @default("pending")
+  runAt     DateTime  @default(now()) @map("run_at") @db.Timestamptz
+  attempts  Int       @default(0)
+  lastError String?   @map("last_error")
+  leaseToken String? @map("lease_token") @db.Uuid
+  dedupeKey String? @unique @map("dedupe_key")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  @@index([status, runAt])
+  @@map("jobs")
+}
+
+model UsernameRegistry {
+  usernameNormalized String @id @map("username_normalized")
+  userId String @map("user_id") @db.Uuid
+  isCurrent Boolean @default(true) @map("is_current")
+  claimedAt DateTime @default(now()) @map("claimed_at") @db.Timestamptz
+  retiredAt DateTime? @map("retired_at") @db.Timestamptz
+  @@map("username_registry")
+  @@index([userId])
+
+  relatedUserId User @relation("UsernameRegistryUserId", fields: [userId], references: [id], onDelete: Restrict)
+
+}
+
+model AdminAuthChallenge {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  kind String
+  sessionId String? @map("session_id") @db.Uuid
+  challengeHash String @unique @map("challenge_hash")
+  codeHash String @map("code_hash")
+  credentialHash String @map("credential_hash")
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  attempts BigInt @default(0) @db.Int8
+  consumedAt DateTime? @map("consumed_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session UserSession? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  @@index([userId, kind, createdAt(sort: Desc)])
+  @@index([expiresAt])
+  @@map("admin_auth_challenges")
+}
+
+model AuthChallenge {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  kind String
+  tokenHash String @map("token_hash")
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  attempts BigInt @default(0) @db.Int8
+  consumedAt DateTime? @map("consumed_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@map("auth_challenges")
+  @@index([userId, kind, createdAt(sort: Desc)])
+  @@index([tokenHash])
+
+  relatedUserId User @relation("AuthChallengeUserId", fields: [userId], references: [id], onDelete: Restrict)
+
+}
+
+model AppSetting {
+  key String @id
+  value Json
+  @@map("app_settings")
+  updatedByUserId String? @map("updated_by_user_id") @db.Uuid
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz
+  relatedUpdatedByUserId User? @relation("AppSettingUpdatedByUserId", fields: [updatedByUserId], references: [id], onDelete: Restrict)
+
+}
+
+model AuditLog {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorUserId String? @map("actor_user_id") @db.Uuid
+  action String
+  targetType String @map("target_type")
+  targetId String? @map("target_id") @db.Uuid
+  reason String @default("")
+  metadata Json @default("{}")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@map("audit_logs")
+  targetDescription String @default("") @map("target_description")
+  @@index([actorUserId])
+  @@index([targetType, targetId, createdAt(sort: Desc)])
+
+  relatedActorUserId User? @relation("AuditLogActorUserId", fields: [actorUserId], references: [id], onDelete: Restrict)
+
+}
+
+model XpLedger {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  amount BigInt @db.Int8
+  eventType String @map("event_type")
+  reason String @default("")
+  title String @default("")
+  paperId String? @map("paper_id") @db.Uuid
+  note String @default("")
+  status String @default("applied")
+  rewardKey String? @unique @map("reward_key")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@map("xp_ledger")
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([paperId])
+
+  relatedUserId User @relation("XpLedgerUserId", fields: [userId], references: [id], onDelete: Restrict)
+
+  relatedPaperId Paper? @relation("XpLedgerPaperId", fields: [paperId], references: [id], onDelete: Restrict)
+
+}
+
+model PaperDownloadEvent {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paperId String @map("paper_id") @db.Uuid
+  ipHash String? @map("ip_hash")
+  processedAt DateTime? @map("processed_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@map("paper_download_events")
+  @@index([paperId, createdAt(sort: Desc)])
+
+  relatedPaperId Paper @relation("PaperDownloadEventPaperId", fields: [paperId], references: [id], onDelete: Restrict)
+
+}
+
+model PaperViewEvent {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paperId String @map("paper_id") @db.Uuid
+  ipHash String? @map("ip_hash")
+  processedAt DateTime? @map("processed_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@map("paper_view_events")
+  @@index([paperId, createdAt(sort: Desc)])
+
+  relatedPaperId Paper @relation("PaperViewEventPaperId", fields: [paperId], references: [id], onDelete: Restrict)
+
+}
+
+model Notification {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  title String
+  type String
+  message String
+  link String?
+  readAt DateTime? @map("read_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@map("notifications")
+  @@index([userId, createdAt(sort: Desc)])
+
+  relatedUserId User @relation("NotificationUserId", fields: [userId], references: [id], onDelete: Restrict)
+
+}
+
+model Announcement {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title String
+  content String
+  type String @default("info")
+  isActive Boolean @default(true) @map("is_active")
+  startsAt DateTime @default(now()) @map("starts_at") @db.Timestamptz
+  endsAt DateTime? @map("ends_at") @db.Timestamptz
+  createdByUserId String? @map("created_by_user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+  deletedById String? @map("deleted_by_user_id") @db.Uuid
+  @@map("announcements")
+  relatedCreatedByUserId User? @relation("AnnouncementCreatedByUserId", fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  relatedDeletedById User? @relation("AnnouncementDeletedById", fields: [deletedById], references: [id], onDelete: Restrict)
+
+}
+
+model ModuleRequest {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  requestedByUserId String? @map("requested_by_user_id") @db.Uuid
+  programId String @map("program_id") @db.Uuid
+  moduleCode String @map("module_code")
+  moduleName String @map("module_name")
+  academicYearStart Int @map("academic_year_start") @db.Int2
+  description String
+  semester Int @db.Int2
+  status String @default("pending")
+  reviewedByUserId String? @map("reviewed_by_user_id") @db.Uuid
+  reviewedAt DateTime? @map("reviewed_at") @db.Timestamptz
+  reviewNote String? @map("review_note")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+  deletedById String? @map("deleted_by_user_id") @db.Uuid
+  @@map("module_requests")
+  @@index([status, createdAt(sort: Desc)])
+  @@index([requestedByUserId])
+  @@index([programId, moduleCode])
+  @@index([reviewedByUserId])
+
+  relatedRequestedByUserId User? @relation("ModuleRequestRequestedByUserId", fields: [requestedByUserId], references: [id], onDelete: Restrict)
+
+  relatedProgramId Program @relation("ModuleRequestProgramId", fields: [programId], references: [id], onDelete: Restrict)
+
+  relatedReviewedByUserId User? @relation("ModuleRequestReviewedByUserId", fields: [reviewedByUserId], references: [id], onDelete: Restrict)
+
+  relatedDeletedById User? @relation("ModuleRequestDeletedById", fields: [deletedById], references: [id], onDelete: Restrict)
+
+}
+
+model PaperReview {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paperId String @map("paper_id") @db.Uuid
+  reviewerUserId String @map("reviewer_user_id") @db.Uuid
+  action String
+  reason String @default("")
+  correctedTitle String? @map("corrected_title")
+  correctedModuleCode String? @map("corrected_module_code")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@map("paper_reviews")
+  @@index([paperId, createdAt(sort: Desc)])
+  @@index([reviewerUserId])
+
+  relatedPaperId Paper @relation("PaperReviewPaperId", fields: [paperId], references: [id], onDelete: Restrict)
+
+  relatedReviewerUserId User @relation("PaperReviewReviewerUserId", fields: [reviewerUserId], references: [id], onDelete: Restrict)
+
+}
+
+model FlaggedReport {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paperId String @map("paper_id") @db.Uuid
+  reportedByUserId String? @map("reported_by_user_id") @db.Uuid
+  reason String
+  details String
+  status String @default("pending")
+  resolvedByUserId String? @map("resolved_by_user_id") @db.Uuid
+  resolvedAt DateTime? @map("resolved_at") @db.Timestamptz
+  resolutionNote String? @map("resolution_note")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@map("flagged_reports")
+  @@index([status, createdAt(sort: Desc)])
+  @@index([paperId])
+  @@index([reportedByUserId])
+  @@index([resolvedByUserId])
+
+  relatedPaperId Paper @relation("FlaggedReportPaperId", fields: [paperId], references: [id], onDelete: Restrict)
+
+  relatedReportedByUserId User? @relation("FlaggedReportReportedByUserId", fields: [reportedByUserId], references: [id], onDelete: Restrict)
+
+  relatedResolvedByUserId User? @relation("FlaggedReportResolvedByUserId", fields: [resolvedByUserId], references: [id], onDelete: Restrict)
+
+}
+
+model TakedownRequest {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paperId String @map("paper_id") @db.Uuid
+  requesterUserId String? @map("requester_user_id") @db.Uuid
+  requesterFullName String @map("requester_full_name")
+  requesterEmail String @map("requester_email")
+  affiliation String
+  reason String
+  evidence String @default("")
+  status String @default("pending")
+  reviewedByUserId String? @map("reviewed_by_user_id") @db.Uuid
+  reviewedAt DateTime? @map("reviewed_at") @db.Timestamptz
+  reviewNote String? @map("review_note")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@map("takedown_requests")
+  @@index([status, createdAt(sort: Desc)])
+  @@index([paperId])
+  @@index([requesterUserId])
+  @@index([reviewedByUserId])
+
+  relatedPaperId Paper @relation("TakedownRequestPaperId", fields: [paperId], references: [id], onDelete: Restrict)
+
+  relatedRequesterUserId User? @relation("TakedownRequestRequesterUserId", fields: [requesterUserId], references: [id], onDelete: Restrict)
+
+  relatedReviewedByUserId User? @relation("TakedownRequestReviewedByUserId", fields: [reviewedByUserId], references: [id], onDelete: Restrict)
+
+}
+
+model AchievementDefinition {
+  id String @id
+  title String
+  description String
+  category String
+  xpReward Int @default(0) @map("xp_reward")
+  iconName String @default("Award") @map("icon_name")
+  maxProgress Int @default(1) @map("max_progress")
+  isActive Boolean @default(true) @map("is_active")
+  @@map("achievement_definitions")
+  userAchievementAchievementId UserAchievement[] @relation("UserAchievementAchievementId")
+
+}
+
+model UserAchievement {
+  userId String @map("user_id") @db.Uuid
+  achievementId String @map("achievement_id")
+  progress Int @default(0)
+  unlockedAt DateTime? @map("unlocked_at") @db.Timestamptz
+  @@id([userId, achievementId])
+  @@map("user_achievements")
+  @@index([achievementId])
+
+  relatedUserId User @relation("UserAchievementUserId", fields: [userId], references: [id], onDelete: Restrict)
+
+  relatedAchievementId AchievementDefinition @relation("UserAchievementAchievementId", fields: [achievementId], references: [id], onDelete: Restrict)
+
+}
+
+model ContactMessage {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  senderUserId String? @map("sender_user_id") @db.Uuid
+  senderName String @map("sender_name")
+  senderEmail String @map("sender_email")
+  subject String
+  message String
+  status String @default("new")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@map("contact_messages")
+  @@index([senderUserId])
+
+  relatedSenderUserId User? @relation("ContactMessageSenderUserId", fields: [senderUserId], references: [id], onDelete: Restrict)
+
+}
+
+model RateLimitCounter {
+  key String @id
+  hits BigInt @default(1) @db.Int8
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  @@map("rate_limit_counters")
+  @@index([expiresAt])
+
+}
+
+model EmailDailyCounter {
+  day DateTime @id @db.Date
+  sent BigInt @default(0) @db.Int8
+  @@map("email_daily_counters")
+}
+
+model LecturerVerification {
+ id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+ userId String @map("user_id") @db.Uuid
+ departmentId String @map("department_id") @db.Uuid
+ evidence String
+ status String @default("pending")
+ reviewedByUserId String? @map("reviewed_by_user_id") @db.Uuid
+ reviewedAt DateTime? @map("reviewed_at") @db.Timestamptz
+ reviewNote String? @map("review_note")
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+ user User @relation("VerificationApplicant",fields:[userId],references:[id],onDelete:Restrict)
+ reviewer User? @relation("VerificationReviewer",fields:[reviewedByUserId],references:[id],onDelete:Restrict)
+ department Department @relation(fields:[departmentId],references:[id],onDelete:Restrict)
+ @@index([status,createdAt(sort:Desc)])
+ @@index([departmentId])
+ @@index([reviewedByUserId])
+ @@map("lecturer_verifications")
+}

@@ -1,0 +1,12 @@
+ALTER TABLE users ADD CONSTRAINT users_deleted_by_fkey FOREIGN KEY(deleted_by_user_id) REFERENCES users(id);
+CREATE INDEX users_deleted_by_idx ON users(deleted_by_user_id);
+ALTER TABLE departments ADD CONSTRAINT departments_deleted_by_fkey FOREIGN KEY(deleted_by_user_id) REFERENCES users(id);
+CREATE INDEX departments_deleted_by_idx ON departments(deleted_by_user_id);
+ALTER TABLE programs ADD CONSTRAINT programs_deleted_by_fkey FOREIGN KEY(deleted_by_user_id) REFERENCES users(id);
+CREATE INDEX programs_deleted_by_idx ON programs(deleted_by_user_id);
+ALTER TABLE modules ADD CONSTRAINT modules_deleted_by_fkey FOREIGN KEY(deleted_by_user_id) REFERENCES users(id);
+CREATE INDEX modules_deleted_by_idx ON modules(deleted_by_user_id);
+ALTER TABLE papers ADD CONSTRAINT papers_deleted_by_fkey FOREIGN KEY(deleted_by_user_id) REFERENCES users(id);
+CREATE INDEX papers_deleted_by_idx ON papers(deleted_by_user_id);
+CREATE INDEX announcements_deleted_by_idx ON announcements(deleted_by_user_id);
+CREATE INDEX module_requests_deleted_by_idx ON module_requests(deleted_by_user_id);

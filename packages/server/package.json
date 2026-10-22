@@ -1,0 +1,34 @@
+{
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "name": "@epapers/server",
+  "exports": {
+    "./lib/*": "./src/lib/*.ts",
+    "./modules/*": "./src/modules/*.ts",
+    "./jobs/*": "./src/jobs/*.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --max-warnings=0",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.850.0",
+    "@aws-sdk/s3-request-presigner": "^3.850.0",
+    "next": "16.4.2",
+    "nodemailer": "^10.1.0",
+    "pino": "^9.9.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "server-only": "^0.0.1",
+    "zod": "4.3.6",
+    "@epapers/database": "workspace:*",
+    "@epapers/auth": "workspace:*",
+    "@epapers/config": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "6.4.23"
+  }
+}

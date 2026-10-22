@@ -1,0 +1,414 @@
+{
+  "version": 2,
+  "departments": [
+    {
+      "code": "D01",
+      "name": "Civil Engineering"
+    },
+    {
+      "code": "D02",
+      "name": "Computer Studies"
+    },
+    {
+      "code": "D03",
+      "name": "Electrical Engineering"
+    },
+    {
+      "code": "D04",
+      "name": "Electronics and Telecommunication Engineering"
+    },
+    {
+      "code": "D05",
+      "name": "Mechanical Engineering"
+    },
+    {
+      "code": "D06",
+      "name": "Science and Laboratory Technology"
+    },
+    {
+      "code": "D07",
+      "name": "Leather Products Technology"
+    },
+    {
+      "code": "D08",
+      "name": "General Studies"
+    }
+  ],
+  "programs": [
+    {
+      "departmentCode": "D01",
+      "code": "ODCE",
+      "name": "Ordinary Diploma in Civil Engineering",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false,
+      "legacyCode": "P0101MA"
+    },
+    {
+      "departmentCode": "D01",
+      "code": "ODCE-SONGWE",
+      "name": "Ordinary Diploma in Civil Engineering",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "SONGWE",
+      "assignmentNeedsVerification": false,
+      "legacyCode": "P0101SO"
+    },
+    {
+      "departmentCode": "D01",
+      "code": "BENGCE",
+      "name": "Bachelor of Engineering (B.Eng) in Civil Engineering",
+      "level": "BACHELOR",
+      "awardTitle": "B.Eng",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false,
+      "legacyCode": "P0102MA"
+    },
+    {
+      "departmentCode": "D02",
+      "code": "ODCOE",
+      "name": "Ordinary Diploma in Computer Engineering",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false,
+      "legacyCode": "P0201MA"
+    },
+    {
+      "departmentCode": "D02",
+      "code": "ODIT",
+      "name": "Ordinary Diploma in Information Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true,
+      "legacyCode": "P0202MA"
+    },
+    {
+      "departmentCode": "D02",
+      "code": "ODMFT",
+      "name": "Ordinary Diploma in Multimedia and Film Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true,
+      "legacyCode": "P0203MA"
+    },
+    {
+      "departmentCode": "D02",
+      "code": "BENGCOE",
+      "name": "Bachelor of Engineering (B.Eng) in Computer Engineering",
+      "level": "BACHELOR",
+      "awardTitle": "B.Eng",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false,
+      "legacyCode": "P0204MA"
+    },
+    {
+      "departmentCode": "D03",
+      "code": "ODEE",
+      "name": "Ordinary Diploma in Electrical Engineering",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false,
+      "legacyCode": "P0301MA"
+    },
+    {
+      "departmentCode": "D03",
+      "code": "ODERE",
+      "name": "Ordinary Diploma in Electrical and Renewable Energy Engineering",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true,
+      "legacyCode": "P0302MA"
+    },
+    {
+      "departmentCode": "D03",
+      "code": "ODIAE",
+      "name": "Ordinary Diploma in Industrial Automation Engineering",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true,
+      "legacyCode": "P0303MA"
+    },
+    {
+      "departmentCode": "D03",
+      "code": "BENGEE",
+      "name": "Bachelor of Engineering (B.Eng) in Electrical Engineering",
+      "level": "BACHELOR",
+      "awardTitle": "B.Eng",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false,
+      "legacyCode": "P0304MA"
+    },
+    {
+      "departmentCode": "D04",
+      "code": "ODETE",
+      "name": "Ordinary Diploma in Electronics and Telecommunications Engineering",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false,
+      "legacyCode": "P0401MA"
+    },
+    {
+      "departmentCode": "D04",
+      "code": "ODCST",
+      "name": "Ordinary Diploma in Communication System Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true,
+      "legacyCode": "P0402MA"
+    },
+    {
+      "departmentCode": "D04",
+      "code": "ODBME",
+      "name": "Ordinary Diploma in Biomedical Equipment Engineering",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true,
+      "legacyCode": "P0403MA"
+    },
+    {
+      "departmentCode": "D04",
+      "code": "BENGETE",
+      "name": "Bachelor of Engineering (B.Eng) in Electronics and Telecommunications Engineering",
+      "level": "BACHELOR",
+      "awardTitle": "B.Eng",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false,
+      "legacyCode": "P0404MA"
+    },
+    {
+      "departmentCode": "D04",
+      "code": "BENGBME",
+      "name": "Bachelor of Engineering (B.Eng) in Biomedical Engineering",
+      "level": "BACHELOR",
+      "awardTitle": "B.Eng",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true,
+      "legacyCode": "P0405MA"
+    },
+    {
+      "departmentCode": "D05",
+      "code": "ODME",
+      "name": "Ordinary Diploma in Mechanical Engineering",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false,
+      "legacyCode": "P0501MA"
+    },
+    {
+      "departmentCode": "D05",
+      "code": "ODMINE",
+      "name": "Ordinary Diploma in Mining Engineering",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true,
+      "legacyCode": "P0502MA"
+    },
+    {
+      "departmentCode": "D05",
+      "code": "BENGME",
+      "name": "Bachelor of Engineering (B.Eng) in Mechanical Engineering",
+      "level": "BACHELOR",
+      "awardTitle": "B.Eng",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false,
+      "legacyCode": "P0503MA"
+    },
+    {
+      "departmentCode": "D05",
+      "code": "BENGOGE",
+      "name": "Bachelor of Engineering (B.Eng) in Oil and Gas Engineering",
+      "level": "BACHELOR",
+      "awardTitle": "B.Eng",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true,
+      "legacyCode": "P0504MA"
+    },
+    {
+      "departmentCode": "D05",
+      "code": "BENGMINE",
+      "name": "Bachelor of Engineering (B.Eng) in Mining Engineering",
+      "level": "BACHELOR",
+      "awardTitle": "B.Eng",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true,
+      "legacyCode": "P0505MA"
+    },
+    {
+      "departmentCode": "D06",
+      "code": "ODSLT",
+      "name": "Ordinary Diploma in Science and Laboratory Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false,
+      "legacyCode": "P0601MA"
+    },
+    {
+      "departmentCode": "D06",
+      "code": "ODSLT-MWANZA",
+      "name": "Ordinary Diploma in Science and Laboratory Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MWANZA",
+      "assignmentNeedsVerification": false,
+      "legacyCode": "P0601MW"
+    },
+    {
+      "departmentCode": "D06",
+      "code": "ODBT",
+      "name": "Ordinary Diploma in Biotechnology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true,
+      "legacyCode": "P0602MA"
+    },
+    {
+      "departmentCode": "D06",
+      "code": "ODFST",
+      "name": "Ordinary Diploma in Food Science and Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": true,
+      "legacyCode": "P0603MA"
+    },
+    {
+      "departmentCode": "D06",
+      "code": "BTECHLS",
+      "name": "Bachelor of Technology (B.Tech) in Laboratory Sciences",
+      "level": "BACHELOR",
+      "awardTitle": "B.Tech",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false,
+      "legacyCode": "P0604MA"
+    },
+    {
+      "departmentCode": "D06",
+      "code": "BTECHLS-MWANZA",
+      "name": "Bachelor of Technology (B.Tech) in Laboratory Sciences",
+      "level": "BACHELOR",
+      "awardTitle": "B.Tech",
+      "campus": "MWANZA",
+      "assignmentNeedsVerification": false,
+      "legacyCode": "P0604MW"
+    },
+    {
+      "departmentCode": "D07",
+      "code": "ODLPCT",
+      "name": "Ordinary Diploma in Leather Processing Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MWANZA",
+      "assignmentNeedsVerification": true,
+      "legacyCode": "P0701MW"
+    },
+    {
+      "departmentCode": "D07",
+      "code": "ODLPT",
+      "name": "Ordinary Diploma in Leather Products Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MWANZA",
+      "assignmentNeedsVerification": true,
+      "legacyCode": "P0702MW"
+    },
+    {
+      "departmentCode": "D07",
+      "code": "ODFPT",
+      "name": "Ordinary Diploma in Food Processing Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MWANZA",
+      "assignmentNeedsVerification": true,
+      "legacyCode": "P0703MW"
+    },
+    {
+      "departmentCode": "D07",
+      "code": "ODTT",
+      "name": "Ordinary Diploma in Textile Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MWANZA",
+      "assignmentNeedsVerification": true,
+      "legacyCode": "P0704MW"
+    },
+    {
+      "departmentCode": "D07",
+      "code": "ODAPHT",
+      "name": "Ordinary Diploma in Agricultural Post-Harvest Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MWANZA",
+      "assignmentNeedsVerification": true,
+      "legacyCode": "P0705MW"
+    },
+    {
+      "departmentCode": "D07",
+      "code": "ODFDT",
+      "name": "Ordinary Diploma in Fashion and Design Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MWANZA",
+      "assignmentNeedsVerification": true,
+      "legacyCode": "P0706MW"
+    },
+    {
+      "departmentCode": "D07",
+      "code": "ODABPT",
+      "name": "Ordinary Diploma in Agro Bioprocess Technology",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MWANZA",
+      "assignmentNeedsVerification": true,
+      "legacyCode": "P0707MW"
+    },
+    {
+      "departmentCode": "D08",
+      "code": "ODGENERAL",
+      "name": "Common Modules",
+      "level": "ORDINARY_DIPLOMA",
+      "awardTitle": "Ordinary Diploma",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false,
+      "legacyCode": "P0801MA"
+    },
+    {
+      "departmentCode": "D08",
+      "code": "BENGGENERAL",
+      "name": "Common Modules",
+      "level": "BACHELOR",
+      "awardTitle": "B.Eng",
+      "campus": "MAIN",
+      "assignmentNeedsVerification": false,
+      "legacyCode": "P0802MA"
+    }
+  ],
+  "source": {
+    "document": "Docxs/dit_prospectus_2025_2026.pdf",
+    "pdfPages": [
+      22,
+      23,
+      24
+    ],
+    "printedPages": [
+      5,
+      6,
+      7
+    ],
+    "codeConvention": "User-supplied abbreviations; extra diploma abbreviations are Epapers conventions, not official prospectus codes.",
+    "campusConvention": "Append campus to a repeated program abbreviation outside Main; retain unique abbreviations for campus-only programs."
+  }
+}

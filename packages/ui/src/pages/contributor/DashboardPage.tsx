@@ -1,0 +1,408 @@
+'use client';
+import { PageLoader } from '../../components/common/PageLoader';
+import { apiTask } from '../../services/client';
+import React, { useState, useEffect } from 'react';
+import { Link } from '@epapers/ui/navigation';
+import { useAuth } from '../../context/AuthContext';
+import { api } from '../../services/api';
+import { AchievementBadge, UserProfile } from '../../types';
+import { UsernameTile } from '../../components/common/UsernameTile';
+import { LevelBadge } from '../../components/common/LevelBadge';
+import { ArrowRight } from 'lucide-react';
+
+export const DashboardPage: React.FC = () => {
+  const { currentUser } = useAuth();
+  const [achievements, setAchievements] = useState<AchievementBadge[]>([]);
+  const [leaderboard, setLeaderboard] = useState<UserProfile[]>([]);
+  const [achievementFilter, setAchievementFilter] = useState<'all' | 'unlocked' | 'progress' | 'locked'>('all');
+  const [loading, setLoading] = useState(true);
+
+  const user = currentUser;
+
+  useEffect(() => {
+    const loadData = apiTask(async () => {
+      setLoading(true);
+      const [achs, leads] = await Promise.all([
+        api.getAchievements(),
+        api.getLeaderboard(),
+      ]);
+      setAchievements(achs);
+      setLeaderboard(leads);
+      setLoading(false);
+    }, () => setLoading(false));
+    loadData();
+  }, [user?.id]);
+
+  if (!user) return null;
+
+  const filteredAchievements = achievements.filter((ach) => {
+    if (achievementFilter === 'unlocked') return ach.isUnlocked;
+    if (achievementFilter === 'progress') return !ach.isUnlocked && ach.progress > 0;
+    if (achievementFilter === 'locked') return !ach.isUnlocked && ach.progress === 0;
+    return true;
+  });
+
+  if (loading) return <PageLoader variant="dashboard" label="Loading content…" />;
+  return (
+    <div className="space-y-6">
+      {/* 1. Top Contributor Header - Light card, NO XP numbers */}
+      <section className="rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-6 sm:p-8 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="inline-flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] font-medium">
+            <span>Epapers Contributor</span>
+            <span>·</span>
+            <span>Academic Archive</span>
+          </div>
+          <div className="inline-flex items-center gap-1.5 text-xs text-[var(--color-text-muted)]">
+            <span>DIT</span>
+          </div>
+        </div>
+
+        {/* User profile + stats row */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pt-1">
+          <div className="flex items-start sm:items-center gap-4">
+            <UsernameTile
+              username={user.username}
+              size="xl"
+              avatarId={user.avatarId}
+            />
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="font-bold text-xl sm:text-2xl text-[var(--color-text)]">
+                  @{user.username}
+                </h1>
+                <LevelBadge level={user.level} title={user.levelTitle} size="sm" />
+              </div>
+              <p className="text-[var(--color-text-muted)] text-xs sm:text-sm mt-1">
+                {user.submissionsCount} examination submissions recorded.
+              </p>
+            </div>
+          </div>
+
+          {/* Metric tiles - NO XP numbers */}
+          <div className="flex items-center gap-3">
+            <div className="bg-[var(--color-input)] border border-[var(--color-input-border)] rounded-lg px-3.5 py-2 text-center min-w-[85px]">
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
+                Rank
+              </span>
+              <span className="font-bold text-base text-[var(--color-text)]">
+                {leaderboard.find(row => row.username === user.username)?.rank ? `#${leaderboard.find(row => row.username === user.username)?.rank}` : 'Unranked'}
+              </span>
+            </div>
+
+            <div className="bg-[var(--color-input)] border border-[var(--color-input-border)] rounded-lg px-3.5 py-2 text-center min-w-[85px]">
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
+                Acceptance
+              </span>
+              <span className="font-bold text-base text-[var(--color-success)]">
+                {user.acceptanceRate}%
+              </span>
+            </div>
+
+            <div className="bg-[var(--color-input)] border border-[var(--color-input-border)] rounded-lg px-3.5 py-2 text-center min-w-[85px]">
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
+                Approved
+              </span>
+              <span className="font-bold text-base text-[var(--color-text)]">
+                {user.approvedCount} Papers
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. Metric Cards */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4 flex flex-col justify-between">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
+            Uploads Approved
+          </span>
+          <div className="mt-2">
+            <span className="font-bold text-2xl text-[var(--color-text)]">
+              {user.approvedCount} Papers
+            </span>
+            <span className="block text-xs text-[var(--color-text-muted)] mt-0.5">
+              Available in campus search
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4 flex flex-col justify-between">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
+            Marking Schemes
+          </span>
+          <div className="mt-2">
+            <span className="font-bold text-2xl text-[var(--color-text)]">
+              {user.markingSchemesCount} Official
+            </span>
+            <span className="block text-xs text-[var(--color-text-muted)] mt-0.5">
+              Verified answer rubrics
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4 flex flex-col justify-between">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
+            Total Submissions
+          </span>
+          <div className="mt-2">
+            <span className="font-bold text-2xl text-[var(--color-text)]">
+              {user.submissionsCount} Files
+            </span>
+            <span className="block text-xs text-[var(--color-text-muted)] mt-0.5">
+              Tests, UE & Supplementary
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4 flex flex-col justify-between">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
+            Badges Earned
+          </span>
+          <div className="mt-2">
+            <span className="font-bold text-2xl text-[var(--color-text)]">
+              {achievements.filter((achievement) => achievement.isUnlocked).length} Earned
+            </span>
+            <span className="block text-xs text-[var(--color-text-muted)] mt-0.5">
+              Archival milestones
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. Main Split View: Left Content & Right Sidebar */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column (Span 2) */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Achievements Gallery - Flat tiles, NO XP numbers */}
+          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="font-bold text-base text-[var(--color-text)]">
+                  Achievements Gallery
+                </h2>
+                <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                  Milestones validated by the Moderation Directorate.
+                </p>
+              </div>
+
+              {/* Filter tabs */}
+              <div className="flex items-center gap-1 p-1 bg-[var(--color-sidebar)] rounded-lg text-xs font-medium">
+                <button
+                  onClick={() => setAchievementFilter('all')}
+                  className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                    achievementFilter === 'all'
+                      ? 'bg-[var(--color-surface)] text-[var(--color-primary)] font-semibold border border-[var(--color-border)]'
+                      : 'text-[var(--color-text-muted)]'
+                  }`}
+                >
+                  All ({achievements.length})
+                </button>
+                <button
+                  onClick={() => setAchievementFilter('unlocked')}
+                  className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                    achievementFilter === 'unlocked'
+                      ? 'bg-[var(--color-surface)] text-[var(--color-primary)] font-semibold border border-[var(--color-border)]'
+                      : 'text-[var(--color-text-muted)]'
+                  }`}
+                >
+                  Earned ({achievements.filter((ach) => ach.isUnlocked).length})
+                </button>
+                <button
+                  onClick={() => setAchievementFilter('progress')}
+                  className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                    achievementFilter === 'progress'
+                      ? 'bg-[var(--color-surface)] text-[var(--color-primary)] font-semibold border border-[var(--color-border)]'
+                      : 'text-[var(--color-text-muted)]'
+                  }`}
+                >
+                  In Progress ({achievements.filter((ach) => !ach.isUnlocked && ach.progress > 0).length})
+                </button>
+                <button
+                  onClick={() => setAchievementFilter('locked')}
+                  className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                    achievementFilter === 'locked'
+                      ? 'bg-[var(--color-surface)] text-[var(--color-primary)] font-semibold border border-[var(--color-border)]'
+                      : 'text-[var(--color-text-muted)]'
+                  }`}
+                >
+                  Locked ({achievements.filter((ach) => !ach.isUnlocked && ach.progress === 0).length})
+                </button>
+              </div>
+            </div>
+
+            {/* Badges 2-Column Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {filteredAchievements.map((ach) => (
+                <div
+                  key={ach.id}
+                  className={`p-3.5 rounded-lg border transition-colors flex flex-col justify-between ${
+                    ach.isUnlocked
+                      ? 'bg-[var(--color-surface)] border-[var(--color-border)]'
+                      : ach.progress > 0
+                      ? 'bg-[var(--color-input)] border-[var(--color-input-border)]'
+                      : 'bg-[var(--color-canvas)] border-[var(--color-border)] text-[var(--color-neutral)]'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-bold text-xs text-[var(--color-text)]">
+                        {ach.title}
+                      </span>
+                      {ach.isUnlocked ? (
+                        <span className="text-[11px] font-semibold text-[var(--color-success)]">
+                          Earned
+                        </span>
+                      ) : ach.progress > 0 ? (
+                        <span className="text-[11px] font-medium text-[var(--color-text-muted)]">
+                          {Math.round((ach.progress / ach.maxProgress) * 100)}%
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-[var(--color-neutral)]">
+                          Locked
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-[var(--color-text-muted)] leading-snug">
+                      {ach.description}
+                    </p>
+                  </div>
+
+                  <div className="mt-3 pt-2 border-t border-[var(--color-border)] text-[11px] text-[var(--color-text-muted)] flex justify-between items-center">
+                    <span>{ach.isUnlocked ? `Earned ${ach.unlockedDate || '2023'}` : 'In progress'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Sidebar Column */}
+        <div className="space-y-6">
+          {/* DIT Leaderboard Preview - NO XP numbers on Dashboard */}
+          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-sm text-[var(--color-text)]">
+                  Epapers Leaderboard
+                </h3>
+                <p className="text-[11px] text-[var(--color-text-muted)]">
+                  Epapers standings
+                </p>
+              </div>
+              <Link
+                to="/leaderboard"
+                className="text-xs text-[var(--color-primary)] font-semibold hover:underline"
+              >
+                Leaderboard →
+              </Link>
+            </div>
+
+            <div className="space-y-1.5">
+              {leaderboard.slice(0, 5).map((lUser) => {
+                const isCurrentUser = lUser.username === user.username;
+                return (
+                  <div
+                    key={lUser.id}
+                    className={`flex items-center justify-between p-2 rounded-lg transition-colors ${
+                      isCurrentUser
+                        ? 'bg-[var(--color-active)]'
+                        : 'hover:bg-[var(--color-canvas)]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="font-mono text-xs text-[var(--color-text-muted)] w-5 text-center">
+                        #{lUser.rank}
+                      </span>
+                      <UsernameTile
+                        username={lUser.username}
+                        size="sm"
+                        avatarId={lUser.avatarId}
+                      />
+                      <span className="text-xs text-[var(--color-text)] truncate">
+                        @{lUser.username}
+                        {isCurrentUser && <span className="ml-1 text-[10px] text-[var(--color-primary)] font-bold">(You)</span>}
+                      </span>
+                    </div>
+
+                    <LevelBadge level={lUser.level} title={lUser.levelTitle} size="sm" />
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="text-[11px] text-[var(--color-text-muted)] pt-2 border-t border-[var(--color-border)]">
+              Rankings update upon moderation approval. Visit the leaderboard page for complete points.
+            </div>
+          </div>
+
+          {/* Suggested Contributions */}
+          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-5 space-y-3">
+            <h3 className="font-bold text-sm text-[var(--color-text)]">
+              Suggested Contributions
+            </h3>
+            <p className="text-xs text-[var(--color-text-muted)]">
+              High-demand examination papers requested by fellow students.
+            </p>
+
+            <div className="space-y-2.5 pt-1">
+              <div className="p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-input)] space-y-1">
+                <span className="font-semibold text-xs text-[var(--color-text)] block">
+                  COE 07202 UE 2024
+                </span>
+                <p className="text-[11px] text-[var(--color-text-muted)]">
+                  Requested by 42 DIT Computing students this week.
+                </p>
+                <Link
+                  to="/upload?moduleCode=COE+07202"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-primary)] hover:underline pt-1"
+                >
+                  <span>Upload Paper</span>
+                  <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
+
+              <div className="p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-input)] space-y-1">
+                <span className="font-semibold text-xs text-[var(--color-text)] block">
+                  CS 174 Test 1 Solution
+                </span>
+                <p className="text-[11px] text-[var(--color-text-muted)]">
+                  Marking scheme missing for existing Semester 1 test.
+                </p>
+                <Link
+                  to="/upload?moduleCode=CS+174&scheme=true"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-primary)] hover:underline pt-1"
+                >
+                  <span>Attach Key</span>
+                  <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* DIT Archival Standards Checklist */}
+          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-5 space-y-2.5">
+            <h3 className="font-bold text-sm text-[var(--color-text)]">
+              DIT Archival Standards
+            </h3>
+
+            <ul className="space-y-2 text-xs text-[var(--color-text-muted)]">
+              <li className="flex items-start gap-1.5">
+                <span className="text-[var(--color-primary)] font-bold">·</span>
+                <span>All uploads must be official DIT examination papers.</span>
+              </li>
+              <li className="flex items-start gap-1.5">
+                <span className="text-[var(--color-danger)] font-bold">·</span>
+                <span>Illegible scans or duplicate submissions will be rejected.</span>
+              </li>
+              <li className="flex items-start gap-1.5">
+                <span className="text-[var(--color-primary)] font-bold">·</span>
+                <span>Marking schemes must correlate with official department grading benchmarks.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

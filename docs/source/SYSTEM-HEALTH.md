@@ -1,0 +1,15 @@
+Admin ? System Health replaces the duplicated Security Center settings form. Site Settings remains the single page for settings and password changes. The frontend URL is /admin/health; /admin/security redirects there. GET /api/v1/admin/health requires an authenticated Admin and returns private, no-store diagnostics. Legacy security API routes remain available for existing clients.
+
+The page refreshes every 30 seconds while visible. Backend snapshots are cached for 30 seconds and concurrent callers share a probe. Refresh shows a spinner and rejects repeat clicks. A failed refresh preserves the previous snapshot with a stale-data warning.
+
+Metrics include API/host uptime, Node version, environment, CPU core count and a short utilization sample, process RSS and heap, reported host memory, exposed container memory limit, load average where available, and the filesystem volume containing the API workspace. Host values are the view available inside the deployed runtime/container; this is not historical monitoring of every machine or dyno. Memory above 90%, CPU above 95%, or disk availability below 10% yields a warning. Volume capacity is separate from R2 object storage.
+
+Database checks include SELECT 1 latency, queue counts, failed and expired jobs, overdue worker leases, the oldest due job, email backlog, daily SMTP reservation budget and read-only/lockdown settings. A metrics failure leaves other checks visible. Operational database probes have a 10-second response deadline. Authentication itself still requires a working database.
+
+The worker writes workerHeartbeat to app_settings each maintenance cycle (roughly once per minute). A heartbeat older than 180 seconds is unhealthy; a missing heartbeat is unknown. Restart the worker after updating so it begins writing this metric. A heartbeat indicates liveness, not successful delivery of every job. Historical failed jobs remain counted until resolved. Scheduled and throttled jobs are included in pending counts.
+
+SMTP verification checks connection, TLS and authentication without sending a message, with an 8-second response deadline. It does not prove inbox delivery. Other email adapters are labelled unknown when no provider probe exists. Daily SMTP counters count reserved send attempts rather than confirmed deliveries.
+
+Incoming and published R2 buckets are checked independently via read-only object listings. Scans are bounded to five pages / 5,000 objects and eight seconds per bucket. Complete inventories show total object bytes and counts; truncated or interrupted scans are explicitly partial/lower bounds. Unavailable metrics are null, never fabricated zero. R2 buckets do not report a fixed disk capacity/free-space quota through this S3 adapter; the dashboard labels capacity as elastic/quota not reported. Listing requests may incur provider operations charges. No uploads, deletions, bucket configuration changes or test emails occur during checks.
+
+Diagnostics do not return credentials, endpoints, hostnames, filesystem paths, object keys or raw provider errors. All checks are scoped to the configured backend instance and services.

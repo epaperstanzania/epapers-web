@@ -1,0 +1,27 @@
+{
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "name": "@epapers/auth",
+  "exports": {
+    "./server": "./src/server.ts",
+    "./jwt": "./src/jwt.ts",
+    "./crypto": "./src/crypto.ts",
+    "./client": "./src/client.ts",
+    "./credentials": "./src/credentials.ts",
+    "./policy": "./src/policy.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --max-warnings=0"
+  },
+  "dependencies": {
+    "@epapers/database": "workspace:*",
+    "@epapers/config": "workspace:*",
+    "jose": "6.1.3",
+    "argon2": "0.41.1",
+    "server-only": "0.0.1"
+  },
+  "devDependencies": {}
+}
