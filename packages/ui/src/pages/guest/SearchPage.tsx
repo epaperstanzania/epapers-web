@@ -18,16 +18,28 @@ import {
   Layers,
 } from 'lucide-react';
 
+const CATEGORY_FILTERS = [
+  { category: 'ALL', testNumber: 'ALL', label: 'All Types' },
+  { category: 'TEST', testNumber: 'ALL', label: 'All Tests' },
+  { category: 'TEST', testNumber: 1, label: 'Test 1' },
+  { category: 'TEST', testNumber: 2, label: 'Test 2' },
+  { category: 'UE', testNumber: 'ALL', label: 'UE' },
+  { category: 'SUPP', testNumber: 'ALL', label: 'SUPP' },
+] as const;
+
 export const SearchPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
   const categoryParam = searchParams.get('category');
   const initialCat: ExamCategory | 'ALL' = categoryParam === 'TEST' || categoryParam === 'UE' || categoryParam === 'SUPP' ? categoryParam : 'ALL';
+  const testNumberParam = searchParams.get('testNumber');
+  const initialTestNumber: 1 | 2 | 'ALL' = testNumberParam === '1' ? 1 : testNumberParam === '2' ? 2 : 'ALL';
 
   const [query, setQuery] = useState(initialQuery);
   const [departmentId, setDepartmentId] = useState<string>('ALL');
   const [programId, setProgramId] = useState<string>('ALL');
   const [category, setCategory] = useState<ExamCategory | 'ALL'>(initialCat);
+  const [testNumber, setTestNumber] = useState<1 | 2 | 'ALL'>(initialTestNumber);
   const [academicYear, setAcademicYear] = useState<string>('ALL');
   const [semester, setSemester] = useState<number | 'ALL'>('ALL');
   const [hasMarkingScheme, setHasMarkingScheme] = useState<boolean>(false);
@@ -73,6 +85,7 @@ export const SearchPage: React.FC = () => {
           departmentId: departmentId === 'ALL' ? undefined : departmentId,
           programId: programId === 'ALL' ? undefined : programId,
           category: category === 'ALL' ? undefined : category,
+          testNumber,
           year: academicYear === 'ALL' ? undefined : academicYear,
           semester: semester === 'ALL' ? undefined : semester,
           hasMarkingScheme: hasMarkingScheme ? true : undefined,
@@ -93,13 +106,19 @@ export const SearchPage: React.FC = () => {
       active = false;
       clearTimeout(timer);
     };
-  }, [query, departmentId, programId, category, academicYear, semester, hasMarkingScheme, sortBy, retryCount]);
+  }, [query, departmentId, programId, category, testNumber, academicYear, semester, hasMarkingScheme, sortBy, retryCount]);
+
+  const selectCategory = (value: ExamCategory | 'ALL') => {
+    setCategory(value);
+    if (value !== 'TEST') setTestNumber('ALL');
+  };
 
   const resetFilters = () => {
     setQuery('');
     setDepartmentId('ALL');
     setProgramId('ALL');
     setCategory('ALL');
+    setTestNumber('ALL');
     setAcademicYear('ALL');
     setSemester('ALL');
     setHasMarkingScheme(false);
@@ -112,6 +131,7 @@ export const SearchPage: React.FC = () => {
     departmentId !== 'ALL' ||
     programId !== 'ALL' ||
     category !== 'ALL' ||
+    testNumber !== 'ALL' ||
     academicYear !== 'ALL' ||
     semester !== 'ALL' ||
     hasMarkingScheme;
@@ -151,17 +171,17 @@ export const SearchPage: React.FC = () => {
         {/* Quick category toggles */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
           <div className="flex items-center gap-1.5 p-1 bg-[var(--color-sidebar)]  rounded-lg text-xs font-semibold">
-            {(['ALL', 'TEST', 'UE', 'SUPP'] as const).map((cat) => (
+            {CATEGORY_FILTERS.map((item) => (
               <button
-                key={cat}
-                onClick={() => setCategory(cat)}
+                key={item.label}
+                onClick={() => { setCategory(item.category); setTestNumber(item.testNumber); }}
                 className={`px-3 py-1.5 rounded-md transition-colors cursor-pointer ${
-                  category === cat
+                  category === item.category && testNumber === item.testNumber
                     ? 'bg-[var(--color-surface)]  text-[var(--color-primary)]  shadow-xs font-bold'
                     : 'text-[var(--color-text-muted)]  hover:text-[var(--color-text)]'
                 }`}
               >
-                {cat === 'ALL' ? 'All Types' : cat}
+                {item.label}
               </button>
             ))}
           </div>
@@ -337,8 +357,17 @@ export const SearchPage: React.FC = () => {
                   </select>
                 </label>
                 <label className="grid gap-1 text-sm font-semibold text-[var(--color-text)]">Category
-                  <select value={category} onChange={(event) => setCategory(event.target.value as ExamCategory | 'ALL')} className="min-h-11 rounded-lg border border-[var(--color-input-border)] bg-[var(--color-input)] px-3 font-normal">
-                    <option value="ALL">All categories</option><option value="TEST">TEST</option><option value="UE">UE</option><option value="SUPP">SUPP</option>
+                  <select value={category} onChange={(event) => selectCategory(event.target.value as ExamCategory | 'ALL')} className="min-h-11 rounded-lg border border-[var(--color-input-border)] bg-[var(--color-input)] px-3 font-normal">
+                    <option value="ALL">All categories</option><option value="TEST">All tests</option><option value="UE">UE</option><option value="SUPP">SUPP</option>
+                  </select>
+                </label>
+                <label className="grid gap-1 text-sm font-semibold text-[var(--color-text)]">Test number
+                  <select value={testNumber} onChange={(event) => {
+                    const value = event.target.value === '1' ? 1 : event.target.value === '2' ? 2 : 'ALL';
+                    setTestNumber(value);
+                    if (value !== 'ALL') setCategory('TEST');
+                  }} className="min-h-11 rounded-lg border border-[var(--color-input-border)] bg-[var(--color-input)] px-3 font-normal">
+                    <option value="ALL">Any test</option><option value="1">Test 1</option><option value="2">Test 2</option>
                   </select>
                 </label>
                 <label className="grid gap-1 text-sm font-semibold text-[var(--color-text)]">Academic year

@@ -45,10 +45,11 @@ test('search translates filters, removes ALL, and follows every cursor', async (
     calls.push({ url, options });
     const query = new URL(url, 'http://localhost').searchParams;
     assert.equal(query.get('academicYear'), '2024'); assert.equal(query.get('q'), 'COE07201');
+    assert.equal(query.get('testNumber'), '2');
     assert.equal(query.has('departmentId'), false); assert.equal(query.get('hasMarkingScheme'), 'true');
     return ok({ items: [{ ...paper, id: query.has('cursor') ? 'second' : 'first' }], nextCursor: query.has('cursor') ? null : 'next' });
   };
-  const result = await api.searchPapers({ query: 'COE07201', year: '2024/2025', departmentId: 'ALL', hasMarkingScheme: true });
+  const result = await api.searchPapers({ query: 'COE07201', year: '2024/2025', departmentId: 'ALL', testNumber: 2, hasMarkingScheme: true });
   assert.equal(result.total, 2); assert.equal(result.papers[0].academicYear, '2024/2025');
   assert.equal(calls.length, 2); assert.equal(calls[0].options.credentials, 'include');
 });

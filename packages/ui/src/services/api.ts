@@ -66,6 +66,7 @@ type Download = { url: string; filename: string; expiresAt: string };
 export const api = {
   async searchPapers(filters: PaperFilters = {}): Promise<{ papers: Paper[]; total: number }> {
     const rows = await listAll<PaperDto>('/papers', { q: filters.query?.trim(), departmentId: filters.departmentId, programId: filters.programId, category: filters.category,
+      testNumber: filters.testNumber && filters.testNumber !== 'ALL' ? filters.testNumber : undefined,
       academicYear: filters.year && filters.year !== 'ALL' ? academicYearStart(filters.year) : undefined,
       semester: filters.semester, hasMarkingScheme: filters.hasMarkingScheme ? 'true' : undefined, sortBy: filters.sortBy });
     return { papers: rows.map(paperFromDto), total: rows.length };

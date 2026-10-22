@@ -213,6 +213,7 @@ export interface PaperFilters {
   departmentId?: string;
   programId?: string;
   category?: ExamCategory | 'ALL';
+  testNumber?: 1 | 2 | 'ALL';
   year?: string;
   semester?: number | 'ALL';
   hasMarkingScheme?: boolean;
