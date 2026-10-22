@@ -16,7 +16,7 @@ copies of its handlers. Public catalogue pages render through the same validated
 catalogue services on the server. Protected workflows are interactive client
 components whose API requests always recheck the live database identity.
 
-## Local setup
+## Local setup 
 
 Use Node 24 (the checked version is in `.node-version`) and pnpm 10.33.4:
 
