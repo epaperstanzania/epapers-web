@@ -50,7 +50,7 @@ export function MobileFilterDrawer({ title, summary, children, className = '' }:
         ref={dialogRef}
         className="epapers-mobile-filter-dialog"
         aria-labelledby={titleId}
-        onClose={() => { setOpen(false); triggerRef.current?.focus(); }}
+        onClose={() => { setOpen(false); if (triggerRef.current?.getClientRects().length) triggerRef.current.focus(); }}
         onClick={(event) => { if (event.target === event.currentTarget) close(); }}
       >
         <div className="epapers-mobile-filter-panel">

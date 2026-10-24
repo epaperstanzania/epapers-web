@@ -282,6 +282,8 @@ body { font-family: "Inter Variable", Inter, sans-serif; }
   .epapers-mobile-filter { display: block; }
   .epapers-portal-main { min-width: 0; padding: 1rem clamp(.75rem, 4vw, 1.5rem) 2rem; }
   .epapers-portal-main .epapers-page-transition { min-width: 0; }
+  .epapers-portal-main :where(.grid, .grid > *) { min-width: 0; }
+  .epapers-portal-main :where(img, video, canvas) { max-width: 100%; }
 }
 @media (max-width: 47.99rem) {
   .epapers-responsive-table,
