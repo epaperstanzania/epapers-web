@@ -7,20 +7,27 @@ export const vercelPortalOrigins = {
   lecturer: 'https://epapertz-lecturer.vercel.app',
   admin: 'https://epapertz-admin.vercel.app',
 } satisfies Record<Portal, string>;
+export const customPortalOrigins = {
+  web: 'https://epapers.co.tz',
+  contributor: 'https://contributor.epapers.co.tz',
+  lecturer: 'https://lecturer.epapers.co.tz',
+  admin: 'https://console.epapers.co.tz',
+} satisfies Record<Portal, string>;
+export const deployedPortalOrigins = process.env.NEXT_PUBLIC_DOMAIN_PROFILE === 'custom' ? customPortalOrigins : vercelPortalOrigins;
 export const vercelPublicEnv = {
   NEXT_PUBLIC_API_BASE_URL: '/api/v1',
   NEXT_PUBLIC_AUTH_MODE: 'proxy',
-  NEXT_PUBLIC_WEB_ORIGIN: vercelPortalOrigins.web,
-  NEXT_PUBLIC_CONTRIBUTOR_ORIGIN: vercelPortalOrigins.contributor,
-  NEXT_PUBLIC_LECTURER_ORIGIN: vercelPortalOrigins.lecturer,
-  NEXT_PUBLIC_ADMIN_ORIGIN: vercelPortalOrigins.admin,
+  NEXT_PUBLIC_WEB_ORIGIN: deployedPortalOrigins.web,
+  NEXT_PUBLIC_CONTRIBUTOR_ORIGIN: deployedPortalOrigins.contributor,
+  NEXT_PUBLIC_LECTURER_ORIGIN: deployedPortalOrigins.lecturer,
+  NEXT_PUBLIC_ADMIN_ORIGIN: deployedPortalOrigins.admin,
 };
 export const portalAuthMode = vercel || process.env.NEXT_PUBLIC_AUTH_MODE === 'proxy' ? 'proxy' : 'bridge';
 export const portalOrigins = {
-  web: vercel ? vercelPortalOrigins.web : process.env.NEXT_PUBLIC_WEB_ORIGIN || (production ? 'https://epapers.co.tz' : 'http://localhost:3000'),
-  contributor: vercel ? vercelPortalOrigins.contributor : process.env.NEXT_PUBLIC_CONTRIBUTOR_ORIGIN || (production ? 'https://contributor.epapers.co.tz' : 'http://localhost:3002'),
-  lecturer: vercel ? vercelPortalOrigins.lecturer : process.env.NEXT_PUBLIC_LECTURER_ORIGIN || (production ? 'https://lecturer.epapers.co.tz' : 'http://localhost:3003'),
-  admin: vercel ? vercelPortalOrigins.admin : process.env.NEXT_PUBLIC_ADMIN_ORIGIN || (production ? 'https://console.epapers.co.tz' : 'http://localhost:3004'),
+  web: vercel ? deployedPortalOrigins.web : process.env.NEXT_PUBLIC_WEB_ORIGIN || (production ? customPortalOrigins.web : 'http://localhost:3000'),
+  contributor: vercel ? deployedPortalOrigins.contributor : process.env.NEXT_PUBLIC_CONTRIBUTOR_ORIGIN || (production ? customPortalOrigins.contributor : 'http://localhost:3002'),
+  lecturer: vercel ? deployedPortalOrigins.lecturer : process.env.NEXT_PUBLIC_LECTURER_ORIGIN || (production ? customPortalOrigins.lecturer : 'http://localhost:3003'),
+  admin: vercel ? deployedPortalOrigins.admin : process.env.NEXT_PUBLIC_ADMIN_ORIGIN || (production ? customPortalOrigins.admin : 'http://localhost:3004'),
 } satisfies Record<Portal, string>;
 for (const [portal, origin] of Object.entries(portalOrigins)) {
   const url = new URL(origin);
@@ -36,7 +43,7 @@ export function portalDestination(path: string, current: Portal = 'web'): string
   let owner: Portal = 'web', target = path;
   if (/^\/admin(?:[/?#]|$)/.test(path)) { owner = 'admin'; target = path.replace(/^\/admin(?=\/|\?|#|$)/, '') || '/'; if (!target.startsWith('/')) target = '/' + target; }
   else if (/^\/lecturer(?:\/|$)/.test(path)) { owner = 'lecturer'; target = path.replace(/^\/lecturer/, '') || '/'; }
-  else if (/^\/(dashboard|upload|leaderboard|help)(?:[/?#]|$)/.test(path)) owner = current === 'lecturer' && path.startsWith('/dashboard/settings') ? 'lecturer' : 'contributor';
+  else if (/^\/(dashboard|upload|leaderboard|help|browse)(?:[/?#]|$)/.test(path)) owner = current === 'lecturer' && path.startsWith('/dashboard/settings') ? 'lecturer' : 'contributor';
   return owner === current ? target : portalOrigins[owner] + target;
 }
 export function safeReturnUrl(input: string | null | undefined, fallback = portalOrigins.contributor + '/dashboard'): string {

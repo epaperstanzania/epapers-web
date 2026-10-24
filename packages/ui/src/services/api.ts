@@ -1,5 +1,8 @@
 import type { Department, Program, Module, Paper, UserProfile, AchievementBadge, XpLedgerEntry, FlaggedReport, TakedownRequest, ModuleRequest, AuditLogItem, SystemAnnouncement, AppNotification, PaperFilters, Role, AdminStats } from '../types';
 import { ApiError, request, listAll, getSessionRole, sensitiveRequest } from './client';
+import { portalOrigins } from '@epapers/config/portals';
+
+export function profileImageUrl(id: string) { return `${portalOrigins.web}/api/v1/profile-images/${encodeURIComponent(id)}`; }
 
 export function calculateLevel(xp: number) {
   const level = xp < 200 ? 1 : xp < 500 ? 2 : xp < 1000 ? 3 : 4;
@@ -64,6 +67,13 @@ async function uploadFile(file: File) {
 type Download = { url: string; filename: string; expiresAt: string };
 
 export const api = {
+  async uploadProfileImage(file: File): Promise<UserProfile> {
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size < 1 || file.size > 6 * 1024 * 1024) throw new Error('Choose a JPEG, PNG or WebP image up to 6 MiB.');
+    const upload = await request<{ token: string; uploadUrl: string; headers: Record<string, string> }>('/users/me/avatar/presign', { method: 'POST', auth: true, body: { contentType: file.type, sizeBytes: file.size } });
+    const response = await fetch(upload.uploadUrl, { method: 'PUT', body: file, headers: upload.headers, credentials: 'omit', signal: AbortSignal.timeout(120000) });
+    if (!response.ok) throw new Error('Profile image upload failed. Please try again.');
+    return profileFromDto(await request<ProfileDto>('/users/me/avatar/complete', { method: 'POST', auth: true, body: { token: upload.token } }));
+  },
   async searchPapers(filters: PaperFilters = {}): Promise<{ papers: Paper[]; total: number }> {
     const rows = await listAll<PaperDto>('/papers', { q: filters.query?.trim(), departmentId: filters.departmentId, programId: filters.programId, category: filters.category,
       testNumber: filters.testNumber && filters.testNumber !== 'ALL' ? filters.testNumber : undefined,
@@ -178,9 +188,14 @@ export const api = {
   },
   async submitModuleRequest(r: Omit<ModuleRequest, 'id' | 'requestedAt' | 'status' | 'notes'>) { return request('/module-requests', { method: 'POST', body: { departmentId: r.departmentId, programId: r.programId, moduleCode: normalizeModuleCode(r.moduleCode), moduleName: r.moduleName, academicYear: academicYearStart(r.academicYear), semester: r.semester, description: r.description } }); },
   async resolveModuleRequest(id: string, status: 'approved' | 'rejected', note = 'Curriculum request reviewed by administrator') { await request(`/admin/module-requests/${idPath(id)}`, { method: 'PATCH', auth: true, body: { status, note } }); },
-  async getAuditLogs(): Promise<AuditLogItem[]> {
-    return (await listAll<Omit<AuditLogItem, 'adminUsername' | 'timestamp' | 'targetDescription'> & { actorUserId: string; createdAt: string }>('/admin/audit-logs', {}, true)).map(r => ({ ...r, adminUsername: r.actorUserId || 'System', timestamp: r.createdAt, targetDescription: r.targetId || '' }));
+  async getAuditLogPage(cursor?: string): Promise<{ items: AuditLogItem[]; nextCursor: string | null }> {
+    type Row = Omit<AuditLogItem, 'adminUsername' | 'timestamp'> & { actorUserId: string; actorUsername?: string; actorRole?: string; createdAt: string };
+    const params = new URLSearchParams({ limit: '100' });
+    if (cursor) params.set('cursor', cursor);
+    const page = await request<{ items: Row[]; nextCursor: string | null }>(`/admin/audit-logs?${params}`, { auth: true });
+    return { nextCursor: page.nextCursor, items: page.items.map(r => ({ ...r, adminUsername: r.actorUsername || r.actorUserId || 'System', timestamp: r.createdAt, targetDescription: r.targetDescription || r.targetId || '' })) };
   },
+  async getAuditLogs(): Promise<AuditLogItem[]> { return (await api.getAuditLogPage()).items; },
   async getAdminStats(): Promise<AdminStats> {
     const s = await request<{ pendingPapers: number; approvedPapers: number; flags: number; takedowns: number; moduleRequests: number; lecturers: number; users: number; downloads: number }>('/admin/dashboard/stats', { auth: true });
     return { pendingPapers: s.pendingPapers, totalPapers: s.approvedPapers, pendingFlags: s.flags, pendingTakedowns: s.takedowns, pendingModuleReqs: s.moduleRequests, verifiedLecturers: s.lecturers, totalUsers: s.users, totalDownloads: s.downloads };

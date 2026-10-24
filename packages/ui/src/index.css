@@ -99,6 +99,39 @@
     --focus-ring: 0 0 0 3px rgba(0, 174, 227, 0.35);
   }
 
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --color-primary: #8ccaff;
+    --color-primary-dark: #b5deff;
+    --color-accent: #3cc8ed;
+    --color-neutral: #a6b5c9;
+    --color-canvas: #0c1422;
+    --color-surface: #152237;
+    --color-sidebar: #111e30;
+    --color-sidebar-border: #2c4159;
+    --color-border: #30445d;
+    --color-input: #101d30;
+    --color-input-border: #405671;
+    --color-text: #edf4fc;
+    --color-text-muted: #b9c9da;
+    --color-active: #204268;
+    --color-active-hover: #2c527a;
+    --color-hover: #213a56;
+    --color-blue-tint: #1b3654;
+    --color-cyan-tint: #153c4b;
+    --color-success: #68d5a0;
+    --color-success-soft: #193d31;
+    --color-warning: #f4c865;
+    --color-warning-text: #f4c865;
+    --color-warning-soft: #483c23;
+    --color-danger: #ff8f91;
+    --color-danger-soft: #4d2833;
+    --color-danger-soft-hover: #613240;
+    --color-neutral-soft: #263850;
+    --color-primary-tint: #213e61;
+    --color-accent-dark: #8de6f8;
+  }
+
   *,
   *::before,
   *::after {
@@ -119,6 +152,9 @@
     background-color: var(--color-canvas);
     color: var(--color-text);
   }
+
+  .epapers-page-transition { animation: epapers-page-enter 180ms ease-out; }
+  @keyframes epapers-page-enter { from { opacity: .65; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
   :focus-visible {
     outline: 2px solid var(--color-accent);
@@ -182,3 +218,12 @@ body { font-family: "Inter Variable", Inter, sans-serif; }
 }
 [data-portal="admin"] aside { --color-sidebar: #0B1B33; }
 [data-portal="lecturer"] aside { --color-primary: #b5e6ff; --color-neutral: #c9d9f2; }
+
+:root[data-theme="dark"] .epapers-catalogue .bg-white { background-color: var(--color-surface); }
+:root[data-theme="dark"] .epapers-catalogue .text-slate-600 { color: var(--color-text-muted); }
+:root[data-theme="dark"] .epapers-catalogue .text-blue-800 { color: var(--color-primary); }
+:root[data-theme="dark"] .epapers-catalogue .border-slate-200 { border-color: var(--color-border); }
+:root[data-theme="dark"] .epapers-catalogue .border { border-color: var(--color-border); }
+:root[data-theme="dark"] .epapers-catalogue input,
+:root[data-theme="dark"] .epapers-catalogue select { color: var(--color-text); background: var(--color-input); }
+@media (prefers-reduced-motion: reduce) { .epapers-page-transition { animation: none; } }

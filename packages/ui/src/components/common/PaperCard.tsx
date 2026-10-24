@@ -9,9 +9,10 @@ import { api } from '../../services/api';
 interface PaperCardProps {
   paper: Paper;
   showStatus?: boolean;
+  detailBase?: string;
 }
 
-export const PaperCard: React.FC<PaperCardProps> = ({ paper, showStatus = false }) => {
+export const PaperCard: React.FC<PaperCardProps> = ({ paper, showStatus = false, detailBase = '/papers' }) => {
   const [downloading, setDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const [downloadError, setDownloadError] = useState('');
@@ -64,7 +65,7 @@ export const PaperCard: React.FC<PaperCardProps> = ({ paper, showStatus = false 
         </div>
 
         {/* Module Code & Title */}
-        <Link to={`/papers/${paper.id}`} className="block group-hover:text-[var(--color-primary)]">
+        <Link to={`${detailBase}/${paper.id}`} className="block group-hover:text-[var(--color-primary)]">
           <h3 className="font-bold text-base text-[var(--color-text)] leading-tight">
             {paper.moduleCode}
           </h3>

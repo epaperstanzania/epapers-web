@@ -1,9 +1,14 @@
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { startPortalSession, finishPortalSession } from '@epapers/auth/portal-session';
-import { portalOrigins } from '@epapers/config/portals';
+import { portalOrigins, portalDestination } from '@epapers/config/portals';
 const originalFetch = globalThis.fetch;
 afterEach(() => { globalThis.fetch = originalFetch; });
+test('paper browsing stays in the contributor portal', () => {
+  assert.equal(portalDestination('/browse', 'contributor'), '/browse');
+  assert.equal(portalDestination('/browse/example', 'contributor'), '/browse/example');
+  assert.equal(portalDestination('/browse/example', 'web'), portalOrigins.contributor + '/browse/example');
+});
 function start(returnTo = '/upload') {
   const response = startPortalSession(new Request(portalOrigins.contributor + '/auth/start?returnTo=' + encodeURIComponent(returnTo)), 'contributor');
   return { response, cookie: response.headers.get('set-cookie').split(';')[0], url: new URL(response.headers.get('location')) };

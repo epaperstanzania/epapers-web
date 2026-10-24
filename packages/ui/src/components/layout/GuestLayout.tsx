@@ -1,7 +1,7 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { LogoutButton } from '../common/LogoutButton';
-import { NavLink, Link } from '@epapers/ui/navigation';
+import { NavLink, Link, useLocation } from '@epapers/ui/navigation';
 import { EPapersLogo } from '../common/EPapersLogo';
 import { TopBar } from './TopBar';
 import { MobileTabBar } from './MobileTabBar';
@@ -15,7 +15,6 @@ import {
   Info,
   ChevronLeft,
   ChevronRight,
-  Upload,
   PlusCircle,
   X,
 } from 'lucide-react';
@@ -23,6 +22,14 @@ import {
 export const GuestLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [contributeOpen, setContributeOpen] = useState(false);
+  const location = useLocation();
+  useEffect(() => {
+    if (!contributeOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setContributeOpen(false); };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [contributeOpen]);
 
   const navItems = [
     { label: 'Explore Home', to: '/', icon: Home },
@@ -55,20 +62,6 @@ export const GuestLayout: React.FC<{ children: React.ReactNode }> = ({ children 
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
-        </div>
-
-        {/* Action Button: Quick Upload */}
-        <div className="p-3">
-          <Link
-            to="/upload"
-            className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-[var(--color-primary)] text-[var(--color-input)] text-xs font-semibold hover:bg-[var(--color-primary-dark)] transition-colors ${
-              collapsed ? 'px-0' : 'px-4'
-            }`}
-            title="Upload Exam Paper"
-          >
-            <Upload className="w-4 h-4 text-[var(--color-accent)]" />
-            {!collapsed && <span>Upload Paper</span>}
-          </Link>
         </div>
 
         {/* Navigation list */}
@@ -170,29 +163,26 @@ export const GuestLayout: React.FC<{ children: React.ReactNode }> = ({ children 
 
             <LogoutButton onLogout={() => setMobileDrawerOpen(false)} />
 
-            <div className="pt-3 border-t border-[var(--color-sidebar-border)]">
-              <Link
-                to="/upload"
-                onClick={() => setMobileDrawerOpen(false)}
-                className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-[var(--color-primary)] text-[var(--color-input)] text-xs font-semibold"
-              >
-                <Upload className="w-4 h-4 text-[var(--color-accent)]" />
-                <span>Upload Paper</span>
-              </Link>
-            </div>
           </div>
         </div>
       )}
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 pb-16 lg:pb-0">
-        <TopBar onOpenMobileDrawer={() => setMobileDrawerOpen(true)} variant="guest" />
+        <TopBar onOpenMobileDrawer={() => setMobileDrawerOpen(true)} onContribute={() => setContributeOpen(true)} variant="guest" />
         <main id="main-content" className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1280px] w-full mx-auto">
-          {children}
+          <div key={location.pathname} className="epapers-page-transition">{children}</div>
         </main>
       </div>
 
-      <MobileTabBar />
+      <MobileTabBar onContribute={() => setContributeOpen(true)} />
+      {contributeOpen && <div className="fixed inset-0 z-[60] grid place-items-center bg-black/60 p-4" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setContributeOpen(false); }}>
+        <section role="dialog" aria-modal="true" aria-labelledby="contribute-title" className="w-full max-w-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 text-[var(--color-text)] shadow-xl">
+          <div className="flex items-start justify-between gap-4"><h2 id="contribute-title" className="text-xl font-bold">Contribute a paper</h2><button type="button" autoFocus aria-label="Close" onClick={() => setContributeOpen(false)} className="rounded p-1 hover:bg-[var(--color-hover)]"><X className="h-5 w-5" /></button></div>
+          <p className="mt-3 text-sm text-[var(--color-text-muted)]">Sign in or create an account to upload examination papers. Your place in the archive will stay here until you choose.</p>
+          <div className="mt-5 flex flex-wrap gap-3"><Link to="/login" className="rounded-lg bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-[var(--color-input)]">Sign in</Link><Link to="/register" className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm font-semibold">Create account</Link></div>
+        </section>
+      </div>}
     </div>
   );
 };

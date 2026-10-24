@@ -17,4 +17,4 @@ worker/.secrets
 worker/.cloudflare/
 
 .vercel
-.env.example
+.env.example 

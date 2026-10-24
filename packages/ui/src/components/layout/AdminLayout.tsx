@@ -278,7 +278,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar onOpenMobileDrawer={() => setMobileDrawerOpen(true)} variant="admin" />
         <main id="main-content" className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1280px] w-full mx-auto">
-          {children}
+          <div key={location.pathname} className="epapers-page-transition">{children}</div>
         </main>
       </div>
     </div>

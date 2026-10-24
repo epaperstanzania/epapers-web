@@ -49,7 +49,7 @@ export const ContributorLayout: React.FC<{ children: React.ReactNode }> = ({ chi
     { label: 'My Submissions', to: '/dashboard/submissions', icon: FileCheck2 },
     { label: 'Achievements', to: '/dashboard/achievements', icon: Award },
     { label: 'Leaderboard', to: '/leaderboard', icon: Trophy },
-    { label: 'Browse Papers', to: '/search', icon: BookOpen },
+    { label: 'Browse Papers', to: '/browse', icon: BookOpen },
     { label: 'Request Module', to: '/dashboard/request-module', icon: PlusCircle },
   ];
 
@@ -305,7 +305,7 @@ export const ContributorLayout: React.FC<{ children: React.ReactNode }> = ({ chi
       <div className="flex-1 flex flex-col min-w-0 pb-16 lg:pb-0">
         <TopBar onOpenMobileDrawer={() => setMobileDrawerOpen(true)} variant="contributor" />
         <main id="main-content" className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1280px] w-full mx-auto">
-          {children}
+          <div key={location.pathname} className="epapers-page-transition">{children}</div>
         </main>
       </div>
 

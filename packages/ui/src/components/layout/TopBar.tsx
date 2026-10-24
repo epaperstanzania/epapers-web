@@ -4,13 +4,15 @@ import { api } from '../../services/api';
 import { useLocation, Link, useNavigate } from '@epapers/ui/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { UsernameTile } from '../common/UsernameTile';
-import { Bell, Search, Menu, Upload, LogIn } from 'lucide-react';
+import { Bell, Search, Menu } from 'lucide-react';
+import { ThemeToggle } from '../common/ThemeToggle';
 
 interface TopBarProps {
   onToggleSidebar?: () => void;
   onOpenMobileDrawer?: () => void;
   breadcrumbs?: { label: string; href?: string }[];
   variant?: 'guest' | 'contributor' | 'admin';
+  onContribute?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -18,6 +20,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenMobileDrawer,
   breadcrumbs,
   variant = 'guest',
+  onContribute,
 }) => {
   const { currentUser, role } = useAuth();
   const location = useLocation();
@@ -100,8 +103,10 @@ export const TopBar: React.FC<TopBarProps> = ({
 
       {/* Center Search quick trigger (desktop) */}
       <div className="hidden md:flex items-center max-w-xs w-full">
-        <div
-          onClick={() => navigate('/search')}
+        <button
+          type="button"
+          onClick={() => navigate(variant === 'contributor' ? '/browse' : '/search')}
+          aria-label="Search examination papers"
           className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--color-input)] border border-[var(--color-input-border)] text-xs text-[var(--color-text-muted)] hover:border-[var(--color-primary)] transition-colors cursor-pointer"
         >
           <Search className="w-3.5 h-3.5 text-[var(--color-neutral)]" />
@@ -109,12 +114,12 @@ export const TopBar: React.FC<TopBarProps> = ({
           <kbd className="ml-auto text-[10px] bg-[var(--color-surface)] px-1.5 py-0.5 rounded border border-[var(--color-input-border)] font-mono text-[var(--color-text-muted)]">
             /
           </kbd>
-        </div>
+        </button>
       </div>
 
       {/* Right Controls */}
       <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-        
+        <ThemeToggle />
 
         {/* Notifications (if logged in) */}
         {currentUser && (
@@ -151,12 +156,13 @@ export const TopBar: React.FC<TopBarProps> = ({
           </Link>
         ) : (
           <div className="flex items-center gap-2">
-            <Link
-              to="/login"
+            <button
+              type="button"
+              onClick={onContribute}
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[var(--color-primary)] hover:bg-[var(--color-sidebar)] transition-colors"
             >
               <span>Contribute</span>
-            </Link>
+            </button>
           </div>
         )}
       </div>

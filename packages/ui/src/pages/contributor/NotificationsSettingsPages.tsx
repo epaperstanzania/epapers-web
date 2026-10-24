@@ -114,10 +114,24 @@ export const NotificationsPage: React.FC = () => {
 
 export const SettingsPage: React.FC = () => {
   const { busy, run } = useApiAction();
-  const { currentUser, updateBioAndAvatar } = useAuth();
+  const { currentUser, updateBioAndAvatar, refreshUser } = useAuth();
   const [bio, setBio] = useState(currentUser?.bio || '');
-  const [avatarId, setAvatarId] = useState(resolveAvatarId(currentUser?.username || '', currentUser?.avatarId));
+  const [avatarId, setAvatarId] = useState(currentUser?.avatarId || resolveAvatarId(currentUser?.username || ''));
   const [saved, setSaved] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState('');
+
+  const uploadImage = async (file?: File) => {
+    if (!file) return;
+    setImageError('');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size < 1 || file.size > 6 * 1024 * 1024) {
+      setImageError('Choose a JPEG, PNG or WebP image up to 6 MiB.'); return;
+    }
+    setUploadingImage(true);
+    try { const user = await api.uploadProfileImage(file); setAvatarId(user.avatarId || ''); await refreshUser(); }
+    catch (error) { setImageError(error instanceof Error ? error.message : 'Profile image upload failed.'); }
+    finally { setUploadingImage(false); }
+  };
 
   const handleSave = run(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -189,6 +203,15 @@ export const SettingsPage: React.FC = () => {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="profile-photo" className="block text-xs font-semibold text-[var(--color-text)]">Upload profile photo</label>
+            <p className="text-xs text-[var(--color-text-muted)]">JPEG, PNG or WebP, up to 6 MiB. Your photo appears on your profile and contributions.</p>
+            <input id="profile-photo" type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingImage} onChange={event => { void uploadImage(event.target.files?.[0]); event.target.value = ''; }} className="block w-full text-xs text-[var(--color-text)] file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--color-primary)] file:px-3 file:py-2 file:font-semibold file:text-[var(--color-input)]" />
+            {uploadingImage && <p role="status" className="text-xs">Uploading profile photo…</p>}
+            {imageError && <p role="alert" className="text-xs text-[var(--color-danger)]">{imageError}</p>}
+            {avatarId.startsWith('p_') && <UsernameTile username={currentUser?.username || 'User'} avatarId={avatarId} size="xl" />}
           </div>
 
           <button

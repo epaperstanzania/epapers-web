@@ -27,7 +27,7 @@ const CATEGORY_FILTERS = [
   { category: 'SUPP', testNumber: 'ALL', label: 'SUPP' },
 ] as const;
 
-export const SearchPage: React.FC = () => {
+export const SearchPage: React.FC<{ contributor?: boolean }> = ({ contributor = false }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
   const categoryParam = searchParams.get('category');
@@ -36,7 +36,7 @@ export const SearchPage: React.FC = () => {
   const initialTestNumber: 1 | 2 | 'ALL' = testNumberParam === '1' ? 1 : testNumberParam === '2' ? 2 : 'ALL';
 
   const [query, setQuery] = useState(initialQuery);
-  const [departmentId, setDepartmentId] = useState<string>('ALL');
+  const [departmentId, setDepartmentId] = useState<string>(searchParams.get('departmentId') || 'ALL');
   const [programId, setProgramId] = useState<string>('ALL');
   const [category, setCategory] = useState<ExamCategory | 'ALL'>(initialCat);
   const [testNumber, setTestNumber] = useState<1 | 2 | 'ALL'>(initialTestNumber);
@@ -142,7 +142,7 @@ export const SearchPage: React.FC = () => {
       <div className="bg-[var(--color-surface)]  p-5 sm:p-6 rounded-xl border border-[var(--color-border)]  shadow-xs space-y-4">
         <div>
           <h1 className="font-heading font-extrabold text-xl sm:text-2xl text-[var(--color-text)] ">
-            Search
+            {contributor ? 'Browse Papers' : 'Search'}
           </h1>
           <p className="text-xs sm:text-sm text-[var(--color-text-muted)]  mt-0.5">
             search matching module codes (e.g. &apos;COE07201&apos; or &apos;COE 07201&apos;), course names, and keywords.
@@ -432,6 +432,7 @@ export const SearchPage: React.FC = () => {
                 <PaperCard
                   key={paper.id}
                   paper={paper}
+                  detailBase={contributor ? '/browse' : '/papers'}
                 />
               ))}
             </div>

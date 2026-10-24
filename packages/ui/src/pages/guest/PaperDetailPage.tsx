@@ -23,7 +23,7 @@ import {
   BookOpen,
 } from 'lucide-react';
 
-export const PaperDetailPage: React.FC = () => {
+export const PaperDetailPage: React.FC<{ contributor?: boolean }> = ({ contributor = false }) => {
   const { busy, run } = useApiAction();
   const { id } = useParams<{ id: string }>();
   const [paper, setPaper] = useState<Paper | null>(null);
@@ -76,7 +76,7 @@ export const PaperDetailPage: React.FC = () => {
           The requested examination document does not exist or has been removed.
         </p>
         <Link
-          to="/search"
+          to={contributor ? '/browse' : '/search'}
           className="mt-4 inline-block px-4 py-2 bg-[var(--color-primary)] text-[var(--color-surface)] rounded-lg text-xs font-semibold"
         >
           Back to Search
@@ -107,14 +107,14 @@ export const PaperDetailPage: React.FC = () => {
 
           <div className="flex items-center gap-2 text-xs text-[var(--color-text-muted)]  flex-wrap">
             <Link
-              to={`/modules/${paper.moduleCode}`}
+              to={contributor ? `/browse?q=${encodeURIComponent(paper.moduleCode)}` : `/modules/${paper.moduleCode}`}
               className="text-[var(--color-primary)]  font-semibold hover:underline"
             >
               {paper.moduleName}
             </Link>
             <span>·</span>
             <Link
-              to={`/departments/${paper.departmentId}`}
+              to={contributor ? `/browse?departmentId=${paper.departmentId}` : `/departments/${paper.departmentId}`}
               className="hover:underline"
             >
               {paper.departmentName}

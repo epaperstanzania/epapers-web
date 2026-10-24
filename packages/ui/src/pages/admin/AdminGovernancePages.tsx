@@ -23,16 +23,29 @@ import {
 export const AdminAuditLogPage: React.FC = () => {
   const [logs, setLogs] = useState<AuditLogItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     const load = apiTask(async () => {
       setLoading(true);
-      const res = await api.getAuditLogs();
-      setLogs(res);
+      const page = await api.getAuditLogPage();
+      setLogs(page.items);
+      setNextCursor(page.nextCursor);
       setLoading(false);
     }, () => setLoading(false));
     load();
   }, []);
+
+  const loadMore = async () => {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    setLoadError('');
+    try { const page = await api.getAuditLogPage(nextCursor); setLogs(previous => [...previous, ...page.items]); setNextCursor(page.nextCursor); }
+    catch { setLoadError('Older events could not be loaded. Please try again.'); }
+    finally { setLoadingMore(false); }
+  };
 
   if (loading) return <PageLoader variant="rows" label="Loading content…" />;
   return (
@@ -41,11 +54,12 @@ export const AdminAuditLogPage: React.FC = () => {
         <div className="flex items-center gap-2">
           <History className="w-6 h-6 text-[var(--color-accent)]" />
           <h1 className="font-heading font-extrabold text-2xl text-[var(--color-text)] ">
-            Administrative Audit Trail
+            User Activity & Audit Log
           </h1>
         </div>
+        {loadError && <p role="alert" className="px-4 text-xs text-[var(--color-danger)]">{loadError}</p>}
         <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
-          Immutable log of all moderation approvals, rejections, user suspensions, and curriculum modifications.
+          Authenticated contributor, lecturer and admin page visits and account actions. Guest browsing is excluded.
         </p>
       </div>
 
@@ -55,10 +69,11 @@ export const AdminAuditLogPage: React.FC = () => {
             <thead className="bg-[var(--color-canvas)]  border-b border-[var(--color-border)]  text-[var(--color-neutral)] font-bold uppercase tracking-wider">
               <tr>
                 <th className="p-4">Timestamp</th>
-                <th className="p-4">Administrator</th>
+                <th className="p-4">User</th>
+                <th className="p-4">Role</th>
                 <th className="p-4">Action</th>
                 <th className="p-4">Target Resource</th>
-                <th className="p-4">Stated Justification</th>
+                <th className="p-4">Details</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border)] ">
@@ -70,6 +85,7 @@ export const AdminAuditLogPage: React.FC = () => {
                   <td className="p-4 font-bold text-[var(--color-text)] ">
                     @{log.adminUsername}
                   </td>
+                  <td className="p-4 capitalize text-[var(--color-text-muted)]">{log.actorRole || 'system'}</td>
                   <td className="p-4">
                     <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-[var(--color-sidebar)]  text-[var(--color-primary)] ">
                       {log.action}
@@ -86,6 +102,7 @@ export const AdminAuditLogPage: React.FC = () => {
             </tbody>
           </table>
         </div>
+        {nextCursor && <div className="border-t border-[var(--color-border)] p-4 text-center"><button type="button" disabled={loadingMore} onClick={() => { void loadMore(); }} className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-xs font-semibold text-[var(--color-primary)] disabled:opacity-50">{loadingMore ? 'Loading…' : 'Load older events'}</button></div>}
       </div>
     </div>
   );

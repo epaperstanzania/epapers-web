@@ -8,6 +8,7 @@ import { EPapersLogo } from '../../components/common/EPapersLogo';
 import { ApiForm } from '../../components/common/ApiForm';
 import { request } from '../../services/client';
 import { KeyRound } from 'lucide-react';
+import { EmailCodeInput } from '../../components/common/EmailCodeInput';
 
 export { LoginPage } from './LoginPage';
 
@@ -102,31 +103,8 @@ export const VerifyOtpPage: React.FC = () => {
   const [resending, setResending] = useState(false);
   const [resendMessage, setResendMessage] = useState('');
 
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [otp, setOtp] = useState('');
   const navigate = useNavigate();
-
-  const handleOtpChange = (index: number, value: string) => {
-    if (value.length > 1) {
-      // Handle paste
-      const digits = value.replace(/\D/g, '').slice(0, 6).split('');
-      const newOtp = [...otp];
-      digits.forEach((d, i) => {
-        newOtp[i] = d;
-      });
-      setOtp(newOtp);
-      return;
-    }
-
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
-
-    // Auto-advance
-    if (value && index < 5) {
-      const nextInput = document.getElementById(`otp-${index + 1}`);
-      nextInput?.focus();
-    }
-  };
 
   const handleVerify = run(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,31 +127,9 @@ export const VerifyOtpPage: React.FC = () => {
           </p>
         </div>
 
-        <ApiForm endpoint="/auth/verify-otp" payload={() => ({ email, code: otp.join('') })} onSubmit={handleVerify} className="space-y-6">
+        <ApiForm endpoint="/auth/verify-otp" payload={() => ({ email, code: otp })} onSubmit={handleVerify} className="space-y-6">
           <label className="block text-left text-xs">Account email<input type="email" required value={email} onChange={event => setEmail(event.target.value)} className="mt-1 w-full rounded border p-2.5" /></label>
-          {/* 6-box OTP Input */}
-          <div className="flex justify-center gap-2 sm:gap-3">
-            {otp.map((digit, idx) => (
-              <input
-                key={idx}
-                id={`otp-${idx}`}
-                type="text"
-                inputMode="numeric"
-                maxLength={1}
-                required
-                pattern="[0-9]"
-                value={digit}
-                onChange={(e) => handleOtpChange(idx, e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Backspace' && !digit && idx > 0) {
-                    const prevInput = document.getElementById(`otp-${idx - 1}`);
-                    prevInput?.focus();
-                  }
-                }}
-                className="w-10 sm:w-12 h-12 sm:h-14 text-center font-heading font-bold text-lg bg-[var(--color-canvas)]  border border-[var(--color-border)]  rounded-xl text-[var(--color-text)]  focus:outline-hidden focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)]"
-              />
-            ))}
-          </div>
+          <EmailCodeInput value={otp} onChange={setOtp} resendAfter="" onResend={() => {}} busy={busy} showResend={false} />
 
           <button
             type="submit"

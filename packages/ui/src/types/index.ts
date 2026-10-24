@@ -180,8 +180,9 @@ export interface AuditLogItem {
   id: string;
   adminUsername: string;
   action: string;
-  targetType: 'paper' | 'user' | 'structure' | 'security' | 'settings';
-  targetId: string;
+  actorRole?: string | null;
+  targetType: string;
+  targetId: string | null;
   targetDescription: string;
   reason: string;
   timestamp: string;

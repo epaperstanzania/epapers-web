@@ -4,7 +4,8 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { env } from '@epapers/config/server-env';
 const client = new S3Client({ region: 'auto', endpoint: env.R2_ENDPOINT, credentials: { accessKeyId: env.R2_ACCESS_KEY_ID, secretAccessKey: env.R2_SECRET_ACCESS_KEY }, requestChecksumCalculation: 'WHEN_REQUIRED', responseChecksumValidation: 'WHEN_REQUIRED' });
 export const storage = {
-    async presign(bucket: string, key: string, size: number) { return getSignedUrl(client, new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: 'application/pdf', ContentLength: size, IfNoneMatch: '*' }), { expiresIn: 300, signableHeaders: new Set(['content-type', 'content-length', 'if-none-match']) }); },
+    async presign(bucket: string, key: string, size: number) { return storage.presignPut(bucket, key, size, 'application/pdf'); },
+    async presignPut(bucket: string, key: string, size: number, contentType: string) { return getSignedUrl(client, new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType, ContentLength: size, IfNoneMatch: '*' }), { expiresIn: 300, signableHeaders: new Set(['content-type', 'content-length', 'if-none-match']) }); },
     async head(bucket: string, key: string) { const h = await client.send(new HeadObjectCommand({ Bucket: bucket, Key: key })); return { size: h.ContentLength, type: h.ContentType, etag: h.ETag }; },
     async range(bucket: string, key: string, range: string) { const r = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key, Range: range })); if (!r.Body)
         throw new Error('Missing object'); return Buffer.from(await r.Body.transformToByteArray()); },

@@ -27,6 +27,12 @@ This prevents local `.env.local` values or stale Vercel overrides from breaking
 the Vercel deployment profile. Do not add conflicting origin/cookie overrides
 to the Vercel projects.
 
+When `epapers.co.tz` and its three subdomains are active, set
+`NEXT_PUBLIC_DOMAIN_PROFILE=custom` on **all four** Vercel projects and redeploy
+them together. The shared portal configuration then switches navigation,
+authentication callbacks, API origin and trusted origins to that one domain;
+keep the default profile for the current `*.vercel.app` deployment.
+
 Separate `vercel.app` hosts cannot share a cookie domain. Portal requests to
 `/api/v1` are proxied to the canonical API. A portal without a session starts at
 `/auth/start`, stores a ten-minute HttpOnly state/PKCE cookie, and visits canonical
@@ -50,7 +56,7 @@ Add these secrets to **Production** in the public project's Vercel settings:
   `REFRESH_TOKEN_PEPPER`, `IP_HASH_SALT`.
 - `EPAPERS_WORKER_TOKEN`, shared with the Cloudflare Cron Worker.
 - `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ENDPOINT`,
-  `R2_INCOMING_BUCKET`, `R2_PUBLISHED_BUCKET`.
+  `R2_INCOMING_BUCKET`, `R2_PUBLISHED_BUCKET`, `R2_PROFILE_BUCKET`.
 - `EMAIL_PROVIDER` and the corresponding SMTP credentials/settings or
   `RESEND_API_KEY`; set the verified sender using `EMAIL_FROM`/`SMTP_FROM`.
 
@@ -59,6 +65,26 @@ Do not add backend secrets to the other three projects. Vercel deployment does
 not provision a database, run migrations, or configure bucket CORS. Email
 delivery and PDF scan/publication are driven by the Cloudflare Cron Worker below.
 Allow the four selected HTTPS origins in private incoming-bucket PUT CORS.
+Create a third private R2 bucket named `profile` and set `R2_PROFILE_BUCKET=profile`
+on the public/API project. R2 bucket names must be lowercase. Its PUT CORS
+policy must allow `Content-Type` and `If-None-Match` request headers from the
+four portal origins (and local development origins when testing locally).
+Profile images use direct signed PUTs and a public same-origin read route; do
+not enable public bucket access. Configure a short lifecycle rule for abandoned
+`pending/` objects; successful uploads move to `profiles/`.
+
+After authenticating the Cloudflare CLI, create the bucket with
+`cf r2 buckets create --name profile`. In the bucket CORS settings, use a rule
+like this for the current production portals:
+
+```json
+[{"AllowedOrigins":["https://epapertz.vercel.app","https://epapertz-contributor.vercel.app","https://epapertz-lecturer.vercel.app","https://epapertz-admin.vercel.app"],"AllowedMethods":["PUT"],"AllowedHeaders":["Content-Type","If-None-Match"],"MaxAgeSeconds":3600}]
+```
+
+Add `http://localhost:3000`, `http://localhost:3002`, `http://localhost:3003`
+and `http://localhost:3004` only for local testing. Change the production
+origins together with `NEXT_PUBLIC_DOMAIN_PROFILE=custom` when the custom
+domain is activated.
 
 Do not copy `.env.local`, `.env.example`, or `VERCEL_OIDC_TOKEN` into Vercel.
 The code sets the public Vercel profile itself. Add only the actual backend
@@ -185,7 +211,7 @@ overwrites `cf-connecting-ip`. Otherwise IP buckets intentionally share the
 untrusted-client identity, and account limits still apply. Configure this before
 public release to avoid a shared public IP limit.
 
-Keep both R2 buckets private. Incoming bucket CORS must allow PUT from the four
+Keep all three R2 buckets private. Incoming and profile bucket CORS must allow PUT from the four
 exact origins, with Content-Type and If-None-Match headers. Storage requests omit
 API cookies/tokens. Apply an appropriate private-object lifecycle consistent with
 database retention. Published URLs remain short-lived; do not configure public

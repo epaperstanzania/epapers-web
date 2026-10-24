@@ -1,6 +1,6 @@
 import 'server-only';
 import { z } from 'zod';
-import { vercelPortalOrigins } from './portals';
+import { deployedPortalOrigins } from './portals';
 const boolFromString = z.string().transform((value, ctx) => {
     if (value === 'true')
         return true;
@@ -25,6 +25,7 @@ const schema = z.object({
     R2_ENDPOINT: z.string().url(),
     R2_INCOMING_BUCKET: z.string().min(3),
     R2_PUBLISHED_BUCKET: z.string().min(3),
+    R2_PROFILE_BUCKET: z.string().regex(/^[a-z0-9](?:[a-z0-9-]{1,61}[a-z0-9])$/).default('profile'),
     R2_PUBLIC_BASE_URL: z.string().url().or(z.literal('')).default(''),
     JWT_ACCESS_SECRET: z.string().refine(value => Buffer.byteLength(value) >= 32, "Must contain at least 32 bytes"),
     REFRESH_TOKEN_PEPPER: z.string().refine(value => Buffer.byteLength(value) >= 32, "Must contain at least 32 bytes"),
@@ -67,9 +68,9 @@ const schema = z.object({
 const vercelEnv = process.env.VERCEL === '1';
 const runtimeEnv = vercelEnv ? {
     ...process.env,
-    APP_ORIGIN: vercelPortalOrigins.web,
-    API_ORIGIN: vercelPortalOrigins.web,
-    PORTAL_ORIGINS: Object.values(vercelPortalOrigins).join(','),
+    APP_ORIGIN: deployedPortalOrigins.web,
+    API_ORIGIN: deployedPortalOrigins.web,
+    PORTAL_ORIGINS: Object.values(deployedPortalOrigins).join(','),
     COOKIE_DOMAIN: '',
     TRUST_PROXY: 'false',
 } : process.env;

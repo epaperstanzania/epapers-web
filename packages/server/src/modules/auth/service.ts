@@ -11,6 +11,7 @@ import { rateLimit } from '@epapers/server/lib/rate-limit';
 import { otpEmail, resetEmail, adminCodeEmail } from '@epapers/server/lib/email/templates';
 import { privateUser } from '@epapers/server/modules/auth/dto';
 import { audit, challenge } from '@epapers/server/modules/auth/repository';
+import { removeProfileImage } from '@epapers/server/modules/auth/avatar';
 const generic = { message: 'If eligible, an email will be sent. Delivery may be delayed.' };
 
 type PortalGrant = { token: string; challenge: string; redirectUri: string; expiresAt: number; sessionExpiresAt: string };
@@ -158,7 +159,7 @@ export async function login(usernameOrEmail: string, password: string, adminOnly
         fail(403, 'FORBIDDEN', 'Admin account required');
     if (user.role === 'ADMIN') return startAdminChallenge(user, 'login');
     const issued = await withTransactionRetry(async (tx) => { await lockUser(tx, user.id); const current = await tx.user.findUnique({ where: { id: user.id } }); active(current); if (current.passwordHash !== user.passwordHash || current.role !== user.role)
-        fail(401, 'INVALID_CREDENTIALS', 'Please log in again'); return issueSession(tx, current); });
+        fail(401, 'INVALID_CREDENTIALS', 'Please log in again'); const issued = await issueSession(tx, current); await audit(tx, current.id, 'LOGIN'); return issued; });
     return { refreshToken: issued.refreshToken, session: { id: issued.session.id, expiresAt: issued.session.expiresAt }, accessToken: await signAccess(user, issued.session.id), user: privateUser(user) };
 }
 export async function refresh(token: string) {
@@ -201,6 +202,7 @@ export { authenticate, authorize } from '@epapers/auth/server';
 export async function logout(token: string) { await withTransactionRetry(async (tx) => { const session = await tx.userSession.findUnique({ where: { refreshTokenHash: tokenHash(token) } }); if (session) {
     await lockUser(tx, session.userId);
     await tx.userSession.updateMany({ where: { familyId: session.familyId }, data: { revokedAt: new Date() } });
+    await audit(tx, session.userId, 'LOGOUT');
 } }); return { message: 'Logged out' }; }
 export async function resetPassword(token: string, password: string) {
     await rateLimit('reset-token:' + tokenHash(token), 5, 1800);
@@ -256,10 +258,12 @@ export async function updateProfile(userId: string, input: {
     bio?: string;
     avatarId?: string | null;
 }) {
-    return withTransactionRetry(async (tx) => {
+    const result = await withTransactionRetry(async (tx) => {
         await lockUser(tx, userId);
         const user = await tx.user.findUnique({ where: { id: userId } });
         active(user);
+        if (input.avatarId?.startsWith('p_') && input.avatarId !== user.avatarId)
+            fail(422, 'INVALID_AVATAR', 'Upload a profile image before selecting it');
         if (input.username && input.username.toLowerCase() !== user.usernameNormalized) {
             const settings = await tx.$queryRaw<Array<{
                 value: number;
@@ -278,8 +282,13 @@ export async function updateProfile(userId: string, input: {
             await audit(tx, userId, 'USERNAME_CHANGED');
         }
         const updated = await tx.user.update({ where: { id: userId }, data: { fullName: input.fullName, bio: input.bio, avatarId: input.avatarId } });
-        return privateUser(updated);
+        if (input.bio !== undefined || input.fullName !== undefined || input.avatarId !== undefined)
+            await audit(tx, userId, 'PROFILE_UPDATED');
+        return { profile: privateUser(updated), previousAvatar: user.avatarId };
     });
+    if (input.avatarId !== undefined && input.avatarId !== result.previousAvatar)
+        await removeProfileImage(userId, result.previousAvatar);
+    return result.profile;
 }
 export async function sessions(userId: string) { return (await db.userSession.findMany({ where: { userId, revokedAt: null, rotatedAt: null, expiresAt: { gt: new Date() } }, orderBy: { createdAt: 'desc' }, take: 100 })).map(s => ({ id: s.id, createdAt: s.createdAt.toISOString(), expiresAt: s.expiresAt.toISOString() })); }
 export async function revokeSession(userId: string, id: string) { await withTransactionRetry(async (tx) => { await lockUser(tx, userId); const s = await tx.userSession.findFirst({ where: { id, userId } }); if (!s)

@@ -1563,6 +1563,37 @@
         }
       }
     },
+    "/profile-images/{id}": {
+      "get": {
+        "summary": "Read a validated public profile image from the private profile bucket",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "pattern": "^p_[a-f0-9]{30}$" } }],
+        "responses": { "200": { "description": "JPEG, PNG or WebP image bytes", "content": { "image/jpeg": { "schema": { "type": "string", "format": "binary" } }, "image/png": { "schema": { "type": "string", "format": "binary" } }, "image/webp": { "schema": { "type": "string", "format": "binary" } } } } }
+      }
+    },
+    "/users/me/avatar/presign": {
+      "post": {
+        "summary": "Authorize a direct profile image upload up to 6 MiB",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["contentType", "sizeBytes"], "properties": { "contentType": { "enum": ["image/jpeg", "image/png", "image/webp"] }, "sizeBytes": { "type": "integer", "minimum": 1, "maximum": 6291456 } } } } } },
+        "responses": { "200": { "description": "Signed PUT URL and completion token", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/users/me/avatar/complete": {
+      "post": {
+        "summary": "Validate image bytes and activate the new profile photo",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["token"], "properties": { "token": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "Updated private profile", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/profile" } } } } } } }
+      }
+    },
+    "/users/me/activity": {
+      "post": {
+        "summary": "Record an authenticated portal page view",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["path"], "properties": { "path": { "type": "string", "maxLength": 160 } } } } } },
+        "responses": { "200": { "description": "Activity accepted", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
     "/users/me": {
       "patch": {
         "security": [
