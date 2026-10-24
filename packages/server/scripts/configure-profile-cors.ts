@@ -4,7 +4,8 @@ const required = ['R2_ENDPOINT', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY'] as 
 const missing = required.filter(name => !process.env[name]);
 if (missing.length) throw new Error(`Missing environment variables: ${missing.join(', ')}`);
 
-const bucket = process.env.R2_PROFILE_BUCKET || 'profile';
+const incoming = process.argv.includes('--incoming');
+const bucket = incoming ? process.env.R2_INCOMING_BUCKET || 'epapers-incoming' : process.env.R2_PROFILE_BUCKET || 'profile';
 const endpoint = process.env.R2_ENDPOINT!;
 const client = new S3Client({
   region: 'auto', endpoint,
@@ -26,7 +27,7 @@ const origins = [
   'http://localhost:3004',
 ];
 const uploadRule: CORSRule = {
-  ID: 'epapers-profile-upload',
+  ID: incoming ? 'epapers-incoming-upload' : 'epapers-profile-upload',
   AllowedOrigins: origins,
   AllowedMethods: ['PUT'],
   AllowedHeaders: ['Content-Type', 'If-None-Match'],
@@ -46,13 +47,14 @@ if (process.argv.includes('--apply')) {
   await client.send(new PutBucketCorsCommand({ Bucket: bucket, CORSConfiguration: { CORSRules: rules } }));
   console.log(`Updated CORS for bucket ${bucket}; preserved ${rules.length - 1} other rule(s).`);
 } else {
-  console.log(`Dry run: bucket ${bucket}; would add the profile PUT rule and preserve ${rules.length - 1} other rule(s). Pass --apply to update.`);
+  console.log(`Dry run: bucket ${bucket}; would add the ${incoming ? 'PDF' : 'profile'} PUT rule and preserve ${rules.length - 1} other rule(s). Pass --apply to update.`);
 }
 
 if (process.argv.includes('--apply')) {
   const confirmed = (await client.send(new GetBucketCorsCommand({ Bucket: bucket }))).CORSRules || [];
   const applied = confirmed.find(rule => rule.ID === uploadRule.ID);
-  if (!applied || !applied.AllowedOrigins?.includes('https://epapertz-contributor.vercel.app') || !applied.AllowedMethods?.includes('PUT'))
-    throw new Error('The profile bucket CORS rule could not be verified.');
-  console.log('Verified contributor origin and PUT method in the saved R2 policy.');
+  const headers = new Set(applied?.AllowedHeaders?.map(header => header.toLowerCase()));
+  if (!applied || !applied.AllowedOrigins?.includes('https://epapertz-contributor.vercel.app') || !applied.AllowedMethods?.includes('PUT') || !headers.has('content-type') || !headers.has('if-none-match'))
+    throw new Error(`The ${bucket} bucket CORS rule could not be verified.`);
+  console.log('Verified contributor origin, PUT method, and signed request headers in the saved R2 policy.');
 }

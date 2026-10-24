@@ -18,4 +18,27 @@ The script preserves unrelated bucket CORS rules. It allows `PUT` from the four 
 
 Cloudflare may take up to 30 seconds to propagate a policy change. Retry the image upload with a newly generated presigned URL. In browser Network tools, the `OPTIONS` request to R2 should return `Access-Control-Allow-Origin: https://epapertz-contributor.vercel.app` and permit `PUT`, `content-type`, and `if-none-match`. An expired signed URL requires a fresh presign request.
 
-The same CORS rule is needed on the private incoming bucket for PDF uploads. Configure that bucket separately before testing papers.
+PDF uploads use the separate private `epapers-incoming` bucket. A profile-bucket rule does not apply to it. The live Cloudflare CLI policy is recorded in [`deployment/r2-incoming-cors.json`](../../deployment/r2-incoming-cors.json). When using an authenticated Cloudflare CLI, inspect the bucket's current policy and preserve any rules added since this snapshot:
+
+```powershell
+cf r2 buckets cors get epapers-incoming
+cf r2 buckets cors update epapers-incoming --rules '@deployment/r2-incoming-cors.json' --dry-run
+cf r2 buckets cors update epapers-incoming --rules '@deployment/r2-incoming-cors.json'
+cf r2 buckets cors get epapers-incoming
+```
+
+`cors update` replaces the bucket's entire rule list, so do not apply a stale snapshot without merging newer rules. The saved file retains the existing `epapers.15botyear.workers.dev` rule and adds exact Vercel, planned custom-domain, and local development origins.
+
+Alternatively, inspect the incoming-bucket policy through the S3 credentials without changing R2:
+
+```powershell
+node --use-system-ca --env-file=apps/web/.env.local --import tsx packages/server/scripts/configure-profile-cors.ts --incoming
+```
+
+Apply and verify the incoming-bucket rule:
+
+```powershell
+node --use-system-ca --env-file=apps/web/.env.local --import tsx packages/server/scripts/configure-profile-cors.ts --incoming --apply
+```
+
+These commands require credentials authorized for the live incoming bucket. If they are available only in a secret manager, supply them through that manager instead of copying them into the repository. The script keeps unrelated CORS rules and checks that the saved rule allows `https://epapertz-contributor.vercel.app`, `PUT`, `Content-Type`, and `If-None-Match`. No Vercel redeploy is needed for a bucket CORS change. Request a fresh presigned URL by retrying the upload after the policy propagates.

@@ -1,0 +1,35 @@
+[
+  {
+    "id": "epapers-browser-upload",
+    "allowed": {
+      "methods": ["PUT"],
+      "origins": ["https://epapers.15botyear.workers.dev"],
+      "headers": ["Content-Type", "Content-Length", "If-None-Match"]
+    },
+    "exposeHeaders": ["ETag"],
+    "maxAgeSeconds": 300
+  },
+  {
+    "id": "epapers-incoming-upload",
+    "allowed": {
+      "methods": ["PUT"],
+      "origins": [
+        "https://epapertz.vercel.app",
+        "https://epapertz-contributor.vercel.app",
+        "https://epapertz-lecturer.vercel.app",
+        "https://epapertz-admin.vercel.app",
+        "https://epapers.co.tz",
+        "https://contributor.epapers.co.tz",
+        "https://lecturer.epapers.co.tz",
+        "https://console.epapers.co.tz",
+        "http://localhost:3000",
+        "http://localhost:3002",
+        "http://localhost:3003",
+        "http://localhost:3004"
+      ],
+      "headers": ["Content-Type", "If-None-Match"]
+    },
+    "exposeHeaders": ["ETag"],
+    "maxAgeSeconds": 3600
+  }
+]

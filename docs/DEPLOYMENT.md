@@ -65,6 +65,7 @@ Do not add backend secrets to the other three projects. Vercel deployment does
 not provision a database, run migrations, or configure bucket CORS. Email
 delivery and PDF scan/publication are driven by the Cloudflare Cron Worker below.
 Allow the four selected HTTPS origins in private incoming-bucket PUT CORS.
+For a safe dry run, apply command, and verification of the live incoming-bucket policy, see [R2 browser upload CORS](source/R2-UPLOAD-CORS.md). This bucket policy is separate from the profile bucket and is not changed by a Vercel deployment.
 Create a third private R2 bucket named `profile` and set `R2_PROFILE_BUCKET=profile`
 on the public/API project. R2 bucket names must be lowercase. Its PUT CORS
 policy must allow `Content-Type` and `If-None-Match` request headers from the
