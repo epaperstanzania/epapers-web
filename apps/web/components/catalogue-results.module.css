@@ -14,6 +14,54 @@
   padding: clamp(1rem, 3vw, 1.75rem);
 }
 
+.mobileSearchTrigger { display: none; }
+.mobileSearchDialog:not([open]) { display: none; }
+.mobileSearchDialog {
+  position: fixed;
+  inset: 0 0 0 auto;
+  width: min(92vw, 26rem);
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: -16px 0 48px rgba(0, 15, 37, .28);
+}
+.mobileSearchDialog::backdrop { background: rgba(3, 16, 38, .62); }
+.mobileSearchDialog[open] { animation: drawerEnter .22s ease-out both; }
+@keyframes drawerEnter { from { transform: translateX(1.5rem); opacity: .7; } to { transform: translateX(0); opacity: 1; } }
+.drawerPanel { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; }
+.drawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  padding: max(1rem, env(safe-area-inset-top)) 1rem 1rem;
+}
+.drawerHeader h2 { margin: .3rem 0 0; color: var(--color-text); font-size: 1.35rem; font-weight: 750; }
+.drawerHeader h2:focus { outline: none; }
+.drawerClose {
+  flex: 0 0 auto;
+  min-width: 3.5rem;
+  min-height: 2.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: .7rem;
+  background: var(--color-input);
+  color: var(--color-text);
+  font-size: .875rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.drawerClose:hover { background: var(--color-hover); }
+.drawerClose:focus-visible,
+.mobileSearchTrigger:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 3px; }
+.drawerBody { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 1rem 1rem max(1rem, env(safe-area-inset-bottom)); }
+
 .formIntro {
   display: flex;
   flex-wrap: wrap;
@@ -321,12 +369,55 @@
 @media (min-width: 48rem) { .paperGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 64rem) { .filtersGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (min-width: 80rem) { .paperGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 47.99rem) {
+  .desktopSearch { display: none; }
+  .mobileSearchTrigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    width: 100%;
+    min-height: 4.25rem;
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    background: var(--color-surface);
+    padding: .85rem 1rem;
+    color: var(--color-text);
+    text-align: left;
+    box-shadow: var(--shadow-neutral);
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .mobileSearchTrigger:hover { border-color: var(--color-primary); }
+  .mobileSearchTrigger:active { background: var(--color-hover); }
+  .mobileSearchTriggerText { display: grid; min-width: 0; gap: .2rem; }
+  .mobileSearchTriggerText strong { font-size: .95rem; line-height: 1.3; }
+  .mobileSearchTriggerText small { overflow: hidden; color: var(--color-text-muted); font-size: .78rem; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
+  .mobileSearchTriggerAction { flex: 0 0 auto; border-radius: .55rem; background: var(--color-primary-tint); padding: .4rem .6rem; color: var(--color-primary); font-size: .78rem; font-weight: 750; }
+  .mobileSearchDialog .searchForm { gap: 1.1rem; border: 0; border-radius: 0; padding: 0; box-shadow: none; }
+  .mobileSearchDialog .formIntro { display: none; }
+  .mobileSearchDialog .filtersGrid { grid-template-columns: minmax(0, 1fr); }
+  .mobileSearchDialog .formFooter {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    flex-direction: column;
+    align-items: stretch;
+    margin-inline: -1rem;
+    background: var(--color-surface);
+    padding: 1rem 1rem max(1rem, env(safe-area-inset-bottom));
+    box-shadow: 0 -12px 24px -24px rgba(0, 20, 48, .5);
+  }
+  .mobileSearchDialog .actions { flex-direction: column; width: 100%; }
+  .mobileSearchDialog .submitButton { width: 100%; }
+}
 @media (max-width: 35.99rem) {
   .homeHero { border-radius: 1.15rem; background-position: 65% center; }
   .homeHero a { width: 100%; }
   .pagination { width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .mobileSearchDialog[open] { animation: none; }
   .submitButton,
   .paperCard { transition: none; }
 }

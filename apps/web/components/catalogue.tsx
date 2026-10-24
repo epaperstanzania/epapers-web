@@ -6,7 +6,8 @@ import { catalogSchemas, uuid } from '@epapers/server/modules/catalog/schemas';
 import { ApiError } from '@epapers/config/errors';
 import { PaperActions } from '@epapers/ui/components/common/PaperActions';
 import { DepartmentDirectory, DepartmentsDirectory, ProgramDirectory } from './catalogue-directory';
-import { HomeHero, ListHeading, PageHeading, PaperList, SearchForm, type CatalogueQuery } from './catalogue-results';
+import { HomeHero, ListHeading, PageHeading, PaperList } from './catalogue-results';
+import { SearchForm, type CatalogueQuery } from './catalogue-search';
 import styles from './catalogue-results.module.css';
 
 function cleanQuery(query: CatalogueQuery) {
