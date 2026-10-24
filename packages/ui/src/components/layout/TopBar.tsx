@@ -12,7 +12,6 @@ interface TopBarProps {
   onOpenMobileDrawer?: () => void;
   breadcrumbs?: { label: string; href?: string }[];
   variant?: 'guest' | 'contributor' | 'admin';
-  onContribute?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -20,7 +19,6 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenMobileDrawer,
   breadcrumbs,
   variant = 'guest',
-  onContribute,
 }) => {
   const { currentUser, role } = useAuth();
   const location = useLocation();
@@ -156,13 +154,12 @@ export const TopBar: React.FC<TopBarProps> = ({
           </Link>
         ) : (
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onContribute}
+            <Link
+              to="/login"
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[var(--color-primary)] hover:bg-[var(--color-sidebar)] transition-colors"
             >
               <span>Contribute</span>
-            </button>
+            </Link>
           </div>
         )}
       </div>

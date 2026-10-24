@@ -4,7 +4,7 @@ import { NavLink } from '@epapers/ui/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { Home, Search, BookOpen, Plus, User, LayoutDashboard } from 'lucide-react';
 
-export const MobileTabBar: React.FC<{ onContribute?: () => void }> = ({ onContribute }) => {
+export const MobileTabBar: React.FC = () => {
   const { role, currentUser } = useAuth();
 
   const getProfileLink = () => {
@@ -55,7 +55,7 @@ export const MobileTabBar: React.FC<{ onContribute?: () => void }> = ({ onContri
           <Plus aria-hidden="true" className="h-5 w-5 text-[var(--color-input)]" strokeWidth={2.5} />
         </div>
         <span className="text-[10px]">Upload</span>
-      </NavLink> : <button type="button" onClick={onContribute} className="flex min-w-[56px] flex-col items-center justify-center gap-1 py-1 text-[11px] font-semibold text-[var(--color-primary)]"><Plus className="h-5 w-5"/><span>Contribute</span></button>}
+      </NavLink> : <NavLink to="/login" className="flex min-w-[56px] flex-col items-center justify-center gap-1 py-1 text-[11px] font-semibold text-[var(--color-primary)]"><Plus className="h-5 w-5"/><span>Contribute</span></NavLink>}
 
       <NavLink
         to={currentUser && role !== 'admin' ? '/browse' : '/departments'}

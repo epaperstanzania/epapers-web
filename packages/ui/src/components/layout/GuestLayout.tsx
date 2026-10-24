@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { LogoutButton } from '../common/LogoutButton';
 import { NavLink, Link, useLocation } from '@epapers/ui/navigation';
 import { EPapersLogo } from '../common/EPapersLogo';
@@ -22,14 +22,7 @@ import {
 export const GuestLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [contributeOpen, setContributeOpen] = useState(false);
   const location = useLocation();
-  useEffect(() => {
-    if (!contributeOpen) return;
-    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setContributeOpen(false); };
-    window.addEventListener('keydown', closeOnEscape);
-    return () => window.removeEventListener('keydown', closeOnEscape);
-  }, [contributeOpen]);
 
   const navItems = [
     { label: 'Explore Home', to: '/', icon: Home },
@@ -169,20 +162,13 @@ export const GuestLayout: React.FC<{ children: React.ReactNode }> = ({ children 
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 pb-16 lg:pb-0">
-        <TopBar onOpenMobileDrawer={() => setMobileDrawerOpen(true)} onContribute={() => setContributeOpen(true)} variant="guest" />
+        <TopBar onOpenMobileDrawer={() => setMobileDrawerOpen(true)} variant="guest" />
         <main id="main-content" className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1280px] w-full mx-auto">
           <div key={location.pathname} className="epapers-page-transition">{children}</div>
         </main>
       </div>
 
-      <MobileTabBar onContribute={() => setContributeOpen(true)} />
-      {contributeOpen && <div className="fixed inset-0 z-[60] grid place-items-center bg-black/60 p-4" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setContributeOpen(false); }}>
-        <section role="dialog" aria-modal="true" aria-labelledby="contribute-title" className="w-full max-w-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 text-[var(--color-text)] shadow-xl">
-          <div className="flex items-start justify-between gap-4"><h2 id="contribute-title" className="text-xl font-bold">Contribute a paper</h2><button type="button" autoFocus aria-label="Close" onClick={() => setContributeOpen(false)} className="rounded p-1 hover:bg-[var(--color-hover)]"><X className="h-5 w-5" /></button></div>
-          <p className="mt-3 text-sm text-[var(--color-text-muted)]">Sign in or create an account to upload examination papers. Your place in the archive will stay here until you choose.</p>
-          <div className="mt-5 flex flex-wrap gap-3"><Link to="/login" className="rounded-lg bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-[var(--color-input)]">Sign in</Link><Link to="/register" className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm font-semibold">Create account</Link></div>
-        </section>
-      </div>}
+      <MobileTabBar />
     </div>
   );
 };
