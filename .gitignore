@@ -18,3 +18,4 @@ worker/.cloudflare/
 
 .vercel
 .env.example 
+.env*
