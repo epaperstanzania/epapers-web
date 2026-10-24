@@ -139,9 +139,10 @@ export async function verifyOtp(email: string, code: string) {
         fail(422, 'INVALID_CODE', 'Code is invalid or expired');
     return { message: 'Email verified' };
 }
-async function issueSession(tx: TransactionClient, user: User, familyId: string = randomUUID()) {
+async function issueSession(tx: TransactionClient, user: User, familyId: string = randomUUID(), rememberAdmin = false) {
     const refreshToken = opaqueToken();
-    const session = await tx.userSession.create({ data: { userId: user.id, familyId, refreshTokenHash: tokenHash(refreshToken), adminEmailVerifiedAt: user.role === 'ADMIN' ? new Date() : null, expiresAt: new Date(Date.now() + (user.role === 'ADMIN' ? 3600000 : 30 * 86400000)) } });
+    const duration = user.role === 'ADMIN' ? (rememberAdmin ? 7 * 86400000 : 3600000) : 30 * 86400000;
+    const session = await tx.userSession.create({ data: { userId: user.id, familyId, refreshTokenHash: tokenHash(refreshToken), adminEmailVerifiedAt: user.role === 'ADMIN' ? new Date() : null, expiresAt: new Date(Date.now() + duration) } });
     return { session, refreshToken };
 }
 export async function login(usernameOrEmail: string, password: string, adminOnly = false) {
@@ -361,9 +362,9 @@ async function consumeAdminChallenge<T>(challengeToken: string, code: string, ki
     return result.value;
 }
 
-export function verifyAdminLogin(challengeToken: string, code: string) {
+export function verifyAdminLogin(challengeToken: string, code: string, rememberDevice = false) {
     return consumeAdminChallenge(challengeToken, code, 'login', async (tx, user) => {
-        const issued = await issueSession(tx, user);
+        const issued = await issueSession(tx, user, randomUUID(), rememberDevice);
         await audit(tx, user.id, 'ADMIN_LOGIN');
         return { refreshToken: issued.refreshToken, session: { id: issued.session.id, expiresAt: issued.session.expiresAt }, accessToken: await signAccess(user, issued.session.id), user: privateUser(user) };
     });

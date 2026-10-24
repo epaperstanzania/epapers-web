@@ -8,6 +8,6 @@ export const needsEmailVerification = (result: LoginResult): result is EmailChal
 export function signIn(usernameOrEmail: string, password: string) {
   return request<LoginResult>('/auth/login', { method: 'POST', body: { usernameOrEmail, password }, retry: false });
 }
-export function verifySignIn(challengeToken: string, code: string) {
-  return request<Session>('/auth/admin/verify-login', { method: 'POST', body: { challengeToken, code }, retry: false });
+export function verifySignIn(challengeToken: string, code: string, rememberDevice = false) {
+  return request<Session>('/auth/admin/verify-login', { method: 'POST', body: { challengeToken, code, rememberDevice }, retry: false });
 }

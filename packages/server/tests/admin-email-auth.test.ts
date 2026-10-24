@@ -55,6 +55,14 @@ describe('administrator email verification', () => {
         await expect(verifyAdminLogin(challenge.challengeToken, emailCode)).rejects.toThrow();
         expect(mocks.tx.userSession.create).toHaveBeenCalledTimes(1);
     });
+    it('remembers an admin session for seven days only after the email code', async () => {
+        const challenge = await start();
+        expect(mocks.tx.userSession.create).not.toHaveBeenCalled();
+        await verifyAdminLogin(challenge.challengeToken, emailCode, true);
+        const expiresAt = mocks.tx.userSession.create.mock.calls[0][0].data.expiresAt as Date;
+        expect(expiresAt.getTime() - Date.now()).toBeGreaterThan(7 * 86400000 - 10000);
+        expect(expiresAt.getTime() - Date.now()).toBeLessThanOrEqual(7 * 86400000);
+    });
     it('commits wrong-code attempts and locks the challenge after five failures', async () => {
         const challenge = await start(); const correctCode = emailCode;
         const wrongCode = correctCode === '000000' ? '111111' : '000000';

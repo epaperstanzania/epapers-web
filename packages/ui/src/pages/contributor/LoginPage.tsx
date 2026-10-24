@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from '@epapers/ui/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { EPapersLogo } from '../../components/common/EPapersLogo';
@@ -11,9 +11,14 @@ import { safeReturnUrl, roleHome } from '@epapers/config/portals';
 export function LoginPage() {
   const [username, setUsername] = useState(''), [password, setPassword] = useState('');
   const [challenge, setChallenge] = useState<EmailChallenge | null>(null), [code, setCode] = useState('');
+  const [rememberDevice, setRememberDevice] = useState(true);
   const [pending, setPending] = useState(false), [error, setError] = useState('');
   const [searchParams] = useSearchParams(), location = useLocation(), navigate = useNavigate();
-  const { login, verifyAdminLogin } = useAuth();
+  const { login, verifyAdminLogin, loading, isAuthenticated, role } = useAuth();
+  const returnTo = searchParams.get('returnTo');
+  useEffect(() => {
+    if (!loading && isAuthenticated) navigate(safeReturnUrl(returnTo, roleHome(role)), { replace: true });
+  }, [loading, isAuthenticated, role, returnTo, navigate]);
   const notice = searchParams.get('notice') || (location.state as { message?: string } | null)?.message;
   const startLogin = async () => {
     if (pending) return;
@@ -28,10 +33,11 @@ export function LoginPage() {
   const verify = async () => {
     if (!challenge || pending) return;
     setPending(true); setError('');
-    try { await verifyAdminLogin(challenge.challengeToken, code); setPassword(''); setCode(''); setChallenge(null); navigate(safeReturnUrl(searchParams.get('returnTo'), roleHome('admin'))); }
+    try { await verifyAdminLogin(challenge.challengeToken, code, rememberDevice); setPassword(''); setCode(''); setChallenge(null); navigate(safeReturnUrl(returnTo, roleHome('admin'))); }
     catch (reason) { setError(reason instanceof Error ? reason.message : 'Verification failed.'); }
     finally { setPending(false); }
   };
+  if (loading || isAuthenticated) return <div role="status" className="flex min-h-[60vh] items-center justify-center text-sm text-[var(--color-text-muted)]">Opening your workspace…</div>;
   return <div className="relative isolate flex min-h-[85vh] items-center justify-center overflow-hidden rounded-2xl p-4">
     <div aria-hidden="true" className="absolute inset-0 -z-10 scale-105 bg-cover bg-center blur-sm" style={{ backgroundImage: "url('/images/A-balck-book.jpg')" }} />
     <div aria-hidden="true" className="absolute inset-0 -z-10 bg-slate-950/45" />
@@ -44,7 +50,13 @@ export function LoginPage() {
       {error && <p role="alert" className="rounded-lg bg-[var(--color-danger-soft)] p-3 text-sm text-[var(--color-danger)]">{error}</p>}
       <form onSubmit={event => { event.preventDefault(); void (challenge ? verify() : startLogin()); }} className="space-y-4" aria-busy={pending}>
         <fieldset disabled={pending} className="space-y-4">
-          {challenge ? <EmailCodeInput value={code} onChange={setCode} resendAfter={challenge.resendAfter} onResend={() => void startLogin()} busy={pending} /> : <>
+          {challenge ? <>
+            <EmailCodeInput value={code} onChange={setCode} resendAfter={challenge.resendAfter} onResend={() => void startLogin()} busy={pending} />
+            <label className="flex items-start gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] p-3 text-xs text-[var(--color-text)]">
+              <input type="checkbox" checked={rememberDevice} onChange={event => setRememberDevice(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--color-primary)]" />
+              <span><strong className="block">Remember this device for 7 days</strong><span className="mt-1 block text-[var(--color-text-muted)]">You will stay signed in here. Signing out will require a new code.</span></span>
+            </label>
+          </> : <>
             <label className="block text-xs font-semibold">Username or email
               <input type="text" name="username" required minLength={3} maxLength={254} autoComplete="username" value={username} onChange={event => setUsername(event.target.value)}
                 className="mt-1.5 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] p-2.5 text-sm" />

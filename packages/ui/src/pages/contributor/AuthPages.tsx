@@ -80,7 +80,7 @@ export const RegisterPage: React.FC = () => {
             type="submit"
             className="w-full py-3 bg-[var(--color-primary)] text-[var(--color-surface)] font-bold rounded-xl text-xs hover:bg-[var(--color-primary-dark)] transition-colors shadow-sm cursor-pointer"
           >
-            Continue to Verification →
+            Continue →
           </button>
         </ApiForm>
 

@@ -167,7 +167,7 @@ export const SettingsPage: React.FC = () => {
               className="w-full bg-[var(--color-sidebar)]  border border-[var(--color-border)]  rounded-lg p-2.5 text-xs text-[var(--color-text-muted)] font-mono"
             />
             <p className="text-[10px] text-[var(--color-neutral)] mt-1">
-              Username changes follow the backend cooldown and availability rules.
+              Username changes can be changed after 15 | 30 active days
             </p>
           </div>
 

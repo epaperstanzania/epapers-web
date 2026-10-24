@@ -70,7 +70,12 @@ export const api = {
   async uploadProfileImage(file: File): Promise<UserProfile> {
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size < 1 || file.size > 6 * 1024 * 1024) throw new Error('Choose a JPEG, PNG or WebP image up to 6 MiB.');
     const upload = await request<{ token: string; uploadUrl: string; headers: Record<string, string> }>('/users/me/avatar/presign', { method: 'POST', auth: true, body: { contentType: file.type, sizeBytes: file.size } });
-    const response = await fetch(upload.uploadUrl, { method: 'PUT', body: file, headers: upload.headers, credentials: 'omit', signal: AbortSignal.timeout(120000) });
+    let response: Response;
+    try {
+      response = await fetch(upload.uploadUrl, { method: 'PUT', body: file, headers: upload.headers, credentials: 'omit', signal: AbortSignal.timeout(120000) });
+    } catch {
+      throw new Error('Profile storage is unavailable. Please try again shortly.');
+    }
     if (!response.ok) throw new Error('Profile image upload failed. Please try again.');
     return profileFromDto(await request<ProfileDto>('/users/me/avatar/complete', { method: 'POST', auth: true, body: { token: upload.token } }));
   },

@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { api } from '../../services/api';
-import { useLocation, Link, useNavigate } from '@epapers/ui/navigation';
+import { Link, useNavigate } from '@epapers/ui/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { UsernameTile } from '../common/UsernameTile';
 import { Bell, Search, Menu } from 'lucide-react';
@@ -10,18 +10,15 @@ import { ThemeToggle } from '../common/ThemeToggle';
 interface TopBarProps {
   onToggleSidebar?: () => void;
   onOpenMobileDrawer?: () => void;
-  breadcrumbs?: { label: string; href?: string }[];
   variant?: 'guest' | 'contributor' | 'admin';
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
   onToggleSidebar,
   onOpenMobileDrawer,
-  breadcrumbs,
   variant = 'guest',
 }) => {
   const { currentUser, role } = useAuth();
-  const location = useLocation();
   const navigate = useNavigate();
   const [unread, setUnread] = useState(0);
   useEffect(() => {
@@ -45,29 +42,9 @@ export const TopBar: React.FC<TopBarProps> = ({
     return () => { active = false; clearInterval(timer); window.removeEventListener('focus', onRefresh); window.removeEventListener('epapers-notifications-read', onRefresh); };
   }, [currentUser?.id]);
 
-  // Auto breadcrumb if not passed
-  const getBreadcrumbs = () => {
-    if (breadcrumbs) return breadcrumbs;
-    const parts = location.pathname.split('/').filter(Boolean);
-    if (parts.length === 0) return [{ label: 'Home' }];
-
-    const crumbs: { label: string; href?: string }[] = [{ label: 'EPapers', href: '/' }];
-    let currentPath = '';
-    parts.forEach((p, idx) => {
-      currentPath += `/${p}`;
-      const isLast = idx === parts.length - 1;
-      let label = p.replace(/-/g, ' ');
-      label = label.charAt(0).toUpperCase() + label.slice(1);
-      crumbs.push({ label, href: isLast ? undefined : currentPath });
-    });
-    return crumbs;
-  };
-
-  const crumbs = getBreadcrumbs();
-
   return (
     <header className="sticky top-0 z-30 h-14 w-full bg-[var(--color-surface)] border-b border-[var(--color-border)] px-4 sm:px-6 flex items-center justify-between gap-4">
-      {/* Left: Mobile hamburger + Breadcrumbs */}
+      {/* Mobile navigation */}
       <div className="flex items-center gap-3 min-w-0">
         <button
           onClick={onOpenMobileDrawer}
@@ -77,26 +54,6 @@ export const TopBar: React.FC<TopBarProps> = ({
           <Menu className="w-5 h-5" />
         </button>
 
-        {/* Breadcrumb Trail */}
-        <nav className="hidden sm:flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] truncate">
-          {crumbs.map((crumb, idx) => (
-            <React.Fragment key={idx}>
-              {idx > 0 && <span className="opacity-40">/</span>}
-              {crumb.href ? (
-                <Link
-                  to={crumb.href}
-                  className="hover:text-[var(--color-primary)] transition-colors truncate"
-                >
-                  {crumb.label}
-                </Link>
-              ) : (
-                <span className="font-semibold text-[var(--color-text)] truncate">
-                  {crumb.label}
-                </span>
-              )}
-            </React.Fragment>
-          ))}
-        </nav>
       </div>
 
       {/* Center Search quick trigger (desktop) */}

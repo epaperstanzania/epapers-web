@@ -10,7 +10,7 @@ interface AuthContextType {
   currentUser: UserProfile | null; role: Role; isAuthenticated: boolean; isGuest: boolean;
   loading: boolean; accessToken: string | null;
   login: (username: string, password: string) => Promise<LoginResult>;
-  verifyAdminLogin: (challengeToken: string, code: string) => Promise<Session>;
+  verifyAdminLogin: (challengeToken: string, code: string, rememberDevice?: boolean) => Promise<Session>;
   logout: () => void; refreshUser: () => Promise<void>;
   updateBioAndAvatar: (bio: string, avatarId: string) => Promise<void>;
   flashMessage: string | null; setFlashMessage: (message: string | null) => void;
@@ -66,8 +66,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const result = await signIn(username, password);
     return needsEmailVerification(result) ? result : acceptSession(result);
   };
-  const verifyAdminLogin = async (challengeToken: string, code: string) => {
-    return acceptSession(await verifySignIn(challengeToken, code));
+  const verifyAdminLogin = async (challengeToken: string, code: string, rememberDevice = false) => {
+    return acceptSession(await verifySignIn(challengeToken, code, rememberDevice));
   };
   const logout = () => {
     // Capture the request before clearing the in-memory access token.

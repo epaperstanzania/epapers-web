@@ -14,7 +14,7 @@ export const schemas = {
     login: z.strictObject({ usernameOrEmail: z.string().trim().min(3).max(254), password: z.string().min(1).max(128) }),
     reauth: z.strictObject({ password: z.string().min(1).max(128) }),
     adminLogin: z.strictObject({ usernameOrEmail: z.string().trim().min(3).max(254), password: z.string().min(1).max(128) }),
-    adminVerify: z.strictObject({ challengeToken: z.string().length(43), code: z.string().regex(/^\d{6}$/) }),
+    adminVerify: z.strictObject({ challengeToken: z.string().length(43), code: z.string().regex(/^\d{6}$/), rememberDevice: z.boolean().optional().default(false) }),
     verifyOtp: z.strictObject({ email, code: z.string().regex(/^\d{6}$/) }),
     resend: z.strictObject({ email }),
     forgot: z.strictObject({ email }),
