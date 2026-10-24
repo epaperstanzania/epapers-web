@@ -181,7 +181,7 @@ export async function processBatch(options: { maxJobs?: number; maxRuntimeMs?: n
     return processed;
 }
 
-async function run(): Promise<void> {
+export async function runWorker(): Promise<void> {
     try {
         while (!stopping) {
             await maintain();
@@ -191,11 +191,4 @@ async function run(): Promise<void> {
     } finally {
         await db.$disconnect();
     }
-}
-
-if (process.env.EPAPERS_WORKER_MODE !== 'lambda') {
-    run().catch(() => {
-        logger.error('Worker failed');
-        process.exitCode = 1;
-    });
 }

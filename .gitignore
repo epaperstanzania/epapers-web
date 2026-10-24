@@ -13,5 +13,8 @@ env.txt
 .vercel/
 worker/dist/
 worker/epapers-secrets.local.json
+worker/.secrets
+worker/.cloudflare/
 
 .vercel
+.env.example

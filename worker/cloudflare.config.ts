@@ -1,0 +1,15 @@
+import { bindings, defineConfig, triggers } from 'cf/config';
+import * as entrypoint from './cloudflare.ts' with { type: 'cf-worker' };
+
+export default defineConfig({
+    worker: {
+        name: 'epapers-background-worker',
+        entrypoint,
+        compatibilityDate: '2026-10-24',
+        env: {
+            EPAPERS_API_ORIGIN: bindings.text('https://epapertz.vercel.app'),
+            EPAPERS_WORKER_TOKEN: bindings.secret(),
+        },
+        triggers: [triggers.scheduled({ schedule: '*/1 * * * *' })],
+    },
+});

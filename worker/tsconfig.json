@@ -1,7 +1,13 @@
 {
   "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true
+  },
   "include": [
     "index.ts",
-    "cloudflare.ts"
+    "cloudflare.ts",
+    "cloudflare.config.ts",
+    "vite.config.ts",
+    ".cloudflare/types"
   ]
 }

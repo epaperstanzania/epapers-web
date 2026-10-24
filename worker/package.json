@@ -9,16 +9,19 @@
   "scripts": {
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint index.ts lambda.mjs --max-warnings=0",
+    "lint": "eslint index.ts cloudflare.ts cloudflare.config.ts vite.config.ts --max-warnings=0",
     "start": "node --conditions=react-server --import tsx index.ts",
-    "build:lambda": "powershell -NoProfile -ExecutionPolicy Bypass -File ./package-lambda.ps1"
+    "dev:cloudflare": "cf dev",
+    "types:cloudflare": "cf workers types",
+    "deploy:cloudflare": "cf deploy"
   },
   "dependencies": {
-    "@aws-sdk/client-secrets-manager": "^3.1156.0",
     "@epapers/server": "workspace:*",
     "tsx": "4.21.0"
   },
   "devDependencies": {
-    "esbuild": "^0.28.2"
+    "@cloudflare/vite-plugin": "2.0.0-beta.v.4",
+    "cf": "0.15.0",
+    "vite": "8.3.5"
   }
 }

@@ -48,6 +48,7 @@ Add these secrets to **Production** in the public project's Vercel settings:
 
 - `DATABASE_URL`, `DATA_ENCRYPTION_KEY`, `JWT_ACCESS_SECRET`,
   `REFRESH_TOKEN_PEPPER`, `IP_HASH_SALT`.
+- `EPAPERS_WORKER_TOKEN`, shared with the Cloudflare Cron Worker.
 - `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ENDPOINT`,
   `R2_INCOMING_BUCKET`, `R2_PUBLISHED_BUCKET`.
 - `EMAIL_PROVIDER` and the corresponding SMTP credentials/settings or
@@ -55,9 +56,8 @@ Add these secrets to **Production** in the public project's Vercel settings:
 
 Use real, independently generated keys; templates are not production values.
 Do not add backend secrets to the other three projects. Vercel deployment does
-not provision a database, run migrations, configure bucket CORS, or start the
-long-running worker. Keep the worker running on a suitable process host with
-matching backend credentials: email delivery and PDF scan/publication need it.
+not provision a database, run migrations, or configure bucket CORS. Email
+delivery and PDF scan/publication are driven by the Cloudflare Cron Worker below.
 Allow the four selected HTTPS origins in private incoming-bucket PUT CORS.
 
 Do not copy `.env.local`, `.env.example`, or `VERCEL_OIDC_TOKEN` into Vercel.
@@ -70,94 +70,57 @@ On Vercel, rate limiting uses the platform-overwritten `x-vercel-forwarded-for`
 header. Keep `TRUST_PROXY=false` there; that option is for restricted Cloudflare
 ingress on other hosts.
 
-## AWS Lambda background worker
+## Cloudflare background worker
 
-The background processor now runs as a bounded AWS Lambda invocation, scheduled
-by Amazon EventBridge Scheduler. Each invocation runs maintenance, processes a
-bounded batch of due jobs, then returns; it does not start the old persistent
-polling loop. The four Vercel portal projects are unchanged.
+Only the scheduler is deployed to Cloudflare Workers. The existing Vercel web/API
+project runs each bounded job batch in its Node.js runtime, preserving Prisma,
+R2, SMTP, and Resend support. The Cloudflare Cron Worker calls the private
+`POST /api/internal/worker/process` endpoint once per minute. Each request can
+process at most 20 jobs and runs for at most 45 seconds; database job leases
+protect against overlapping or retried invocations.
 
-The target function is
-`arn:aws:lambda:eu-north-1:172083943921:function:epapers-background-worker`.
-Deploying requires AWS credentials with permission to update that Lambda,
-create the EventBridge Scheduler resources/IAM roles, and update its execution
-role. The AWS CLI must be installed and authenticated.
+The Worker calls the public API origin `https://epapertz.vercel.app`. Deploy the
+web/API project with a high-entropy `EPAPERS_WORKER_TOKEN` in its Production
+environment first. Use the exact same token as the Cloudflare Worker secret.
+Generate a separate token for staging. Never commit or print either token.
 
-Build a standalone workspace package and ZIP from the repository root:
+From the repository root, install dependencies and generate the Cloudflare
+Worker types:
 
 ```powershell
 pnpm install --frozen-lockfile
-pnpm --filter @epapers/worker build:lambda
+pnpm --filter @epapers/worker types:cloudflare
 ```
 
-The script generates Prisma for both the local platform and AWS Lambda's
-Amazon Linux OpenSSL 3 runtime, then creates
-`worker/dist/epapers-background-worker.zip`. In the Lambda console configure
-runtime `nodejs24.x`, architecture `x86_64`, handler `lambda.handler`, memory
-1024 MB, and timeout 300 seconds. Set these environment variables:
+Create `worker/.secrets` as an ignored local file containing only:
 
 ```text
-EPAPERS_SECRET_ARN=<Secrets Manager secret ARN>
-EPAPERS_WORKER_MAX_JOBS=20
+EPAPERS_WORKER_TOKEN=<same random token configured in Vercel>
 ```
 
-Set reserved concurrency to `1` if this Lambda is dedicated to background jobs,
-so scheduled invocations do not overlap. Scheduler retries throttled deliveries.
-
-Create a Secrets Manager secret as a JSON object. It must include the server
-environment values from `worker/.env.example` (including portal origins,
-CockroachDB `DATABASE_URL`, encryption/signing keys, R2 credentials and
-bucket settings, and the email provider credentials). Every value must be a
-JSON string. Keep this secret out of source control. Attach the secret ARN to
-`EPAPERS_SECRET_ARN`; the function loads it with the AWS SDK at cold start.
-Its execution role needs `secretsmanager:GetSecretValue` on that specific
-secret, plus `kms:Decrypt` only if the secret uses a customer-managed KMS key.
-`worker/template.yaml` grants the Secrets Manager permission to the existing
-Lambda execution role and creates a least-privilege Scheduler invoke role.
-
-Upload the generated code package:
+After the Vercel deployment containing the authenticated endpoint is live, deploy
+only the Worker from its directory:
 
 ```powershell
-aws lambda update-function-code `
-  --region eu-north-1 `
-  --function-name arn:aws:lambda:eu-north-1:172083943921:function:epapers-background-worker `
-  --zip-file fileb://worker/dist/epapers-background-worker.zip
+Push-Location worker
+cf auth whoami
+cf deploy --dry-run --secrets-file .secrets
+cf deploy --secrets-file .secrets
+Pop-Location
 ```
 
-Find the existing Lambda execution role ARN with:
+The typed project config in `worker/cloudflare.config.ts` names the Worker and
+installs a `*/1 * * * *` Cron Trigger. Verify deployment in the Cloudflare
+dashboard under **Workers & Pages → epapers-background-worker → Triggers** and
+inspect its invocation logs. Cron changes can take several minutes to propagate.
+Successful runs log `Scheduled worker batch completed` with a processed count;
+`processed: 0` means the endpoint ran but there were no due jobs. Confirm the
+database `workerHeartbeat` setting advances and monitor failed/retrying jobs.
 
-```powershell
-aws lambda get-function-configuration `
-  --region eu-north-1 `
-  --function-name arn:aws:lambda:eu-north-1:172083943921:function:epapers-background-worker `
-  --query Role `
-  --output text
-```
-
-Use the role name returned by that command. Deploy the schedule and IAM
-resources, replacing `<ROLE_NAME>` and `<SECRET_ARN>` with the actual values:
-
-```powershell
-aws cloudformation deploy `
-  --region eu-north-1 `
-  --template-file worker/template.yaml `
-  --stack-name epapers-background-worker-schedule `
-  --capabilities CAPABILITY_IAM `
-  --parameter-overrides FunctionName=epapers-background-worker LambdaExecutionRoleName=<ROLE_NAME> WorkerSecretArn=<SECRET_ARN>
-```
-
-The schedule defaults to one invocation per minute. Lambda processes no more
-than 20 jobs per invocation and stops starting work before the 300-second
-function timeout. Job claims remain transactional, so duplicate or retried
-scheduler invocations do not claim the same pending job concurrently. Verify the
-EventBridge schedule is enabled, inspect Lambda CloudWatch logs, and confirm
-the database `workerHeartbeat` setting advances. AWS service usage may incur
-charges; check the current Lambda, EventBridge Scheduler, and Secrets Manager
-pricing and account free-tier eligibility before enabling production traffic.
-
-Do not run database migrations from the Lambda handler. Keep schema changes in
-the existing release process and keep the four portal projects on their current
-Vercel configuration.
+Do not deploy the Vercel portals as part of a Worker-only release. Do not run
+database migrations from the Cron Worker; keep migrations in the existing
+release process. The Node worker entrypoint remains available for local or
+non-Cloudflare operation.
 
 ## Local development
 
