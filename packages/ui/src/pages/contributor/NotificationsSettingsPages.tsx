@@ -54,7 +54,7 @@ export const NotificationsPage: React.FC = () => {
   });
 
   return (<BusyScope busy={busy}><div className="max-w-3xl mx-auto space-y-6">
-      <div className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl p-6 shadow-xs flex items-center justify-between gap-4">
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-heading font-extrabold text-2xl text-[var(--color-text)] ">
             Notifications

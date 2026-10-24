@@ -400,8 +400,8 @@ export const AdminLecturersPage: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {users.map((u) => (
-          <div key={u.id} className="p-5 bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl flex items-center justify-between gap-4">
-            <div className="space-y-1">
+          <div key={u.id} className="min-w-0 p-4 sm:p-5 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="min-w-0 space-y-1">
               <span className="font-bold text-sm text-[var(--color-text)]  block">
                 @{u.username}
               </span>

@@ -133,7 +133,8 @@ export const SearchPage: React.FC<{ contributor?: boolean }> = ({ contributor = 
     testNumber !== 'ALL' ||
     academicYear !== 'ALL' ||
     semester !== 'ALL' ||
-    hasMarkingScheme;
+    hasMarkingScheme ||
+    sortBy !== 'recent';
 
   return (
     <div className="space-y-6">
@@ -152,6 +153,7 @@ export const SearchPage: React.FC<{ contributor?: boolean }> = ({ contributor = 
           <Search className="w-5 h-5 text-[var(--color-neutral)] absolute left-3.5" />
           <input
             type="text"
+            aria-label="Search examination papers by module or title"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Type module code, title, or topic..."
@@ -160,6 +162,7 @@ export const SearchPage: React.FC<{ contributor?: boolean }> = ({ contributor = 
           {query && (
             <button
               onClick={() => setQuery('')}
+              aria-label="Clear search"
               className="absolute right-3.5 p-1 text-[var(--color-neutral)] hover:text-[var(--color-text-muted)]  cursor-pointer"
             >
               <X className="w-4 h-4" />

@@ -44,7 +44,7 @@ export const SubmissionsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl p-6 sm:p-8 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 sm:p-8 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-heading font-extrabold text-2xl text-[var(--color-text)] ">
             My Examination Submissions
@@ -64,10 +64,10 @@ export const SubmissionsPage: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-[var(--color-border)]  pb-2 overflow-x-auto">
+      <div className="grid grid-cols-2 sm:flex items-center gap-2 border-b border-[var(--color-border)] pb-2">
         <button
           onClick={() => setActiveTab('ALL')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+          className={`min-h-11 px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
             activeTab === 'ALL'
               ? 'bg-[var(--color-primary)] text-[var(--color-surface)] shadow-xs'
               : 'text-[var(--color-text-muted)]  hover:bg-[var(--color-sidebar)] '
@@ -77,7 +77,7 @@ export const SubmissionsPage: React.FC = () => {
         </button>
         <button
           onClick={() => setActiveTab('PENDING')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+          className={`min-h-11 px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
             activeTab === 'PENDING'
               ? 'bg-[var(--color-warning)] text-[var(--color-primary-dark)] font-bold shadow-xs'
               : 'text-[var(--color-text-muted)]  hover:bg-[var(--color-sidebar)] '
@@ -87,7 +87,7 @@ export const SubmissionsPage: React.FC = () => {
         </button>
         <button
           onClick={() => setActiveTab('APPROVED')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+          className={`min-h-11 px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
             activeTab === 'APPROVED'
               ? 'bg-[var(--color-success)] text-[var(--color-surface)] shadow-xs'
               : 'text-[var(--color-text-muted)]  hover:bg-[var(--color-sidebar)] '
@@ -97,7 +97,7 @@ export const SubmissionsPage: React.FC = () => {
         </button>
         <button
           onClick={() => setActiveTab('REJECTED')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+          className={`min-h-11 px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
             activeTab === 'REJECTED'
               ? 'bg-[var(--color-primary)] text-[var(--color-surface)] shadow-xs'
               : 'text-[var(--color-text-muted)]  hover:bg-[var(--color-sidebar)] '

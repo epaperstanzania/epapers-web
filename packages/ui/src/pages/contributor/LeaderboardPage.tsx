@@ -29,9 +29,9 @@ export const LeaderboardPage: React.FC = () => {
   if (isGuest) return null;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-w-0 max-w-4xl mx-auto space-y-5 sm:space-y-6">
       {/* Header */}
-      <div className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-bold text-xl sm:text-2xl text-[var(--color-text)] ">
             Archive Leaderboard
@@ -48,7 +48,7 @@ export const LeaderboardPage: React.FC = () => {
 
       {/* Leaderboard Table / Cards */}
       <div className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl overflow-hidden">
-        <div className="p-4 sm:p-5 border-b border-[var(--color-border)]  flex items-center justify-between text-xs font-bold text-[var(--color-neutral)] uppercase tracking-wider">
+        <div className="hidden sm:flex p-4 sm:p-5 border-b border-[var(--color-border)] items-center justify-between text-xs font-bold text-[var(--color-neutral)] uppercase tracking-wider">
           <span>Rank & Archivist</span>
           <span className="text-right">Stats & Accrued XP</span>
         </div>
@@ -62,14 +62,14 @@ export const LeaderboardPage: React.FC = () => {
               return (
                 <div
                   key={user.id}
-                  className={`p-4 sm:p-5 flex items-center justify-between gap-4 transition-colors ${
+                  className={`min-w-0 p-4 sm:p-5 flex flex-col items-start sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 transition-colors ${
                     isCurrent
                       ? 'bg-[var(--color-blue-tint)]/70  border-l-4 border-[var(--color-accent)]'
                       : 'hover:bg-[var(--color-input)] '
                   }`}
                 >
                   {/* Left: Rank + Tile + Name */}
-                  <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
                     {/* Rank Badge */}
                     <div className="w-8 flex items-center justify-center font-mono font-bold text-sm shrink-0 text-[var(--color-text-muted)] ">
                       #{rank}
@@ -80,7 +80,7 @@ export const LeaderboardPage: React.FC = () => {
                     </Link>
 
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <Link
                           to={`/u/${user.username}`}
                           className="font-bold text-sm text-[var(--color-text)]  hover:text-[var(--color-primary)]  truncate"
@@ -107,7 +107,7 @@ export const LeaderboardPage: React.FC = () => {
                   </div>
 
                   {/* Right: XP Score */}
-                  <div className="text-right shrink-0">
+                  <div className="flex w-full items-center justify-between border-t border-[var(--color-border)] pt-2 text-left sm:block sm:w-auto sm:border-0 sm:pt-0 sm:text-right shrink-0">
                     <span className="font-bold text-base sm:text-lg text-[var(--color-primary)]  font-mono tabular-nums">
                       {user.xp} XP
                     </span>

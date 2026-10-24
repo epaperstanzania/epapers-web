@@ -49,7 +49,7 @@ export const TopBar: React.FC<TopBarProps> = ({
       <div className="flex items-center gap-3 min-w-0">
         <button
           onClick={onOpenMobileDrawer}
-          className="lg:hidden p-1.5 -ml-2 rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-sidebar)] cursor-pointer"
+          className="lg:hidden grid min-h-11 min-w-11 -ml-2 place-items-center rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-sidebar)] cursor-pointer"
           title="Open Menu"
         >
           <Menu className="w-5 h-5" />
@@ -66,7 +66,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           type="button"
           onClick={() => navigate(searchTarget)}
           aria-label="Search examination papers"
-          className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--color-input)] border border-[var(--color-input-border)] text-xs text-[var(--color-text-muted)] hover:border-[var(--color-primary)] transition-colors cursor-pointer"
+          className="w-full min-h-11 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--color-input)] border border-[var(--color-input-border)] text-xs text-[var(--color-text-muted)] hover:border-[var(--color-primary)] transition-colors cursor-pointer"
         >
           <Search className="w-3.5 h-3.5 text-[var(--color-neutral)]" />
           <span className="truncate">Search modules, e.g. COE 07201...</span>

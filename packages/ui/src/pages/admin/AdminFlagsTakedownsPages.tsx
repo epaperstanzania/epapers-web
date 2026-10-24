@@ -31,7 +31,7 @@ export const AdminFlagsPage: React.FC = () => {
 
   if (loading) return <PageLoader variant="rows" label="Loading content…" />;
   return (<BusyScope busy={busy}><div className="space-y-6">
-      <div className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl p-6 shadow-xs flex items-center justify-between">
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <Flag className="w-5 h-5 text-[var(--color-danger)]" />
