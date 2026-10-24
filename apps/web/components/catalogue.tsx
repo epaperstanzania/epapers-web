@@ -6,27 +6,133 @@ import { catalogSchemas, uuid } from '@epapers/server/modules/catalog/schemas';
 import { ApiError } from '@epapers/config/errors';
 import { PaperActions } from '@epapers/ui/components/common/PaperActions';
 import { DepartmentDirectory, DepartmentsDirectory, ProgramDirectory } from './catalogue-directory';
-import type { paperDto } from '@epapers/server/modules/catalog/dto';
-type Paper = ReturnType<typeof paperDto>;
-type Query = Record<string,string|string[]|undefined>;
-function cleanQuery(query: Query) { return Object.fromEntries(Object.entries(query).filter(([,value])=>value!==''&&value!==undefined)); }
-function NextPage({cursor,path,query={}}:{cursor:string|null;path:string;query?:Query}) { if(!cursor)return null;const params=new URLSearchParams(cleanQuery(query) as Record<string,string>);params.set('cursor',cursor);return <Link className="mt-8 inline-flex min-h-11 items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-5 py-3 text-sm font-semibold text-[var(--color-primary)] shadow-sm transition-colors hover:bg-[var(--color-hover)] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-accent)]" href={path+'?'+params}>Next page →</Link>; }
-function categoryLabel(category:string,testNumber:number|null|undefined) {return category==='TEST'?testNumber?`Test ${testNumber}`:'Test':category;}
-function PaperList({items}:{items:Paper[]}) {return items.length?<ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{items.map(p=><li key={p.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex justify-between gap-2 text-xs font-semibold text-blue-800"><span className="font-mono">{p.module.code}</span><span>{categoryLabel(p.category,p.testNumber)} · {p.academicYear}</span></div><h2 className="my-3 text-lg font-bold"><Link className="hover:underline" href={'/papers/'+p.id}>{p.title}</Link></h2><p className="text-sm text-slate-600">{p.module.name}</p><p className="mt-4 text-xs text-slate-600">Semester {p.semester} · {p.downloadsCount.toLocaleString()} downloads{p.hasMarkingScheme?' · Marking scheme':''}</p></li>)}</ul>:<p className="rounded-xl border bg-white p-8">No approved papers match these filters.</p>;}
-function SearchForm({query={}}:{query?:Query}) {return <form action="/search" className="my-6 grid gap-3 rounded-xl border bg-white p-5 sm:grid-cols-2 lg:grid-cols-4"><label className="sm:col-span-2">Search papers<input name="q" maxLength={120} defaultValue={typeof query.q==='string'?query.q:''} placeholder="Module code, module name or paper title" className="mt-1 w-full rounded-lg border p-3" /></label><label>Exam category<select name="category" defaultValue={query.category as string||''} className="mt-1 w-full rounded-lg border p-3"><option value="">All categories</option><option value="TEST">All tests</option><option value="UE">UE</option><option value="SUPP">SUPP</option></select></label><label>Test number<select name="testNumber" defaultValue={query.testNumber as string||''} className="mt-1 w-full rounded-lg border p-3"><option value="">Any test</option><option value="1">Test 1</option><option value="2">Test 2</option></select></label><label>Sort by<select name="sortBy" defaultValue={query.sortBy as string||'recent'} className="mt-1 w-full rounded-lg border p-3"><option value="recent">Most recent</option><option value="popular">Most downloaded</option><option value="year_desc">Newest academic year</option><option value="year_asc">Oldest academic year</option></select></label><label>Academic year<input name="academicYear" type="number" min={2000} max={2200} defaultValue={query.academicYear as string||''} className="mt-1 w-full rounded-lg border p-3" /></label><label>Semester<select name="semester" defaultValue={query.semester as string||''} className="mt-1 w-full rounded-lg border p-3"><option value="">Both semesters</option><option value="1">1</option><option value="2">2</option></select></label><label className="flex items-center gap-2"><input type="checkbox" name="hasMarkingScheme" value="true" defaultChecked={query.hasMarkingScheme==='true'} />With marking scheme</label>{['departmentId','programId','moduleId'].map(key=>typeof query[key]==='string'?<input key={key} type="hidden" name={key} value={query[key] as string}/>:null)}<button className="self-end rounded-lg bg-[#0049A4] p-3 font-semibold text-white">Search archive</button></form>;}
-export async function CataloguePage({kind,params={},query={}}:{kind:string;params?:Record<string,string>;query?:Query}) {
- try {
-  let content: React.ReactNode;
-  if(kind==='home') {const result=await catalogue.papers(catalogSchemas.papers.parse({limit:6,sortBy:'popular'}));content=<><section className="overflow-hidden rounded-2xl bg-[#00337A] bg-cover bg-center px-6 py-12 text-white shadow-lg sm:px-10 sm:py-16" style={{backgroundImage:"linear-gradient(90deg,rgba(0,31,78,.94) 0%,rgba(0,51,122,.78) 55%,rgba(0,51,122,.28) 100%),url('/images/dit-community.jpg')"}}><p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-blue-200">E Papers 
-Tusome Pamoja</p><h1 className="max-w-3xl font-heading text-4xl font-extrabold leading-tight sm:text-5xl">Prepare with confidence.<br/>Learn from past papers.</h1><p className="mt-5 max-w-2xl text-blue-100">Explore examination papers by department, program and module. A shared academic archive, built by the DIT community.</p><Link href="/departments" className="mt-6 inline-block rounded-lg bg-white px-5 py-3 font-semibold text-blue-900">Browse departments →</Link></section><SearchForm/><div className="mb-5 flex items-center justify-between"><h2 className="text-2xl font-bold">Popular papers</h2><Link href="/popular" className="text-blue-800 underline">View all</Link></div><PaperList items={result.items}/></>;}
-  else if(['search','popular'].includes(kind)){const raw=cleanQuery({...query,...(kind==='popular'?{sortBy:'popular'}:{})});const q=catalogSchemas.papers.safeParse(raw);if(!q.success)return <InvalidQuery/>;const result=await catalogue.papers(q.data);content=<><h1 className="text-3xl font-bold">{kind==='popular'?'Popular papers':'Search examination papers'}</h1><SearchForm query={raw}/><PaperList items={result.items}/><NextPage cursor={result.nextCursor} path={'/'+kind} query={raw}/></>;}
-  else if(kind==='departments'){const q=catalogSchemas.departments.safeParse(cleanQuery(query));if(!q.success)return <InvalidQuery/>;const result=await cachedDepartments(q.data);content=<><DepartmentsDirectory departments={result.items}/><NextPage cursor={result.nextCursor} path="/departments" query={query}/></>;}
-  else if(kind==='department'){if(!uuid.safeParse(params.dept).success)notFound();const d=await cachedDepartment(params.dept);const q=catalogSchemas.programs.safeParse({...cleanQuery(query),departmentId:d.id});if(!q.success)return <InvalidQuery/>;const result=await cachedPrograms(q.data);content=<><DepartmentDirectory department={d} programs={result.items}/><NextPage cursor={result.nextCursor} path={'/departments/'+d.id} query={query}/></>;}
-  else if(kind==='program'){if(!uuid.safeParse(params.id).success)notFound();const p=await cachedProgram(params.id);const q=catalogSchemas.modules.safeParse({...cleanQuery(query),programId:p.id});if(!q.success)return <InvalidQuery/>;const result=await cachedModules(q.data);content=<><ProgramDirectory program={p} modules={result.items}/><NextPage cursor={result.nextCursor} path={'/programs/'+p.id} query={query}/></>;}
-  else if(kind==='module'){if(!params.code||params.code.length>100)notFound();const m=await catalogue.moduleDetail(params.code);const q=catalogSchemas.papers.safeParse({...cleanQuery(query),moduleId:m.id});if(!q.success)return <InvalidQuery/>;const result=await catalogue.papers(q.data);content=<><p className="font-mono text-blue-800">{m.code}</p><h1 className="my-4 text-3xl font-bold">{m.name}</h1><p className="mb-6">Semester {m.semester}{m.credits?` · ${m.credits} credits`:''}</p><PaperList items={result.items}/><NextPage cursor={result.nextCursor} path={'/modules/'+encodeURIComponent(m.code)} query={query}/></>;}
-  else if(kind==='paper'){if(!uuid.safeParse(params.id).success)notFound();const p=await catalogue.paper(params.id);content=<article className="space-y-6 rounded-xl border bg-white p-6 sm:p-10"><Link href={'/modules/'+encodeURIComponent(p.module.code)} className="font-mono text-blue-800 underline">{p.module.code} — {p.module.name}</Link><h1 className="text-3xl font-bold">{p.title}</h1><p>{categoryLabel(p.category,p.testNumber)} · {p.academicYear}/{p.academicYear+1} · Semester {p.semester} · {p.examPeriod}</p><p className="text-slate-600">{p.department.name} · {p.program.name}</p>{p.uploader&&<p>Contributed by <Link className="text-blue-800 underline" href={'/u/'+encodeURIComponent(p.uploader.username)}>@{p.uploader.username}</Link>{p.uploader.isLecturerVerified?' · Verified lecturer':''}</p>}<PaperActions id={p.id} available={p.downloadAvailable} hasMarkingScheme={p.hasMarkingScheme}/></article>;}
-  else notFound();
-  return <div className="epapers-catalogue mx-auto w-full max-w-7xl space-y-4 px-4 py-8 sm:px-6">{content}</div>;
- } catch(error) {if(error instanceof ApiError&&error.status===404)notFound();if(error instanceof Error && error.message.startsWith('NEXT_'))throw error;return <section className="mx-auto max-w-xl p-8"><h1 className="text-2xl font-bold">The archive is temporarily unavailable</h1><p role="alert" className="my-4">We could not load the archive. Please try again shortly.</p><a className="rounded border bg-white px-5 py-3" href="">Retry</a></section>;}
+import { HomeHero, ListHeading, PageHeading, PaperList, SearchForm, type CatalogueQuery } from './catalogue-results';
+import styles from './catalogue-results.module.css';
+
+function cleanQuery(query: CatalogueQuery) {
+  return Object.fromEntries(Object.entries(query).filter(([, value]) => value !== '' && value !== undefined));
 }
-function InvalidQuery(){return <section className="p-8"><h1 className="text-2xl font-bold">Check your search filters</h1><p role="alert">One or more filters are invalid. Choose an exam category, a year from 2000 to 2200, and semester 1 or 2.</p><Link href="/search" className="underline">Reset search</Link></section>;}
+
+function NextPage({ cursor, path, query = {} }: { cursor: string | null; path: string; query?: CatalogueQuery }) {
+  if (!cursor) return null;
+  const params = new URLSearchParams(cleanQuery(query) as Record<string, string>);
+  params.set('cursor', cursor);
+  return <Link className={styles.pagination} href={`${path}?${params}`}>Next page <span aria-hidden="true">→</span></Link>;
+}
+
+function categoryLabel(category: string, testNumber: number | null | undefined) {
+  return category === 'TEST' ? (testNumber ? `Test ${testNumber}` : 'Test') : category;
+}
+
+export async function CataloguePage({
+  kind,
+  params = {},
+  query = {},
+}: {
+  kind: string;
+  params?: Record<string, string>;
+  query?: CatalogueQuery;
+}) {
+  try {
+    let content: React.ReactNode;
+
+    if (kind === 'home') {
+      const result = await catalogue.papers(catalogSchemas.papers.parse({ limit: 6, sortBy: 'popular' }));
+      content = <>
+        <HomeHero />
+        <SearchForm />
+        <ListHeading title="Popular papers" href="/popular" linkLabel="View all" />
+        <PaperList items={result.items} />
+      </>;
+    } else if (kind === 'search' || kind === 'popular') {
+      const raw = cleanQuery({ ...query, ...(kind === 'popular' ? { sortBy: 'popular' } : {}) });
+      const parsed = catalogSchemas.papers.safeParse(raw);
+      if (!parsed.success) return <InvalidQuery />;
+      const result = await catalogue.papers(parsed.data);
+      content = <>
+        <PageHeading kind={kind} />
+        <SearchForm query={raw} showReset />
+        <ListHeading title={kind === 'popular' ? 'Most downloaded' : 'Search results'} count={result.items.length} />
+        <PaperList items={result.items} />
+        <NextPage cursor={result.nextCursor} path={`/${kind}`} query={raw} />
+      </>;
+    } else if (kind === 'departments') {
+      const parsed = catalogSchemas.departments.safeParse(cleanQuery(query));
+      if (!parsed.success) return <InvalidQuery />;
+      const result = await cachedDepartments(parsed.data);
+      content = <>
+        <DepartmentsDirectory departments={result.items} />
+        <NextPage cursor={result.nextCursor} path="/departments" query={query} />
+      </>;
+    } else if (kind === 'department') {
+      if (!uuid.safeParse(params.dept).success) notFound();
+      const department = await cachedDepartment(params.dept);
+      const parsed = catalogSchemas.programs.safeParse({ ...cleanQuery(query), departmentId: department.id });
+      if (!parsed.success) return <InvalidQuery />;
+      const result = await cachedPrograms(parsed.data);
+      content = <>
+        <DepartmentDirectory department={department} programs={result.items} />
+        <NextPage cursor={result.nextCursor} path={`/departments/${department.id}`} query={query} />
+      </>;
+    } else if (kind === 'program') {
+      if (!uuid.safeParse(params.id).success) notFound();
+      const program = await cachedProgram(params.id);
+      const parsed = catalogSchemas.modules.safeParse({ ...cleanQuery(query), programId: program.id });
+      if (!parsed.success) return <InvalidQuery />;
+      const result = await cachedModules(parsed.data);
+      content = <>
+        <ProgramDirectory program={program} modules={result.items} />
+        <NextPage cursor={result.nextCursor} path={`/programs/${program.id}`} query={query} />
+      </>;
+    } else if (kind === 'module') {
+      if (!params.code || params.code.length > 100) notFound();
+      const module = await catalogue.moduleDetail(params.code);
+      const parsed = catalogSchemas.papers.safeParse({ ...cleanQuery(query), moduleId: module.id });
+      if (!parsed.success) return <InvalidQuery />;
+      const result = await catalogue.papers(parsed.data);
+      content = <>
+        <header className={styles.moduleHeader}>
+          <p className={styles.eyebrow}>{module.code}</p>
+          <h1>{module.name}</h1>
+          <p>Semester {module.semester}{module.credits ? ` · ${module.credits} credits` : ''}</p>
+        </header>
+        <ListHeading title="Available papers" count={result.items.length} />
+        <PaperList items={result.items} />
+        <NextPage cursor={result.nextCursor} path={`/modules/${encodeURIComponent(module.code)}`} query={query} />
+      </>;
+    } else if (kind === 'paper') {
+      if (!uuid.safeParse(params.id).success) notFound();
+      const paper = await catalogue.paper(params.id);
+      content = <article className={styles.paperDetail}>
+        <Link className={styles.paperBack} href={`/modules/${encodeURIComponent(paper.module.code)}`}>
+          {paper.module.code} — {paper.module.name}
+        </Link>
+        <h1>{paper.title}</h1>
+        <p>{categoryLabel(paper.category, paper.testNumber)} · {paper.academicYear}/{paper.academicYear + 1} · Semester {paper.semester} · {paper.examPeriod}</p>
+        <p>{paper.department.name} · {paper.program.name}</p>
+        {paper.uploader && <p>Contributed by <Link className={styles.paperBack} href={`/u/${encodeURIComponent(paper.uploader.username)}`}>@{paper.uploader.username}</Link>{paper.uploader.isLecturerVerified ? ' · Verified lecturer' : ''}</p>}
+        <PaperActions id={paper.id} available={paper.downloadAvailable} hasMarkingScheme={paper.hasMarkingScheme} />
+      </article>;
+    } else {
+      notFound();
+    }
+
+    return <div className="epapers-catalogue mx-auto grid w-full min-w-0 max-w-7xl gap-6 pb-8 sm:gap-8">{content}</div>;
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) notFound();
+    if (error instanceof Error && error.message.startsWith('NEXT_')) throw error;
+    return <section className={styles.statusCard}>
+      <h1>The archive is temporarily unavailable</h1>
+      <p role="alert">We could not load the archive. Please try again shortly.</p>
+      <a href="">Retry</a>
+    </section>;
+  }
+}
+
+function InvalidQuery() {
+  return <section className={styles.statusCard}>
+    <h1>Check your search filters</h1>
+    <p role="alert">One or more filters are invalid. Choose an exam category, a year from 2000 to 2200, and semester 1 or 2.</p>
+    <Link href="/search">Reset search</Link>
+  </section>;
+}
