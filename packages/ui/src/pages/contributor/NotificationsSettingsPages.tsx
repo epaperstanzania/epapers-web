@@ -216,7 +216,7 @@ export const SettingsPage: React.FC = () => {
 
           <button
             type="submit"
-            className="py-2.5 px-5 bg-[var(--color-primary)] text-[var(--color-surface)] font-bold rounded-xl text-xs hover:bg-[var(--color-primary-dark)] transition-colors cursor-pointer"
+            className="py-2.5 px-5 bg-[var(--color-primary)] text-[var(--color-input)] font-bold rounded-xl text-xs hover:bg-[var(--color-primary-dark)] transition-colors cursor-pointer"
           >
             Save Settings
           </button>

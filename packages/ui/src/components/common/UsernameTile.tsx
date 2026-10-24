@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import { Atom, BookOpen, GraduationCap, Laptop, Lightbulb, UserRound } from 'lucide-react';
 import { profileImageUrl } from '../../services/api';
 
@@ -49,9 +49,10 @@ export const UsernameTile: React.FC<UsernameTileProps> = ({
   isLecturerVerified,
   className = '',
 }) => {
+  const [failedAvatarId, setFailedAvatarId] = useState<string | null>(null);
   const initial = (username?.[0] || 'U').toUpperCase();
   const selectedAvatar = DEFAULT_AVATARS.find((avatar) => avatar.id === resolveAvatarId(username, avatarId))!;
-  const uploaded = !!avatarId && /^p_[a-f0-9]{30}$/.test(avatarId);
+  const uploaded = !!avatarId && /^p_[a-f0-9]{30}$/.test(avatarId) && failedAvatarId !== avatarId;
   const AvatarIcon = selectedAvatar.icon;
 
   const sizeClasses = {
@@ -68,7 +69,7 @@ export const UsernameTile: React.FC<UsernameTileProps> = ({
         className={`${sizeClasses} shrink-0 flex items-center justify-center bg-[var(--color-sidebar)] text-[var(--color-neutral)] select-none`}
         title={`${uploaded ? 'Profile photo' : selectedAvatar.label + ' avatar'} for @${username}`}
       >
-        {uploaded ? <img src={profileImageUrl(avatarId!)} alt="" className="h-full w-full rounded-full object-cover" /> : AvatarIcon ? <AvatarIcon className="w-1/2 h-1/2" strokeWidth={1.8} /> : <span className="font-bold">{initial}</span>}
+        {uploaded ? <img src={profileImageUrl(avatarId!)} alt="" onError={() => setFailedAvatarId(avatarId!)} className="h-full w-full rounded-full object-cover" /> : AvatarIcon ? <AvatarIcon className="w-1/2 h-1/2" strokeWidth={1.8} /> : <span className="font-bold">{initial}</span>}
       </div>
 
       {showDetails && (

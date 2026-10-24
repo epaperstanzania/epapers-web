@@ -92,8 +92,9 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* User state / Quick Actions */}
         {currentUser ? (
           <Link
-            to={`/u/${currentUser.username}`}
+            to={role === 'admin' ? '/admin' : role === 'lecturer' ? '/lecturer' : '/dashboard'}
             className="flex items-center gap-2 pl-1 group cursor-pointer"
+            aria-label={`Open ${role === 'admin' ? 'admin' : role === 'lecturer' ? 'lecturer' : 'contributor'} dashboard`}
           >
             <UsernameTile
               username={currentUser.username}

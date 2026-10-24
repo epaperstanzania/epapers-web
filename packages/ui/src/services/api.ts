@@ -23,7 +23,7 @@ export type PaperDto = Pick<Paper, 'id' | 'title' | 'category' | 'testNumber' | 
   uploader: { username: string; avatarId?: string; isLecturerVerified: boolean } | null;
   createdAt: string; downloadAvailable: boolean; status?: string; rejectionReason?: string; duplicateWarning?: boolean;
 };
-type ProfileDto = { id?: string; username: string; email?: string; role?: Role; emailVerified?: boolean; isLecturerVerified?: boolean; lecturerVerified?: boolean; homeDepartmentId?: string; bio?: string; avatarId?: string; xp?: number; allTimeXp?: number; levelTitle: string; joinedAt?: string; status?: UserProfile['status']; rank?: number; approvedCount?: number };
+type ProfileDto = { id?: string; username: string; email?: string; role?: Role; emailVerified?: boolean; isLecturerVerified?: boolean; lecturerVerified?: boolean; homeDepartmentId?: string; bio?: string; avatarId?: string | null; xp?: number; allTimeXp?: number; levelTitle: string; joinedAt?: string; status?: UserProfile['status']; rank?: number; approvedCount?: number };
 export function profileFromDto(p: ProfileDto): UserProfile {
   return {
     id: p.id || p.username, username: p.username, email: p.email || '', role: p.role || 'contributor',

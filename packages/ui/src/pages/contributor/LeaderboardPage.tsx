@@ -57,7 +57,7 @@ export const LeaderboardPage: React.FC = () => {
           <div className="divide-y divide-[var(--color-border)] ">
             {leaderboard.map((user, idx) => {
               const isCurrent = user.username === currentUser?.username;
-              const rank = idx + 1;
+              const rank = user.rank || idx + 1;
 
               return (
                 <div
@@ -75,11 +75,9 @@ export const LeaderboardPage: React.FC = () => {
                       #{rank}
                     </div>
 
-                    <UsernameTile
-                      username={user.username}
-                      size="md"
-                      avatarId={user.avatarId}
-                    />
+                    <Link to={`/u/${user.username}`} aria-label={`View @${user.username}'s profile`} className="shrink-0 rounded-full ring-2 ring-[var(--color-border)] ring-offset-2 ring-offset-[var(--color-surface)] hover:ring-[var(--color-primary)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-primary)]">
+                      <UsernameTile username={user.username} size="lg" avatarId={user.avatarId} />
+                    </Link>
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">

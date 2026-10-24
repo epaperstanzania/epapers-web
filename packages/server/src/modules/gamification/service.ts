@@ -52,18 +52,20 @@ export async function leaderboard(user: User, q: z.infer<typeof moderationSchema
     const rows = await db.$queryRaw<Array<{
         id: string;
         username: string;
+        avatar_id: string | null;
+        role: string;
         xp: bigint;
         all_time_xp: number;
         approved_count: bigint;
         rank: bigint;
     }>> `
   WITH ranked AS (
-   SELECT u.id,u.username,u.all_time_xp,COALESCE(SUM(l.amount),0)::INT8 AS xp,
+   SELECT u.id,u.username,u.avatar_id,u.role,u.all_time_xp,COALESCE(SUM(l.amount),0)::INT8 AS xp,
     (SELECT count(*) FROM papers p WHERE p.uploaded_by_user_id=u.id AND p.status='APPROVED' AND p.deleted_at IS NULL)::INT8 AS approved_count
    FROM users u LEFT JOIN xp_ledger l ON l.user_id=u.id AND l.status='applied' AND l.created_at>=${since}
    WHERE u.role IN ('CONTRIBUTOR','LECTURER') AND u.status='ACTIVE' AND u.deleted_at IS NULL
-   GROUP BY u.id,u.username,u.all_time_xp
+   GROUP BY u.id,u.username,u.avatar_id,u.role,u.all_time_xp
   ), ordered AS (SELECT *,row_number() OVER(ORDER BY xp DESC,id ASC)::INT8 AS rank FROM ranked)
   SELECT * FROM ordered WHERE rank>COALESCE((SELECT rank FROM ordered WHERE id=${cursorId(q.cursor) || '00000000-0000-0000-0000-000000000000'}::UUID),0) ORDER BY rank LIMIT ${q.limit + 1}`;
-    return page(rows, q.limit, r => ({ rank: Number(r.rank), username: r.username, levelTitle: levelTitleForXp(Number(r.all_time_xp)), xp: Number(r.xp), approvedCount: Number(r.approved_count) }));
+    return page(rows, q.limit, r => ({ id: r.id, rank: Number(r.rank), username: r.username, avatarId: r.avatar_id, isLecturerVerified: r.role === 'LECTURER', levelTitle: levelTitleForXp(Number(r.all_time_xp)), xp: Number(r.xp), approvedCount: Number(r.approved_count) }));
 }

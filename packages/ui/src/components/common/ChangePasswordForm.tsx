@@ -32,7 +32,7 @@ export function ChangePasswordForm() {
         <PasswordInput label="Current password" name="currentPassword" value={currentPassword} onChange={setCurrentPassword} />
         <PasswordInput label="New password" value={password} onChange={setPassword} newPassword />
         <PasswordInput label="Confirm new password" name="confirmPassword" value={confirmation} onChange={setConfirmation} newPassword matchValue={password} />
-        <button type="submit" className="rounded-lg bg-[var(--color-primary)] px-5 py-2.5 text-xs font-bold text-white disabled:opacity-60">{busy ? 'Changing password…' : 'Change password'}</button>
+        <button type="submit" className="rounded-lg bg-[var(--color-primary)] px-5 py-2.5 text-xs font-bold text-[var(--color-input)] disabled:opacity-60">{busy ? 'Changing password…' : 'Change password'}</button>
       </fieldset>
     </form>
   </section>;

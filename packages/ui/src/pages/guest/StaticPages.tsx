@@ -37,7 +37,7 @@ export const HowItWorksPage: React.FC = () => (
       </div>
 
       <div className="grid grid-cols-1 gap-4 p-4 pt-0 md:grid-cols-3 sm:p-6 sm:pt-0">
-        <div className="space-y-2 rounded-lg border border-white/70 bg-white/95 p-5 text-[var(--color-text)] shadow-sm backdrop-blur-sm">
+        <div className="space-y-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 text-[var(--color-text)] shadow-sm">
           <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-primary)]  block">
             Step 1
           </span>
@@ -49,7 +49,7 @@ export const HowItWorksPage: React.FC = () => (
           </p>
         </div>
 
-        <div className="space-y-2 rounded-lg border border-white/70 bg-white/95 p-5 text-[var(--color-text)] shadow-sm backdrop-blur-sm">
+        <div className="space-y-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 text-[var(--color-text)] shadow-sm">
           <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-primary)]  block">
             Step 2
           </span>
@@ -61,7 +61,7 @@ export const HowItWorksPage: React.FC = () => (
           </p>
         </div>
 
-        <div className="space-y-2 rounded-lg border border-white/70 bg-white/95 p-5 text-[var(--color-text)] shadow-sm backdrop-blur-sm">
+        <div className="space-y-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 text-[var(--color-text)] shadow-sm">
           <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-primary)]  block">
             Step 3
           </span>

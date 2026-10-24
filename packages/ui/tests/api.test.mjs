@@ -36,7 +36,7 @@ test('admin login uses the shared credentials endpoint and requires a second ema
   assert.equal(calls[0].url, '/api/v1/auth/login'); assert.deepEqual(calls[0].body, { usernameOrEmail: 'admin@example.com', password: 'Correct1' });
   const verified = await verifySignIn(result.challengeToken, '123456');
   assert.equal(verified.user.role, 'admin'); assert.equal(calls[1].url, '/api/v1/auth/admin/verify-login');
-  assert.deepEqual(calls[1].body, { challengeToken: result.challengeToken, code: '123456' });
+  assert.deepEqual(calls[1].body, { challengeToken: result.challengeToken, code: '123456', rememberDevice: false });
 });
 
 test('search translates filters, removes ALL, and follows every cursor', async () => {
