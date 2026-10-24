@@ -6,7 +6,7 @@ import { Link, useNavigate } from '@epapers/ui/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { Department, Program, Module, ExamCategory } from '../../types';
-import { ArrowLeft, ArrowRight, Search, Upload, Paperclip, X, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Search, Upload, Paperclip, X, AlertTriangle, PlusCircle } from 'lucide-react';
 
 type SelectedFile = { name: string; size: string; file: File };
 
@@ -23,6 +23,7 @@ export const UploadPage: React.FC = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [modules, setModules] = useState<Module[]>([]);
   const [isLoadingModules, setIsLoadingModules] = useState(false);
+  const [moduleRefreshAttempt, setModuleRefreshAttempt] = useState(0);
   const [selectedDeptId, setSelectedDeptId] = useState('');
   const [selectedProgramId, setSelectedProgramId] = useState('');
   const [academicYear, setAcademicYear] = useState('');
@@ -31,6 +32,15 @@ export const UploadPage: React.FC = () => {
   const [category, setCategory] = useState<ExamCategory | ''>('');
   const [testNumber, setTestNumber] = useState<1 | 2 | ''>('');
   const [moduleSearch, setModuleSearch] = useState('');
+  const [showModuleRequest, setShowModuleRequest] = useState(false);
+  const [moduleRequestCode, setModuleRequestCode] = useState('');
+  const [moduleRequestName, setModuleRequestName] = useState('');
+  const [moduleRequestDescription, setModuleRequestDescription] = useState('');
+  const [moduleRequestError, setModuleRequestError] = useState<string | null>(null);
+  const [moduleRequestSent, setModuleRequestSent] = useState(false);
+  const [isSubmittingModuleRequest, setIsSubmittingModuleRequest] = useState(false);
+  const moduleRequestInFlight = useRef(false);
+  const moduleRequestVersion = useRef(0);
   const [paperFile, setPaperFile] = useState<SelectedFile | null>(null);
   const [markingSchemeFile, setMarkingSchemeFile] = useState<SelectedFile | null>(null);
   const [isDuplicate, setIsDuplicate] = useState(false);
@@ -101,7 +111,7 @@ export const UploadPage: React.FC = () => {
       if (active) setIsLoadingModules(false);
     });
     return () => { active = false; };
-  }, [selectedProgramId, selectedDeptId, semester, loadAttempt]);
+  }, [selectedProgramId, selectedDeptId, semester, loadAttempt, moduleRefreshAttempt]);
 
   useEffect(() => {
     let active = true;
@@ -122,6 +132,16 @@ export const UploadPage: React.FC = () => {
     setSubmitError(null);
   };
 
+  const resetModuleRequest = () => {
+    moduleRequestVersion.current += 1;
+    setShowModuleRequest(false);
+    setModuleRequestCode('');
+    setModuleRequestName('');
+    setModuleRequestDescription('');
+    setModuleRequestError(null);
+    setModuleRequestSent(false);
+  };
+
   const selectDepartment = (id: string) => {
     setSelectedDeptId(id);
     setSelectedProgramId('');
@@ -133,6 +153,7 @@ export const UploadPage: React.FC = () => {
     setModules([]);
     setModuleSearch('');
     setIsDuplicate(false);
+    resetModuleRequest();
     resetFiles();
   };
 
@@ -146,6 +167,7 @@ export const UploadPage: React.FC = () => {
     setModules([]);
     setModuleSearch('');
     setIsDuplicate(false);
+    resetModuleRequest();
     resetFiles();
   };
 
@@ -157,6 +179,7 @@ export const UploadPage: React.FC = () => {
     setTestNumber('');
     setModules([]);
     setIsDuplicate(false);
+    resetModuleRequest();
     resetFiles();
   };
 
@@ -166,15 +189,50 @@ export const UploadPage: React.FC = () => {
     setCategory('');
     setTestNumber('');
     setIsDuplicate(false);
+    resetModuleRequest();
     resetFiles();
   };
 
   const selectModule = (module: Module) => {
     setSelectedModuleId(module.id);
+    setModuleRequestSent(false);
+    setShowModuleRequest(false);
     setCategory('');
     setTestNumber('');
     setIsDuplicate(false);
     resetFiles();
+  };
+
+  const submitModuleRequest = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (moduleRequestInFlight.current || !selectedDepartment || !selectedProgram || !academicYear || !semester) return;
+    moduleRequestInFlight.current = true;
+    const requestVersion = moduleRequestVersion.current;
+    setIsSubmittingModuleRequest(true);
+    setModuleRequestError(null);
+    try {
+      await api.submitModuleRequest({
+        departmentId: selectedDepartment.id,
+        departmentName: selectedDepartment.name,
+        programId: selectedProgram.id,
+        programName: selectedProgram.name,
+        academicYear,
+        semester,
+        moduleCode: moduleRequestCode.trim(),
+        moduleName: moduleRequestName.trim(),
+        description: moduleRequestDescription.trim(),
+        requestedBy: currentUser?.username || 'contributor',
+      });
+      if (requestVersion === moduleRequestVersion.current) {
+        setModuleRequestSent(true);
+        setShowModuleRequest(false);
+      }
+    } catch (error) {
+      if (requestVersion === moduleRequestVersion.current) setModuleRequestError(error instanceof Error ? error.message : 'The module request could not be sent. Please try again.');
+    } finally {
+      moduleRequestInFlight.current = false;
+      setIsSubmittingModuleRequest(false);
+    }
   };
 
   const setSelectedFile = (event: React.ChangeEvent<HTMLInputElement>, isScheme: boolean) => {
@@ -358,7 +416,6 @@ export const UploadPage: React.FC = () => {
             {isLoadingModules ? <PageLoader variant="cards" label="Loading modules…" compact /> : modules.length === 0 ? (
               <div className="rounded-lg border border-dashed border-[var(--color-border)] p-5 text-sm text-[var(--color-text-muted)]">
                 No modules are offered for this program in Semester {semester}.
-                <Link to={`/request-module?departmentId=${encodeURIComponent(selectedDeptId)}&programId=${encodeURIComponent(selectedProgramId)}&academicYear=${encodeURIComponent(academicYear)}&semester=${semester}`} className="ml-2 inline-flex min-h-11 items-center font-semibold text-[var(--color-primary)] underline">Request new module</Link>
               </div>
             ) : filteredModules.length === 0 ? (
               <p className="rounded-lg bg-[var(--color-input)] p-4 text-sm text-[var(--color-text-muted)]">No modules match that search.</p>
@@ -366,6 +423,40 @@ export const UploadPage: React.FC = () => {
               <ul className="max-h-72 space-y-2 overflow-y-auto" aria-label="Available modules">
                 {filteredModules.map((module) => <li key={module.id}><button type="button" aria-pressed={selectedModuleId === module.id} onClick={() => selectModule(module)} className={`min-h-12 w-full rounded-lg border px-4 py-2 text-left ${selectedModuleId === module.id ? 'border-[var(--color-primary)] bg-[var(--color-active)]' : 'border-[var(--color-border)] bg-[var(--color-input)] hover:border-[var(--color-primary)]'}`}><span className="block font-mono text-sm font-bold text-[var(--color-primary)]">{module.code}</span><span className="block text-sm text-[var(--color-text)]">{module.name}</span></button></li>)}
               </ul>
+            )}
+            {moduleRequestSent ? (
+              <div role="status" className="rounded-lg border border-[var(--color-success)]/30 bg-[var(--color-success-soft)] p-4 text-sm text-[var(--color-text)]">
+                <p className="font-semibold">Module request sent for admin review.</p>
+                <p className="mt-1 text-[var(--color-text-muted)]">Your upload details are saved here. Once the module is approved, it will appear in the list above.</p>
+                <button type="button" onClick={() => setModuleRefreshAttempt(value => value + 1)} disabled={isLoadingModules} className="mt-2 min-h-11 rounded-lg border border-[var(--color-success)]/40 px-3 font-semibold text-[var(--color-text)] disabled:opacity-60">Refresh modules</button>
+              </div>
+            ) : showModuleRequest ? (
+              <form onSubmit={submitModuleRequest} className="space-y-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-input)] p-4 sm:p-5">
+                <div>
+                  <h3 className="text-sm font-bold text-[var(--color-text)]">Request a missing module</h3>
+                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">{selectedDepartment?.name} · {selectedProgram?.name} · {academicYear} · Semester {semester}</p>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="space-y-1.5 text-xs font-semibold text-[var(--color-text)]">Module code
+                    <input required minLength={2} maxLength={30} pattern="[A-Za-z0-9 _-]+" value={moduleRequestCode} onChange={event => setModuleRequestCode(event.target.value)} placeholder="e.g. COE 08204" className="block min-h-11 w-full rounded-lg border border-[var(--color-input-border)] bg-[var(--color-surface)] px-3 text-sm font-normal text-[var(--color-text)]" />
+                  </label>
+                  <label className="space-y-1.5 text-xs font-semibold text-[var(--color-text)]">Module name
+                    <input required minLength={2} maxLength={120} value={moduleRequestName} onChange={event => setModuleRequestName(event.target.value)} placeholder="e.g. Cloud Computing" className="block min-h-11 w-full rounded-lg border border-[var(--color-input-border)] bg-[var(--color-surface)] px-3 text-sm font-normal text-[var(--color-text)]" />
+                  </label>
+                </div>
+                <label className="space-y-1.5 text-xs font-semibold text-[var(--color-text)]">Why is this module missing?
+                  <textarea required minLength={8} maxLength={400} rows={3} value={moduleRequestDescription} onChange={event => setModuleRequestDescription(event.target.value)} placeholder="Briefly describe the module or the examination you want to upload." className="block w-full rounded-lg border border-[var(--color-input-border)] bg-[var(--color-surface)] p-3 text-sm font-normal text-[var(--color-text)]" />
+                </label>
+                {moduleRequestError && <p role="alert" className="rounded-lg bg-[var(--color-danger-soft)] p-3 text-sm text-[var(--color-danger)]">{moduleRequestError}</p>}
+                <div className="flex flex-wrap gap-3">
+                  <button type="submit" disabled={isSubmittingModuleRequest} className="min-h-11 rounded-lg bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-input)] disabled:opacity-60">{isSubmittingModuleRequest ? 'Sending request…' : 'Send module request'}</button>
+                  <button type="button" disabled={isSubmittingModuleRequest} onClick={() => { setShowModuleRequest(false); setModuleRequestError(null); }} className="min-h-11 rounded-lg border border-[var(--color-input-border)] px-4 text-sm font-semibold text-[var(--color-text)] disabled:opacity-60">Cancel</button>
+                </div>
+              </form>
+            ) : !isLoadingModules && !loadError && (
+              <button type="button" onClick={() => setShowModuleRequest(true)} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-[var(--color-input-border)] px-4 text-sm font-semibold text-[var(--color-primary)] hover:bg-[var(--color-input)]">
+                <PlusCircle aria-hidden="true" className="h-4 w-4" /> Request a missing module
+              </button>
             )}
           </div>
         )}

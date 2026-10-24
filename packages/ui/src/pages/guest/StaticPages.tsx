@@ -383,7 +383,7 @@ export const TakedownPage: React.FC = () => {
     </div></BusyScope>);
 };
 
-export const RequestModulePage: React.FC = () => {
+export const RequestModulePage: React.FC<{ returnTo?: string; returnLabel?: string }> = ({ returnTo = '/departments', returnLabel = 'Browse modules' }) => {
   const [searchParams] = useSearchParams();
   const { currentUser } = useAuth();
   const initialSemester = searchParams.get('semester');
@@ -476,8 +476,8 @@ export const RequestModulePage: React.FC = () => {
           <div role="status" className="rounded-lg bg-[var(--color-success-soft)] p-5 text-center">
             <CheckCircle aria-hidden="true" className="mx-auto h-7 w-7 text-[var(--color-success)]" />
             <p className="mt-2 text-sm font-semibold text-[var(--color-text)]">Request sent for curriculum review.</p>
-            <Link to="/departments" className="mt-4 inline-flex min-h-10 items-center rounded-lg bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-surface)]">
-              Browse modules
+            <Link to={returnTo} className="mt-4 inline-flex min-h-10 items-center rounded-lg bg-[var(--color-primary)] px-4 text-sm font-semibold text-[var(--color-input)]">
+              {returnLabel}
             </Link>
           </div>
         ) : (

@@ -39,6 +39,26 @@ test('admin login uses the shared credentials endpoint and requires a second ema
   assert.deepEqual(calls[1].body, { challengeToken: result.challengeToken, code: '123456', rememberDevice: false });
 });
 
+test('module requests keep the signed-in contributor identity while allowing guest requests', async () => {
+  const calls = [];
+  globalThis.fetch = async (url, options) => {
+    calls.push({ url, headers: options.headers, body: JSON.parse(options.body) });
+    return ok({ id: 'request-id', status: 'pending' });
+  };
+  const details = {
+    departmentId: 'department', departmentName: 'Computing', programId: 'program', programName: 'Computer Engineering',
+    academicYear: '2025/2026', semester: 2, moduleCode: 'COE 08204', moduleName: 'Cloud Computing',
+    description: 'Missing from the upload list', requestedBy: 'contributor',
+  };
+  await api.submitModuleRequest(details);
+  setSession(session('contributor-token'));
+  await api.submitModuleRequest(details);
+  assert.equal(calls[0].url, '/api/v1/module-requests');
+  assert.equal(calls[0].headers.Authorization, undefined);
+  assert.equal(calls[1].headers.Authorization, 'Bearer contributor-token');
+  assert.equal(calls[1].body.moduleCode, 'COE08204');
+});
+
 test('search translates filters, removes ALL, and follows every cursor', async () => {
   const calls = [];
   globalThis.fetch = async (url, options) => {
