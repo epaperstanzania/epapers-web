@@ -44,9 +44,9 @@ export const DashboardPage: React.FC = () => {
 
   if (loading) return <PageLoader variant="dashboard" label="Loading content…" />;
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-5 sm:space-y-7">
       {/* 1. Top Contributor Header - Light card, NO XP numbers */}
-      <section className="rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] p-6 sm:p-8 space-y-4">
+      <section className="min-w-0 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] p-4 sm:p-8 space-y-5 shadow-[var(--shadow-neutral)]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="inline-flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] font-medium">
             <span>Epapers Contributor</span>
@@ -59,16 +59,16 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* User profile + stats row */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pt-1">
-          <div className="flex items-start sm:items-center gap-4">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-5 pt-1">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <UsernameTile
               username={user.username}
               size="xl"
               avatarId={user.avatarId}
             />
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="font-bold text-xl sm:text-2xl text-[var(--color-text)]">
+                <h1 className="min-w-0 break-all font-bold text-xl sm:text-2xl text-[var(--color-text)]">
                   @{user.username}
                 </h1>
                 <LevelBadge level={user.level} title={user.levelTitle} size="sm" />
@@ -80,8 +80,8 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {/* Metric tiles - NO XP numbers */}
-          <div className="flex items-center gap-3">
-            <div className="bg-[var(--color-input)] border border-[var(--color-input-border)] rounded-lg px-3.5 py-2 text-center min-w-[85px]">
+          <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 xl:w-auto">
+            <div className="min-w-0 bg-[var(--color-input)] border border-[var(--color-input-border)] rounded-xl px-3 py-3 text-left sm:text-center">
               <span className="block text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
                 Rank
               </span>
@@ -90,7 +90,7 @@ export const DashboardPage: React.FC = () => {
               </span>
             </div>
 
-            <div className="bg-[var(--color-input)] border border-[var(--color-input-border)] rounded-lg px-3.5 py-2 text-center min-w-[85px]">
+            <div className="min-w-0 bg-[var(--color-input)] border border-[var(--color-input-border)] rounded-xl px-3 py-3 text-left sm:text-center">
               <span className="block text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
                 Acceptance
               </span>
@@ -99,7 +99,7 @@ export const DashboardPage: React.FC = () => {
               </span>
             </div>
 
-            <div className="bg-[var(--color-input)] border border-[var(--color-input-border)] rounded-lg px-3.5 py-2 text-center min-w-[85px]">
+            <div className="col-span-2 min-w-0 bg-[var(--color-input)] border border-[var(--color-input-border)] rounded-xl px-3 py-3 text-left sm:col-span-1 sm:text-center">
               <span className="block text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
                 Approved
               </span>
@@ -112,13 +112,13 @@ export const DashboardPage: React.FC = () => {
       </section>
 
       {/* 2. Metric Cards */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4 flex flex-col justify-between">
+      <section aria-label="Your archive activity" className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-3.5 sm:p-5 flex flex-col justify-between shadow-[var(--shadow-neutral)]">
           <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
             Uploads Approved
           </span>
           <div className="mt-2">
-            <span className="font-bold text-2xl text-[var(--color-text)]">
+            <span className="font-bold text-xl sm:text-2xl text-[var(--color-text)] break-words">
               {user.approvedCount} Papers
             </span>
             <span className="block text-xs text-[var(--color-text-muted)] mt-0.5">
@@ -127,12 +127,12 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4 flex flex-col justify-between">
+        <div className="min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-3.5 sm:p-5 flex flex-col justify-between shadow-[var(--shadow-neutral)]">
           <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
             Marking Schemes
           </span>
           <div className="mt-2">
-            <span className="font-bold text-2xl text-[var(--color-text)]">
+            <span className="font-bold text-xl sm:text-2xl text-[var(--color-text)] break-words">
               {user.markingSchemesCount} Official
             </span>
             <span className="block text-xs text-[var(--color-text-muted)] mt-0.5">
@@ -141,12 +141,12 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4 flex flex-col justify-between">
+        <div className="min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-3.5 sm:p-5 flex flex-col justify-between shadow-[var(--shadow-neutral)]">
           <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
             Total Submissions
           </span>
           <div className="mt-2">
-            <span className="font-bold text-2xl text-[var(--color-text)]">
+            <span className="font-bold text-xl sm:text-2xl text-[var(--color-text)] break-words">
               {user.submissionsCount} Files
             </span>
             <span className="block text-xs text-[var(--color-text-muted)] mt-0.5">
@@ -155,12 +155,12 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4 flex flex-col justify-between">
+        <div className="min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-3.5 sm:p-5 flex flex-col justify-between shadow-[var(--shadow-neutral)]">
           <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
             Badges Earned
           </span>
           <div className="mt-2">
-            <span className="font-bold text-2xl text-[var(--color-text)]">
+            <span className="font-bold text-xl sm:text-2xl text-[var(--color-text)] break-words">
               {achievements.filter((achievement) => achievement.isUnlocked).length} Earned
             </span>
             <span className="block text-xs text-[var(--color-text-muted)] mt-0.5">
@@ -171,11 +171,11 @@ export const DashboardPage: React.FC = () => {
       </section>
 
       {/* 3. Main Split View: Left Content & Right Sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid min-w-0 grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
         {/* Left Column (Span 2) */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="min-w-0 lg:col-span-2 space-y-6">
           {/* Achievements Gallery - Flat tiles, NO XP numbers */}
-          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-5 space-y-4">
+          <div className="min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 sm:p-6 space-y-4 shadow-[var(--shadow-neutral)]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h2 className="font-bold text-base text-[var(--color-text)]">
@@ -187,10 +187,10 @@ export const DashboardPage: React.FC = () => {
               </div>
 
               {/* Filter tabs */}
-              <div className="flex items-center gap-1 p-1 bg-[var(--color-sidebar)] rounded-lg text-xs font-medium">
+              <div role="group" aria-label="Filter achievements" className="grid grid-cols-2 sm:flex items-center gap-1.5 p-1 bg-[var(--color-sidebar)] rounded-xl text-xs font-medium">
                 <button
                   onClick={() => setAchievementFilter('all')}
-                  className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                  className={`min-h-11 px-2.5 py-2 rounded-lg transition-colors cursor-pointer ${
                     achievementFilter === 'all'
                       ? 'bg-[var(--color-surface)] text-[var(--color-primary)] font-semibold border border-[var(--color-border)]'
                       : 'text-[var(--color-text-muted)]'
@@ -200,7 +200,7 @@ export const DashboardPage: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setAchievementFilter('unlocked')}
-                  className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                  className={`min-h-11 px-2.5 py-2 rounded-lg transition-colors cursor-pointer ${
                     achievementFilter === 'unlocked'
                       ? 'bg-[var(--color-surface)] text-[var(--color-primary)] font-semibold border border-[var(--color-border)]'
                       : 'text-[var(--color-text-muted)]'
@@ -210,7 +210,7 @@ export const DashboardPage: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setAchievementFilter('progress')}
-                  className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                  className={`min-h-11 px-2.5 py-2 rounded-lg transition-colors cursor-pointer ${
                     achievementFilter === 'progress'
                       ? 'bg-[var(--color-surface)] text-[var(--color-primary)] font-semibold border border-[var(--color-border)]'
                       : 'text-[var(--color-text-muted)]'
@@ -220,7 +220,7 @@ export const DashboardPage: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setAchievementFilter('locked')}
-                  className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                  className={`min-h-11 px-2.5 py-2 rounded-lg transition-colors cursor-pointer ${
                     achievementFilter === 'locked'
                       ? 'bg-[var(--color-surface)] text-[var(--color-primary)] font-semibold border border-[var(--color-border)]'
                       : 'text-[var(--color-text-muted)]'
@@ -236,7 +236,7 @@ export const DashboardPage: React.FC = () => {
               {filteredAchievements.map((ach) => (
                 <div
                   key={ach.id}
-                  className={`p-3.5 rounded-lg border transition-colors flex flex-col justify-between ${
+                  className={`min-w-0 p-4 rounded-xl border transition-colors flex flex-col justify-between ${
                     ach.isUnlocked
                       ? 'bg-[var(--color-surface)] border-[var(--color-border)]'
                       : ach.progress > 0
@@ -245,7 +245,7 @@ export const DashboardPage: React.FC = () => {
                   }`}
                 >
                   <div>
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex flex-wrap items-start justify-between gap-1 mb-1">
                       <span className="font-bold text-xs text-[var(--color-text)]">
                         {ach.title}
                       </span>
@@ -269,7 +269,7 @@ export const DashboardPage: React.FC = () => {
                   </div>
 
                   <div className="mt-3 pt-2 border-t border-[var(--color-border)] text-[11px] text-[var(--color-text-muted)] flex justify-between items-center">
-                    <span>{ach.isUnlocked ? `Earned ${ach.unlockedDate || '2023'}` : 'In progress'}</span>
+                    <span>{ach.isUnlocked ? `Earned ${ach.unlockedDate ? new Date(ach.unlockedDate).toLocaleDateString() : 'recently'}` : 'In progress'}</span>
                   </div>
                 </div>
               ))}
@@ -278,10 +278,10 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Right Sidebar Column */}
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-5 sm:space-y-6">
           {/* DIT Leaderboard Preview - NO XP numbers on Dashboard */}
-          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-5 space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 sm:p-5 space-y-4 shadow-[var(--shadow-neutral)]">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h3 className="font-bold text-sm text-[var(--color-text)]">
                   Epapers Leaderboard
@@ -304,13 +304,13 @@ export const DashboardPage: React.FC = () => {
                 return (
                   <div
                     key={lUser.id}
-                    className={`flex items-center justify-between p-2 rounded-lg transition-colors ${
+                    className={`flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-lg transition-colors ${
                       isCurrentUser
                         ? 'bg-[var(--color-active)]'
                         : 'hover:bg-[var(--color-canvas)]'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex flex-1 items-center gap-2 min-w-0">
                       <span className="font-mono text-xs text-[var(--color-text-muted)] w-5 text-center">
                         #{lUser.rank}
                       </span>
@@ -337,7 +337,7 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {/* Suggested Contributions */}
-          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-5 space-y-3">
+          <div className="min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 sm:p-5 space-y-3 shadow-[var(--shadow-neutral)]">
             <h3 className="font-bold text-sm text-[var(--color-text)]">
               Suggested Contributions
             </h3>
@@ -381,7 +381,7 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {/* DIT Archival Standards Checklist */}
-          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-5 space-y-2.5">
+          <div className="min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 sm:p-5 space-y-2.5 shadow-[var(--shadow-neutral)]">
             <h3 className="font-bold text-sm text-[var(--color-text)]">
               DIT Archival Standards
             </h3>

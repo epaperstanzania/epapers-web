@@ -2,6 +2,7 @@
 import { AdminSystemHealth } from './AdminSystemHealth';
 import { BusyScope, useApiAction } from '../../components/common/BusyScope';
 import { PageLoader } from '../../components/common/PageLoader';
+import { MobileFilterDrawer } from '../../components/common/MobileFilterDrawer';
 import { apiTask } from '../../services/client';
 import { AdminSystemSettings } from './AdminSystemSettings';
 import React, { useState, useEffect } from 'react';
@@ -50,7 +51,7 @@ export const AdminAuditLogPage: React.FC = () => {
   if (loading) return <PageLoader variant="rows" label="Loading content…" />;
   return (
     <div className="space-y-6">
-      <div className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl p-6 shadow-xs">
+      <div className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl p-4 sm:p-6 shadow-xs">
         <div className="flex items-center gap-2">
           <History className="w-6 h-6 text-[var(--color-accent)]" />
           <h1 className="font-heading font-extrabold text-2xl text-[var(--color-text)] ">
@@ -65,7 +66,7 @@ export const AdminAuditLogPage: React.FC = () => {
 
       <div className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="epapers-responsive-table w-full text-left text-xs">
             <thead className="bg-[var(--color-canvas)]  border-b border-[var(--color-border)]  text-[var(--color-neutral)] font-bold uppercase tracking-wider">
               <tr>
                 <th className="p-4">Timestamp</th>
@@ -79,22 +80,22 @@ export const AdminAuditLogPage: React.FC = () => {
             <tbody className="divide-y divide-[var(--color-border)] ">
               {logs.map((log) => (
                 <tr key={log.id} className="hover:bg-[var(--color-input)] ">
-                  <td className="p-4 font-mono text-[var(--color-neutral)]">
+                  <td data-label="Timestamp" className="p-4 font-mono text-[var(--color-neutral)]">
                     {new Date(log.timestamp).toLocaleString()}
                   </td>
-                  <td className="p-4 font-bold text-[var(--color-text)] ">
+                  <td data-label="User" className="p-4 font-bold text-[var(--color-text)] ">
                     @{log.adminUsername}
                   </td>
-                  <td className="p-4 capitalize text-[var(--color-text-muted)]">{log.actorRole || 'system'}</td>
-                  <td className="p-4">
+                  <td data-label="Role" className="p-4 capitalize text-[var(--color-text-muted)]">{log.actorRole || 'system'}</td>
+                  <td data-label="Action" className="p-4">
                     <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-[var(--color-sidebar)]  text-[var(--color-primary)] ">
                       {log.action}
                     </span>
                   </td>
-                  <td className="p-4 font-mono text-[11px] text-[var(--color-text-muted)] ">
+                  <td data-label="Resource" className="p-4 font-mono text-[11px] text-[var(--color-text-muted)] ">
                     {log.targetDescription}
                   </td>
-                  <td className="p-4 text-[var(--color-text-muted)] max-w-xs truncate">
+                  <td data-label="Details" className="p-4 text-[var(--color-text-muted)] max-w-xs break-words">
                     {log.reason}
                   </td>
                 </tr>
@@ -297,7 +298,7 @@ export const AdminPapersDirectoryPage: React.FC = () => {
   if (loading) return <PageLoader variant="rows" />;
   return (
     <div className="space-y-6">
-      <div className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl p-4 sm:p-6 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="font-heading font-extrabold text-2xl text-[var(--color-text)] ">
             Examination Papers Directory
@@ -309,16 +310,28 @@ export const AdminPapersDirectoryPage: React.FC = () => {
 
         <input
           type="text"
+          aria-label="Search papers by module or title"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Filter papers..."
-          className="bg-[var(--color-canvas)]  border border-[var(--color-border)]  rounded-xl px-3 py-2 text-xs text-[var(--color-text)]  w-64 focus:outline-hidden"
+          className="hidden lg:block bg-[var(--color-canvas)] border border-[var(--color-border)] rounded-xl px-3 py-2 text-sm text-[var(--color-text)] w-64 focus:outline-hidden"
         />
+        <MobileFilterDrawer title="Search exam papers" summary={search || `${filtered.length} papers`}>
+          {(close) => <div className="epapers-mobile-filter-fields">
+            <label>Module code or paper title
+              <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="e.g. COE07201" />
+            </label>
+            <div className="epapers-mobile-filter-actions">
+              <button type="button" onClick={() => setSearch('')}>Clear</button>
+              <button type="button" onClick={close}>Show {filtered.length} results</button>
+            </div>
+          </div>}
+        </MobileFilterDrawer>
       </div>
 
       <div className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="epapers-responsive-table w-full text-left text-xs">
             <thead className="bg-[var(--color-canvas)]  border-b border-[var(--color-border)]  text-[var(--color-neutral)] font-bold uppercase tracking-wider">
               <tr>
                 <th className="p-4">Module Code & Title</th>
@@ -332,15 +345,15 @@ export const AdminPapersDirectoryPage: React.FC = () => {
             <tbody className="divide-y divide-[var(--color-border)] ">
               {filtered.map((p) => (
                 <tr key={p.id} className="hover:bg-[var(--color-input)] ">
-                  <td className="p-4">
+                  <td data-label="Paper" className="p-4">
                     <span className="font-mono font-bold text-sm text-[var(--color-text)]  block">
                       {p.moduleCode}
                     </span>
                     <span className="text-[var(--color-text-muted)] line-clamp-1">{p.title}</span>
                   </td>
-                  <td className="p-4 font-bold">{p.category}</td>
-                  <td className="p-4">{p.academicYear} · Sem {p.semester}</td>
-                  <td className="p-4">
+                  <td data-label="Type" className="p-4 font-bold">{p.category}</td>
+                  <td data-label="Session" className="p-4">{p.academicYear} · Sem {p.semester}</td>
+                  <td data-label="Status" className="p-4">
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                       p.status === 'APPROVED' ? 'bg-[var(--color-success-soft)] text-[var(--color-success)]' :
                       p.status === 'PENDING' ? 'bg-[var(--color-warning-soft)] text-[var(--color-warning-text)]' : 'bg-[var(--color-danger-soft)] text-[var(--color-danger)]'
@@ -348,8 +361,8 @@ export const AdminPapersDirectoryPage: React.FC = () => {
                       {p.status}
                     </span>
                   </td>
-                  <td className="p-4">@{p.uploadedBy.username}</td>
-                  <td className="p-4 text-right font-mono font-bold">{p.downloadsCount}</td>
+                  <td data-label="Uploader" className="p-4">@{p.uploadedBy.username}</td>
+                  <td data-label="Downloads" className="p-4 text-right font-mono font-bold">{p.downloadsCount}</td>
                 </tr>
               ))}
             </tbody>

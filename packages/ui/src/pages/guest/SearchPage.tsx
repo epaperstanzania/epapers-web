@@ -5,10 +5,10 @@ import { useSearchParams } from '@epapers/ui/navigation';
 import { api } from '../../services/api';
 import { Department, Program, Paper, ExamCategory, PaperFilters } from '../../types';
 import { PaperCard } from '../../components/common/PaperCard';
+import { MobileFilterDrawer } from '../../components/common/MobileFilterDrawer';
 import {
   Search,
   Filter,
-  SlidersHorizontal,
   X,
   FileText,
   RotateCcw,
@@ -51,7 +51,6 @@ export const SearchPage: React.FC<{ contributor?: boolean }> = ({ contributor = 
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  const [mobileFilterOpen, setMobileFilterOpen] = useState<boolean>(false);
 
   // Load departments and programs once
   useEffect(() => {
@@ -149,7 +148,7 @@ export const SearchPage: React.FC<{ contributor?: boolean }> = ({ contributor = 
           </p>
         </div>
 
-        <div className="relative flex items-center">
+        <div className="relative hidden lg:flex items-center">
           <Search className="w-5 h-5 text-[var(--color-neutral)] absolute left-3.5" />
           <input
             type="text"
@@ -169,7 +168,7 @@ export const SearchPage: React.FC<{ contributor?: boolean }> = ({ contributor = 
         </div>
 
         {/* Quick category toggles */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+        <div className="hidden lg:flex flex-wrap items-center justify-between gap-3 pt-1">
           <div className="flex items-center gap-1.5 p-1 bg-[var(--color-sidebar)]  rounded-lg text-xs font-semibold">
             {CATEGORY_FILTERS.map((item) => (
               <button
@@ -187,17 +186,6 @@ export const SearchPage: React.FC<{ contributor?: boolean }> = ({ contributor = 
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setMobileFilterOpen(!mobileFilterOpen)}
-              className="lg:hidden inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--color-border)]  text-xs font-semibold text-[var(--color-text)]  cursor-pointer"
-            >
-              <SlidersHorizontal className="w-4 h-4 text-[var(--color-accent)]" />
-              <span>Filters</span>
-              {hasActiveFilters && (
-                <span className="w-2 h-2 rounded-full bg-[var(--color-accent)]" />
-              )}
-            </button>
-
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as NonNullable<PaperFilters['sortBy']>)}
@@ -336,16 +324,12 @@ export const SearchPage: React.FC<{ contributor?: boolean }> = ({ contributor = 
           </div>
         </div>
 
-        {/* Mobile filter sheet */}
-        {mobileFilterOpen && (
-          <div className="fixed inset-0 z-50 flex items-end lg:hidden" role="dialog" aria-modal="true" aria-label="Search filters">
-            <button aria-label="Close filters" onClick={() => setMobileFilterOpen(false)} className="absolute inset-0 bg-[var(--color-text)]/20" />
-            <div className="relative z-10 max-h-[85vh] w-full overflow-y-auto rounded-t-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 pb-8 shadow-sm">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="font-bold text-base text-[var(--color-text)]">Filters</h2>
-                <button aria-label="Close filters" onClick={() => setMobileFilterOpen(false)} className="min-h-11 min-w-11 rounded-lg text-[var(--color-text-muted)]"><X aria-hidden="true" /></button>
-              </div>
-              <div className="grid gap-4">
+        {/* Mobile search and filters share one side drawer, leaving room for results. */}
+        <MobileFilterDrawer title="Search papers" summary={query || (hasActiveFilters ? 'Filters applied' : 'Code, category, year and semester')}>
+          {(close) => <div className="epapers-mobile-filter-fields">
+                <label>Search by module or title
+                  <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="e.g. COE07201" autoComplete="off" />
+                </label>
                 <label className="grid gap-1 text-sm font-semibold text-[var(--color-text)]">Department
                   <select value={departmentId} onChange={(event) => { setDepartmentId(event.target.value); setProgramId('ALL'); }} className="min-h-11 rounded-lg border border-[var(--color-input-border)] bg-[var(--color-input)] px-3 font-normal">
                     <option value="ALL">All departments</option>{departments.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
@@ -380,18 +364,21 @@ export const SearchPage: React.FC<{ contributor?: boolean }> = ({ contributor = 
                     <option value="ALL">All semesters</option><option value="1">Semester 1</option><option value="2">Semester 2</option>
                   </select>
                 </label>
+                <label>Sort results
+                  <select value={sortBy} onChange={(event) => setSortBy(event.target.value as NonNullable<PaperFilters['sortBy']>)}>
+                    <option value="recent">Most recent</option><option value="popular">Most downloaded</option><option value="year_desc">Newest academic year</option><option value="year_asc">Oldest academic year</option>
+                  </select>
+                </label>
                 <label className="flex min-h-11 items-center gap-3 text-sm font-semibold text-[var(--color-text)]">
                   <input type="checkbox" checked={hasMarkingScheme} onChange={(event) => setHasMarkingScheme(event.target.checked)} className="h-5 w-5 accent-[var(--color-primary)]" />
                   Has marking scheme
                 </label>
-                <div className="flex gap-3">
-                  <button onClick={resetFilters} className="min-h-11 flex-1 rounded-lg border border-[var(--color-input-border)] font-semibold text-[var(--color-text)]">Reset</button>
-                  <button onClick={() => setMobileFilterOpen(false)} className="min-h-11 flex-1 rounded-lg bg-[var(--color-primary)] font-semibold text-[var(--color-surface)]">Show results</button>
+                <div className="epapers-mobile-filter-actions">
+                  <button type="button" onClick={resetFilters}>Reset</button>
+                  <button type="button" onClick={close}>Show results</button>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
+              </div>}
+        </MobileFilterDrawer>
 
         {/* Results Stream */}
         <div className="lg:col-span-3 space-y-4">

@@ -20,6 +20,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 }) => {
   const { currentUser, role } = useAuth();
   const navigate = useNavigate();
+  const searchTarget = variant === 'contributor' ? '/browse' : variant === 'admin' ? '/admin/papers' : '/search';
   const [unread, setUnread] = useState(0);
   useEffect(() => {
     setUnread(0);
@@ -57,10 +58,13 @@ export const TopBar: React.FC<TopBarProps> = ({
       </div>
 
       {/* Center Search quick trigger (desktop) */}
+      <button type="button" onClick={() => navigate(searchTarget)} aria-label="Open paper search" className="md:hidden ml-auto grid min-h-11 min-w-11 place-items-center rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-hover)]">
+        <Search aria-hidden="true" className="h-5 w-5" />
+      </button>
       <div className="hidden md:flex items-center max-w-xs w-full">
         <button
           type="button"
-          onClick={() => navigate(variant === 'contributor' ? '/browse' : '/search')}
+          onClick={() => navigate(searchTarget)}
           aria-label="Search examination papers"
           className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--color-input)] border border-[var(--color-input-border)] text-xs text-[var(--color-text-muted)] hover:border-[var(--color-primary)] transition-colors cursor-pointer"
         >

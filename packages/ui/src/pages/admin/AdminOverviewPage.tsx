@@ -40,14 +40,14 @@ export const AdminOverviewPage: React.FC = () => {
   if (!stats) return <p role="alert" className="p-6 text-[var(--color-danger)]">Overview could not be loaded. Refresh to try again.</p>;
 
   return (
-    <div className="space-y-8">
+    <div className="min-w-0 space-y-5 sm:space-y-8">
       {/* Top Header */}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Link
           to="/admin/review"
-          className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl p-5 shadow-xs hover:border-[var(--color-accent)] transition-all"
+          className="min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-3.5 sm:p-5 shadow-xs hover:border-[var(--color-accent)] transition-all"
         >
           <div className="flex justify-between items-center text-xs text-[var(--color-text-muted)] mb-2">
             <span className="font-bold uppercase tracking-wider">Pending Moderation</span>
@@ -55,14 +55,14 @@ export const AdminOverviewPage: React.FC = () => {
               {stats.pendingPapers}
             </span>
           </div>
-          <span className="font-heading font-black text-3xl text-[var(--color-text)] ">
+          <span className="font-heading font-black text-xl sm:text-3xl text-[var(--color-text)] break-words">
             {stats.pendingPapers} Papers
           </span>
         </Link>
 
         <Link
           to="/admin/flags"
-          className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl p-5 shadow-xs hover:border-[var(--color-accent)] transition-all"
+          className="min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-3.5 sm:p-5 shadow-xs hover:border-[var(--color-accent)] transition-all"
         >
           <div className="flex justify-between items-center text-xs text-[var(--color-text-muted)] mb-2">
             <span className="font-bold uppercase tracking-wider">Flagged Reports</span>
@@ -70,14 +70,14 @@ export const AdminOverviewPage: React.FC = () => {
               {stats.pendingFlags}
             </span>
           </div>
-          <span className="font-heading font-black text-3xl text-[var(--color-text)] ">
+          <span className="font-heading font-black text-xl sm:text-3xl text-[var(--color-text)] break-words">
             {stats.pendingFlags} Reports
           </span>
         </Link>
 
         <Link
           to="/admin/takedowns"
-          className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl p-5 shadow-xs hover:border-[var(--color-accent)] transition-all"
+          className="min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-3.5 sm:p-5 shadow-xs hover:border-[var(--color-accent)] transition-all"
         >
           <div className="flex justify-between items-center text-xs text-[var(--color-text-muted)] mb-2">
             <span className="font-bold uppercase tracking-wider">Takedown Inquiries</span>
@@ -85,20 +85,20 @@ export const AdminOverviewPage: React.FC = () => {
               {stats.pendingTakedowns}
             </span>
           </div>
-          <span className="font-heading font-black text-3xl text-[var(--color-text)] ">
+          <span className="font-heading font-black text-xl sm:text-3xl text-[var(--color-text)] break-words">
             {stats.pendingTakedowns} Notice
           </span>
 
         </Link>
 
-        <div className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl p-5 shadow-xs">
+        <div className="min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-3.5 sm:p-5 shadow-xs">
           <div className="flex justify-between items-center text-xs text-[var(--color-text-muted)] mb-2">
             <span className="font-bold uppercase tracking-wider">Total Download Volume</span>
             <span className="w-7 h-7 rounded-lg bg-[var(--color-blue-tint)]  text-[var(--color-primary)] flex items-center justify-center font-bold">
               DL
             </span>
           </div>
-          <span className="font-heading font-black text-3xl text-[var(--color-primary)] ">
+          <span className="font-heading font-black text-xl sm:text-3xl text-[var(--color-primary)] break-words">
             {stats.totalDownloads.toLocaleString()}
           </span>
           <span className="block text-xs text-[var(--color-neutral)] mt-1">
@@ -108,10 +108,10 @@ export const AdminOverviewPage: React.FC = () => {
       </div>
 
       {/* Split section: Action shortcuts & Recent Audit Log */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid min-w-0 grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Left Column: Review Queue preview */}
-        <div className="lg:col-span-2 bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="min-w-0 lg:col-span-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4 sm:p-6 shadow-xs space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="font-heading font-bold text-base text-[var(--color-text)] ">
               Moderation Priority Tasks
             </h3>
@@ -140,8 +140,8 @@ export const AdminOverviewPage: React.FC = () => {
         </div>
 
         {/* Right Column: Immutable Audit Trail */}
-        <div className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4 sm:p-6 shadow-xs space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="font-heading font-bold text-base text-[var(--color-text)]  flex items-center gap-2">
               <History className="w-5 h-5 text-[var(--color-neutral)]" />
               <span>Recent Audit</span>

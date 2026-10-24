@@ -7,6 +7,7 @@ import { api } from '../../services/api';
 import { UserProfile, Role } from '../../types';
 import { UsernameTile } from '../../components/common/UsernameTile';
 import { LevelBadge } from '../../components/common/LevelBadge';
+import { MobileFilterDrawer } from '../../components/common/MobileFilterDrawer';
 
 export const AdminUsersPage: React.FC = () => {
   const { busy, run } = useApiAction();
@@ -57,7 +58,7 @@ export const AdminUsersPage: React.FC = () => {
 
   if (loading) return <PageLoader variant="rows" />;
   return (<BusyScope busy={busy}><div className="space-y-6">
-      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="font-bold text-xl sm:text-2xl text-[var(--color-text)]">
             User & Archivist Directory
@@ -68,17 +69,29 @@ export const AdminUsersPage: React.FC = () => {
         </div>
 
         <input
+          aria-label="Search users by username or email"
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Filter by username or email..."
-          className="bg-[var(--color-input)] border border-[var(--color-input-border)] rounded-lg px-3 py-2 text-xs text-[var(--color-text)] w-64 focus:outline-hidden focus:border-[var(--color-primary)]"
+          className="hidden lg:block bg-[var(--color-input)] border border-[var(--color-input-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text)] w-64 focus:outline-hidden focus:border-[var(--color-primary)]"
         />
+        <MobileFilterDrawer title="Search users" summary={search || `${filtered.length} users`}>
+          {(close) => <div className="epapers-mobile-filter-fields">
+            <label>Username or email
+              <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Find a contributor or admin" />
+            </label>
+            <div className="epapers-mobile-filter-actions">
+              <button type="button" onClick={() => setSearch('')}>Clear</button>
+              <button type="button" onClick={close}>Show {filtered.length} results</button>
+            </div>
+          </div>}
+        </MobileFilterDrawer>
       </div>
 
       <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="epapers-responsive-table w-full text-left text-xs">
             <thead className="bg-[var(--color-sidebar)] border-b border-[var(--color-border)] text-[var(--color-text-muted)] font-semibold uppercase tracking-wider text-[11px]">
               <tr>
                 <th className="p-3.5">Archivist</th>
@@ -92,7 +105,7 @@ export const AdminUsersPage: React.FC = () => {
             <tbody className="divide-y divide-[var(--color-border)]">
               {filtered.map((u) => (
                 <tr key={u.id} className="hover:bg-[var(--color-canvas)] transition-colors">
-                  <td className="p-3.5">
+                  <td data-label="Archivist" className="p-3.5">
                     <div className="flex items-center gap-3">
                       <UsernameTile
                         username={u.username}
@@ -108,7 +121,7 @@ export const AdminUsersPage: React.FC = () => {
                     </div>
                   </td>
 
-                  <td className="p-3.5">
+                  <td data-label="Role & status" className="p-3.5">
                     <div className="space-y-0.5">
                       <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[var(--color-sidebar)] text-[var(--color-primary)]">
                         {u.role}
@@ -126,19 +139,19 @@ export const AdminUsersPage: React.FC = () => {
                     </div>
                   </td>
 
-                  <td className="p-3.5">
+                  <td data-label="Tier" className="p-3.5">
                     <LevelBadge level={u.level} title={u.levelTitle} size="sm" />
                   </td>
 
-                  <td className="p-3.5 font-mono text-[var(--color-text)]">
+                  <td data-label="Submissions" className="p-3.5 font-mono text-[var(--color-text)]">
                     {u.approvedCount} / {u.submissionsCount} ({u.acceptanceRate}%)
                   </td>
 
-                  <td className="p-3.5 font-mono font-bold text-[var(--color-primary)]">
+                  <td data-label="Current XP" className="p-3.5 font-mono font-bold text-[var(--color-primary)]">
                     {u.xp} XP
                   </td>
 
-                  <td className="p-3.5 text-right space-x-1.5">
+                  <td data-label="Actions" className="p-3.5 text-right space-x-1.5">
                     <button
                       onClick={() => {
                         setSelectedUser(u);

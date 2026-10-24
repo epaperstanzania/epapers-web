@@ -304,7 +304,7 @@ export const ContributorLayout: React.FC<{ children: React.ReactNode }> = ({ chi
       {/* Main viewport */}
       <div className="flex-1 flex flex-col min-w-0 pb-16 lg:pb-0">
         <TopBar onOpenMobileDrawer={() => setMobileDrawerOpen(true)} variant="contributor" />
-        <main id="main-content" className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1280px] w-full mx-auto">
+        <main id="main-content" className="epapers-portal-main flex-1 min-w-0 p-4 sm:p-6 lg:p-8 max-w-[1280px] w-full mx-auto">
           <div key={location.pathname} className="epapers-page-transition">{children}</div>
         </main>
       </div>

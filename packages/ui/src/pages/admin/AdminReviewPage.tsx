@@ -1,6 +1,7 @@
 'use client';
 import { BusyScope, useApiAction } from '../../components/common/BusyScope';
 import { PageLoader } from '../../components/common/PageLoader';
+import { MobileFilterDrawer } from '../../components/common/MobileFilterDrawer';
 import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api';
 import { Paper, Department } from '../../types';
@@ -130,8 +131,23 @@ export const AdminReviewPage: React.FC = () => {
   return (<BusyScope busy={busy}><div className="space-y-4">
       {loadError && <div role="alert" className="rounded-lg border border-[var(--color-danger)]/30 bg-[var(--color-danger-soft)] p-4 text-sm text-[var(--color-danger)]">{loadError} <button className="ml-2 underline" onClick={loadQueue}>Retry</button></div>}
       {/* Top Filter & Routing Controls Bar */}
-      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <MobileFilterDrawer title="Filter review queue" summary={selectedDeptFilter === 'ALL' ? `${filteredPapers.length} pending papers` : departments.find(item => item.id === selectedDeptFilter)?.name}>
+          {(close) => <div className="epapers-mobile-filter-fields">
+            <label>Department
+              <select value={selectedDeptFilter} onChange={(event) => { setSelectedDeptFilter(event.target.value); setCurrentIndex(0); }}>
+                <option value="ALL">All departments ({allPendingPapers.length})</option>
+                {departments.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+              </select>
+            </label>
+            <label className="flex items-center gap-3"><input type="checkbox" checked={groupByDept} onChange={(event) => setGroupByDept(event.target.checked)} /> Group by department</label>
+            <div className="epapers-mobile-filter-actions">
+              <button type="button" onClick={() => { setSelectedDeptFilter('ALL'); setGroupByDept(false); setCurrentIndex(0); }}>Reset</button>
+              <button type="button" onClick={close}>Show {filteredPapers.length} papers</button>
+            </div>
+          </div>}
+        </MobileFilterDrawer>
+        <div className="hidden lg:flex flex-wrap items-center gap-3">
           {/* Department Filter */}
           <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)]">
             <Filter className="w-3.5 h-3.5" />
