@@ -99,8 +99,10 @@ runtime `nodejs24.x`, architecture `x86_64`, handler `lambda.handler`, memory
 ```text
 EPAPERS_SECRET_ARN=<Secrets Manager secret ARN>
 EPAPERS_WORKER_MAX_JOBS=20
-NODE_OPTIONS=--conditions=react-server --import=tsx
 ```
+
+Set reserved concurrency to `1` if this Lambda is dedicated to background jobs,
+so scheduled invocations do not overlap. Scheduler retries throttled deliveries.
 
 Create a Secrets Manager secret as a JSON object. It must include the server
 environment values from `worker/.env.example` (including portal origins,
@@ -122,9 +124,18 @@ aws lambda update-function-code `
   --zip-file fileb://worker/dist/epapers-background-worker.zip
 ```
 
-Deploy the schedule and IAM resources after finding the existing Lambda role
-name with `aws lambda get-function-configuration`. Replace `<ROLE_NAME>` and
-`<SECRET_ARN>` with the actual values:
+Find the existing Lambda execution role ARN with:
+
+```powershell
+aws lambda get-function-configuration `
+  --region eu-north-1 `
+  --function-name arn:aws:lambda:eu-north-1:172083943921:function:epapers-background-worker `
+  --query Role `
+  --output text
+```
+
+Use the role name returned by that command. Deploy the schedule and IAM
+resources, replacing `<ROLE_NAME>` and `<SECRET_ARN>` with the actual values:
 
 ```powershell
 aws cloudformation deploy `
@@ -136,9 +147,9 @@ aws cloudformation deploy `
 ```
 
 The schedule defaults to one invocation per minute. Lambda processes no more
-than 20 jobs per invocation and reserves time before the 300-second function
-timeout. Job claims remain transactional, so duplicate or retried scheduler
-invocations do not claim the same pending job concurrently. Verify the
+than 20 jobs per invocation and stops starting work before the 300-second
+function timeout. Job claims remain transactional, so duplicate or retried
+scheduler invocations do not claim the same pending job concurrently. Verify the
 EventBridge schedule is enabled, inspect Lambda CloudWatch logs, and confirm
 the database `workerHeartbeat` setting advances. AWS service usage may incur
 charges; check the current Lambda, EventBridge Scheduler, and Secrets Manager

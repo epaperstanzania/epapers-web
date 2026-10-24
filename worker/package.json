@@ -17,5 +17,8 @@
     "@aws-sdk/client-secrets-manager": "^3.1156.0",
     "@epapers/server": "workspace:*",
     "tsx": "4.21.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
   }
 }

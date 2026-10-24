@@ -12,5 +12,6 @@ test-results/
 env.txt
 .vercel/
 worker/dist/
+worker/epapers-secrets.local.json
 
 .vercel

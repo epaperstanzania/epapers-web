@@ -15,23 +15,22 @@ try {
     if (Test-Path -LiteralPath $packageDirectory) {
         Remove-Item -LiteralPath $packageDirectory -Recurse -Force
     }
-    pnpm --filter @epapers/worker deploy --prod --legacy $packageDirectory
+    New-Item -ItemType Directory -Path $packageDirectory -Force | Out-Null
+    pnpm --filter @epapers/worker exec esbuild `
+        lambda.mjs `
+        --bundle `
+        --platform=node `
+        --target=node24 `
+        --format=cjs `
+        --external:@prisma/client `
+        --alias:server-only=./lambda-empty.mjs `
+        --outfile=dist/lambda-package/lambda.js
     if ($LASTEXITCODE -ne 0) {
-        throw 'Creating the isolated Lambda package failed.'
+        throw 'Bundling the Lambda handler failed.'
     }
-
-    $workspaceLinks = @(
-        (Join-Path $packageDirectory 'node_modules\@epapers\worker'),
-        (Join-Path $packageDirectory 'node_modules\.pnpm\node_modules\@epapers\worker')
-    )
-    foreach ($workspaceLink in $workspaceLinks) {
-        $link = Get-Item -LiteralPath $workspaceLink -Force -ErrorAction SilentlyContinue
-        if ($link -and $link.LinkType) {
-            [System.IO.Directory]::Delete($workspaceLink, $false)
-        }
-    }
-
-    Copy-Item -LiteralPath (Join-Path $workerDirectory 'lambda.mjs') -Destination $packageDirectory
+    Copy-Item `
+        -LiteralPath (Join-Path $workerDirectory 'lambda-package.json') `
+        -Destination (Join-Path $packageDirectory 'package.json')
 
     $generatedPrismaDirectory = Get-ChildItem `
         -Path (Join-Path $repositoryRoot 'node_modules\.pnpm') `
@@ -44,7 +43,18 @@ try {
         throw 'Generated Prisma client was not found after generation.'
     }
 
-    $packagePrismaDirectory = Join-Path $packageDirectory 'node_modules\.prisma'
+    $packageNodeModules = Join-Path $packageDirectory 'node_modules'
+    $packagePrismaDirectory = Join-Path $packageNodeModules '.prisma'
+    $packageClientDirectory = Join-Path $packageNodeModules '@prisma'
+    New-Item -ItemType Directory -Path $packageClientDirectory -Force | Out-Null
+    $generatedClientPackage = Join-Path `
+        (Split-Path -Parent $generatedPrismaDirectory.FullName) `
+        '@prisma\client'
+    Copy-Item `
+        -LiteralPath $generatedClientPackage `
+        -Destination (Join-Path $packageClientDirectory 'client') `
+        -Recurse `
+        -Force
     New-Item -ItemType Directory -Path $packagePrismaDirectory -Force | Out-Null
     Copy-Item `
         -LiteralPath (Join-Path $generatedPrismaDirectory.FullName 'client') `
@@ -62,14 +72,36 @@ try {
         Remove-Item -LiteralPath $archivePath -Force
     }
 
+    Add-Type -AssemblyName System.IO.Compression
     Add-Type -AssemblyName System.IO.Compression.FileSystem
-    [System.IO.Compression.ZipFile]::CreateFromDirectory(
-        $packageDirectory,
+    $archive = [System.IO.Compression.ZipFile]::Open(
         $archivePath,
-        [System.IO.Compression.CompressionLevel]::Optimal,
-        $false
+        [System.IO.Compression.ZipArchiveMode]::Create
     )
+    try {
+        Get-ChildItem -LiteralPath $packageDirectory -File -Recurse -Force | ForEach-Object {
+            $relativePath = $_.FullName.Substring($packageDirectory.Length).TrimStart('\', '/').Replace('\', '/')
+            $entry = $archive.CreateEntry($relativePath, [System.IO.Compression.CompressionLevel]::Optimal)
+            $source = [System.IO.File]::OpenRead($_.FullName)
+            try {
+                $destination = $entry.Open()
+                try {
+                    $source.CopyTo($destination)
+                }
+                finally {
+                    $destination.Dispose()
+                }
+            }
+            finally {
+                $source.Dispose()
+            }
+        }
+    }
+    finally {
+        $archive.Dispose()
+    }
 
+    Remove-Item -LiteralPath $packageDirectory -Recurse -Force
     Write-Output "Lambda deployment package created: $archivePath"
 }
 finally {

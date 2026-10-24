@@ -56,7 +56,7 @@ Resources:
       State: ENABLED
       ScheduleExpression: !Ref ScheduleExpression
       FlexibleTimeWindow:
-        Mode: OFF
+        Mode: 'OFF'
       Target:
         Arn: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${FunctionName}
         RoleArn: !GetAtt WorkerScheduleRole.Arn
