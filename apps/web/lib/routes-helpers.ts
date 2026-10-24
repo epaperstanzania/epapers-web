@@ -1,4 +1,5 @@
 import 'server-only';
+import { revalidateTag } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { ApiError, fail } from '@epapers/config/errors';
@@ -12,6 +13,7 @@ import { enforceWritePolicy } from '@epapers/server/lib/write-policy';
 import { clientIp, trustedOrigin, validMutation, refreshCookieOptions } from '@epapers/auth/policy';
 
 type Identity = Awaited<ReturnType<typeof authenticate>>;
+type CacheInvalidation<T> = { tag: string; when?: (data: T, result: unknown) => boolean };
 
 export function withAuth(options: {
     roles?: string[];
@@ -80,6 +82,7 @@ export function route<T>(
     action: (data: T, req: NextRequest, identity?: Identity) => Promise<unknown>,
     auth: boolean | 'optional' | { roles: string[]; requireReauth?: boolean } = false,
     publicCache = false,
+    cacheInvalidation?: CacheInvalidation<T>,
 ) {
     return async (req: NextRequest) => {
         const started = Date.now();
@@ -144,6 +147,15 @@ export function route<T>(
             response = result instanceof NextResponse
                 ? result
                 : NextResponse.json({ data: result });
+            if (cacheInvalidation && req.method !== 'GET' && response.ok
+                && (cacheInvalidation.when?.(data, result) ?? true)) {
+                try {
+                    revalidateTag(cacheInvalidation.tag, { expire: 0 });
+                } catch (error) {
+                    // The write already committed; a short TTL remains as fallback.
+                    logger.error({ err: error, requestId, tag: cacheInvalidation.tag }, 'Cache revalidation failed');
+                }
+            }
         } catch (error) {
             const code = (error as { code?: string }).code;
             if (error instanceof z.ZodError) {

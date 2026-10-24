@@ -97,6 +97,23 @@ On Vercel, rate limiting uses the platform-overwritten `x-vercel-forwarded-for`
 header. Keep `TRUST_PROXY=false` there; that option is for restricted Cloudflare
 ingress on other hosts.
 
+## Public catalogue cache
+
+The public department, program, and module directory pages cache only their
+curriculum DTOs in the web project's Next.js Data Cache for 60 seconds. Admin
+create, edit, archive, delete, CSV import, and approved module-request routes
+expire the shared `public-catalogue-structure` tag after a successful write;
+CSV dry runs do not expire it. The pages remain dynamically rendered, and
+papers, search results, sessions, and account data are not included in this
+server cache. A failed cache invalidation is logged and the 60-second TTL is
+the fallback.
+
+Public API metadata responses separately use browser/CDN HTTP caching
+(`max-age=60`, `s-maxage=300`). Next.js tag invalidation does not purge an
+already cached CDN API response, so other portals may see older metadata until
+that HTTP TTL expires. Do not rely on browser storage being shared among the
+current separate `*.vercel.app` hosts.
+
 ## Cloudflare background worker
 
 Only the scheduler is deployed to Cloudflare Workers. The existing Vercel web/API
