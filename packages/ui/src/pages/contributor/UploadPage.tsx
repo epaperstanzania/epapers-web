@@ -19,6 +19,7 @@ export const UploadPage: React.FC = () => {
   const { currentUser, role } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const stepHeadingRef = useRef<HTMLHeadingElement>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
   const [modules, setModules] = useState<Module[]>([]);
@@ -201,7 +202,12 @@ export const UploadPage: React.FC = () => {
     setTestNumber('');
     setIsDuplicate(false);
     resetFiles();
+    setStep(6);
   };
+
+  useEffect(() => {
+    if (step === 6) stepHeadingRef.current?.focus();
+  }, [step]);
 
   const submitModuleRequest = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -363,7 +369,7 @@ export const UploadPage: React.FC = () => {
       <section className="space-y-5 rounded-xl border border-white/70 bg-[var(--color-surface)]/95 p-5 shadow-sm backdrop-blur-sm sm:p-7" aria-labelledby="upload-step-heading">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-primary)]">Step {step} of 8</p>
-          <h2 id="upload-step-heading" className="mt-1 text-lg font-bold text-[var(--color-text)]">{stepTitles[step - 1]}</h2>
+          <h2 ref={stepHeadingRef} tabIndex={-1} id="upload-step-heading" className="mt-1 text-lg font-bold text-[var(--color-text)]">{stepTitles[step - 1]}</h2>
         </div>
 
         {loadError && <div role="alert" className="rounded-lg bg-[var(--color-danger-soft)] p-3 text-sm text-[var(--color-danger)]"><p>{loadError}</p><button type="button" onClick={() => setLoadAttempt(value => value + 1)} className="mt-2 min-h-11 rounded-lg border border-current px-4 font-semibold">Retry loading</button></div>}
