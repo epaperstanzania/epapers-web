@@ -241,7 +241,7 @@ export const PrivacyPage: React.FC = () => (
     <h1 className="font-heading font-extrabold text-2xl text-[var(--color-text)] ">
       Privacy Policy
     </h1>
-    <p className="text-xs text-[var(--color-text-muted)]">Last updated: Academic Session 2023/2024</p>
+    <p className="text-xs text-[var(--color-text-muted)]">Last updated: Academic Session 2026/2027</p>
     <div className="text-xs sm:text-sm text-[var(--color-text-muted)]  space-y-3 leading-relaxed">
       <p>
         EPapers is committed to student and contributor privacy. Guest access requires zero tracking cookies or personal data capture. Examination downloads are served directly.
