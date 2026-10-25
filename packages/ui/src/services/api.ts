@@ -15,8 +15,8 @@ export function academicYearStart(value: string) {
   if (!/^\d{4}(?:\/\d{4})?$/.test(value)) throw new Error('Choose a valid academic year.');
   return Number(value.slice(0, 4));
 }
-type DepartmentDto = Pick<Department, 'id' | 'code' | 'name' | 'description' | 'icon'>;
-type ProgramDto = Pick<Program, 'id' | 'departmentId' | 'code' | 'name' | 'level'> & { campus: string; awardTitle: string };
+type DepartmentDto = Pick<Department, 'id' | 'code' | 'name' | 'description' | 'icon'> & Partial<Pick<Department, 'programsCount' | 'modulesCount' | 'papersCount'>>;
+type ProgramDto = Pick<Program, 'id' | 'departmentId' | 'code' | 'name' | 'level'> & { campus: string; awardTitle: string; modulesCount?: number };
 type ModuleDto = Pick<Module, 'id' | 'programId' | 'code' | 'name' | 'semester'> & { levelYear: number | null; credits: number | null };
 export type PaperDto = Pick<Paper, 'id' | 'title' | 'category' | 'testNumber' | 'semester' | 'examPeriod' | 'hasMarkingScheme' | 'pageCount' | 'viewsCount' | 'downloadsCount'> & {
   academicYear: number; module: ModuleDto; program: ProgramDto; department: DepartmentDto;
@@ -34,7 +34,7 @@ export function profileFromDto(p: ProfileDto): UserProfile {
     acceptanceRate: 0, submissionsCount: 0, approvedCount: p.approvedCount ?? 0, markingSchemesCount: 0,
   };
 }
-const departmentFromDto = (d: DepartmentDto): Department => ({ ...d, programsCount: 0, modulesCount: 0, papersCount: 0 });
+const departmentFromDto = (d: DepartmentDto): Department => ({ ...d, programsCount: d.programsCount ?? 0, modulesCount: d.modulesCount ?? 0, papersCount: d.papersCount ?? 0 });
 export function paperFromDto(p: PaperDto): Paper {
   return {
     id: p.id, title: p.title, moduleId: p.module.id, moduleCode: p.module.code, moduleName: p.module.name,
@@ -113,17 +113,16 @@ export const api = {
     document.body.appendChild(link); link.click(); link.remove();
   },
   async getDepartments(): Promise<Department[]> {
-    const [deps, progs, mods, papers] = await Promise.all([listAll<DepartmentDto>('/departments'), listAll<ProgramDto>('/programs'), listAll<ModuleDto>('/modules'), listAll<PaperDto>('/papers')]);
-    return deps.map(d => ({ ...departmentFromDto(d), programsCount: progs.filter(p => p.departmentId === d.id).length,
-      modulesCount: mods.filter(m => progs.some(p => p.id === m.programId && p.departmentId === d.id)).length, papersCount: papers.filter(p => p.department.id === d.id).length }));
+    return (await listAll<DepartmentDto>('/departments')).map(departmentFromDto);
   },
   async getPrograms(departmentId?: string): Promise<Program[]> {
-    const [rows, deps, mods] = await Promise.all([listAll<ProgramDto>('/programs', { departmentId }), listAll<DepartmentDto>('/departments'), listAll<ModuleDto>('/modules', { departmentId })]);
-    return rows.map(p => ({ ...p, departmentName: deps.find(d => d.id === p.departmentId)?.name || '', level: p.level === 'BACHELOR' ? 'Bachelor Degree' : 'Ordinary Diploma', modulesCount: mods.filter(m => m.programId === p.id).length }));
+    const [rows, deps] = await Promise.all([listAll<ProgramDto>('/programs', { departmentId }), listAll<DepartmentDto>('/departments')]);
+    const names = new Map(deps.map(d => [d.id, d.name]));
+    return rows.map(p => ({ ...p, departmentName: names.get(p.departmentId) || '', level: p.level === 'BACHELOR' ? 'Bachelor Degree' : 'Ordinary Diploma', modulesCount: p.modulesCount ?? 0 }));
   },
   async getModules(filters: { programId?: string; departmentId?: string; semester?: 1 | 2 } = {}): Promise<Module[]> {
     const [rows, programs] = await Promise.all([listAll<ModuleDto>('/modules', filters), api.getPrograms(filters.departmentId)]);
-    return rows.map(m => { const p = programs.find(p => p.id === m.programId); return { ...m, departmentId: p?.departmentId || '', departmentName: p?.departmentName || '', programName: p?.name || '', levelYear: m.levelYear ?? 0, credits: m.credits ?? 0, papersCount: 0 }; });
+    return rows.map(m => { const p = programs.find(p => p.id === m.programId); return { ...m, departmentId: p?.departmentId || '', departmentName: p?.departmentName || '', programName: p?.name || '', levelYear: m.levelYear ?? 1, credits: m.credits ?? 0, papersCount: 0 }; });
   },
   async getDepartment(id: string) {
     return optional(async () => {
@@ -193,12 +192,17 @@ export const api = {
   },
   async submitModuleRequest(r: Omit<ModuleRequest, 'id' | 'requestedAt' | 'status' | 'notes'>) { return request('/module-requests', { method: 'POST', auth: !!getSessionRole(), body: { departmentId: r.departmentId, programId: r.programId, moduleCode: normalizeModuleCode(r.moduleCode), moduleName: r.moduleName, academicYear: academicYearStart(r.academicYear), semester: r.semester, description: r.description } }); },
   async resolveModuleRequest(id: string, status: 'approved' | 'rejected', note = 'Curriculum request reviewed by administrator') { await request(`/admin/module-requests/${idPath(id)}`, { method: 'PATCH', auth: true, body: { status, note } }); },
-  async getAuditLogPage(cursor?: string): Promise<{ items: AuditLogItem[]; nextCursor: string | null }> {
-    type Row = Omit<AuditLogItem, 'adminUsername' | 'timestamp'> & { actorUserId: string; actorUsername?: string; actorRole?: string; createdAt: string };
-    const params = new URLSearchParams({ limit: '100' });
+  async getAuditLogPage(cursor?: string, limit = 100): Promise<{ items: AuditLogItem[]; nextCursor: string | null }> {
+    const params = new URLSearchParams({ limit: String(limit) });
     if (cursor) params.set('cursor', cursor);
-    const page = await request<{ items: Row[]; nextCursor: string | null }>(`/admin/audit-logs?${params}`, { auth: true });
-    return { nextCursor: page.nextCursor, items: page.items.map(r => ({ ...r, adminUsername: r.actorUsername || r.actorUserId || 'System', timestamp: r.createdAt, targetDescription: r.targetDescription || r.targetId || '' })) };
+    const page = await request<{ items: Array<Omit<AuditLogItem, 'timestamp'> & { createdAt: string }>; nextCursor: string | null }>(`/admin/audit-logs?${params}`, { auth: true });
+    return { nextCursor: page.nextCursor, items: page.items.map(({ createdAt, ...item }) => ({ ...item, timestamp: createdAt })) };
+  },
+  async getMyAuditLogPage(cursor?: string, limit = 30): Promise<{ items: AuditLogItem[]; nextCursor: string | null }> {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (cursor) params.set('cursor', cursor);
+    const page = await request<{ items: Array<Omit<AuditLogItem, 'timestamp'> & { createdAt: string }>; nextCursor: string | null }>(`/users/me/audit-logs?${params}`, { auth: true });
+    return { nextCursor: page.nextCursor, items: page.items.map(({ createdAt, ...item }) => ({ ...item, timestamp: createdAt })) };
   },
   async getAuditLogs(): Promise<AuditLogItem[]> { return (await api.getAuditLogPage()).items; },
   async getAdminStats(): Promise<AdminStats> {

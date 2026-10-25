@@ -155,7 +155,7 @@ export const DepartmentDetailPage: React.FC = () => {
           {filteredModules.map((mod) => (
             <Link
               key={mod.id}
-              to={`/modules/${mod.code}`}
+              to={`/modules/${mod.id}`}
               className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl p-4 hover:border-[var(--color-accent)]/50 hover:shadow-md transition-all flex flex-col justify-between"
             >
               <div>
@@ -164,7 +164,7 @@ export const DepartmentDetailPage: React.FC = () => {
                     {mod.code}
                   </span>
                   <span className="text-[11px] text-[var(--color-neutral)]">
-                    Sem {mod.semester} · {mod.credits} Credits
+                    Year {mod.levelYear || 1} ? Sem {((mod.levelYear || 1) - 1) * 2 + mod.semester} · {mod.credits} Credits
                   </span>
                 </div>
                 <h3 className="font-heading font-bold text-sm text-[var(--color-text)]  line-clamp-1">

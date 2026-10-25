@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { decrypt } from '@epapers/server/lib/encryption';
 import { db, withTransactionRetry } from '@epapers/database';
+import { Prisma } from '@epapers/database/client';
 import { logger } from '@epapers/server/lib/logger';
 import { emailProvider, EmailMessage } from '@epapers/server/lib/email/provider';
 import { env } from '@epapers/config/server-env';
@@ -19,16 +20,22 @@ process.on('SIGTERM', () => { stopping = true; });
 process.on('SIGINT', () => { stopping = true; });
 export async function tick(): Promise<boolean> {
     const token = randomUUID();
-    const job = await withTransactionRetry(async (tx) => {
-        const candidate = await tx.job.findFirst({ where: { type: 'email_otp', runAt: { lte: new Date() }, status: 'pending' }, orderBy: { runAt: 'asc' } })
-            || await tx.job.findFirst({ where: { type: { in: ['email', 'email_notice'] }, runAt: { lte: new Date() }, status: 'pending' }, orderBy: { runAt: 'asc' } })
-            || await tx.job.findFirst({ where: { type: 'broadcast_notifications', runAt: { lte: new Date() }, status: 'pending' }, orderBy: { runAt: 'asc' } })
-            || await tx.job.findFirst({ where: { type: { in: types }, runAt: { lte: new Date() }, status: 'pending' }, orderBy: { runAt: 'asc' } });
-        if (!candidate)
-            return null;
-        const claim = await tx.job.updateMany({ where: { id: candidate.id, status: 'pending' }, data: { status: 'running', leaseToken: token, runAt: new Date(Date.now() + 300000), attempts: { increment: 1 } } });
-        return claim.count ? candidate : null;
-    });
+    const [job] = await db.$queryRaw<Array<{ id: string; type: string; payload: unknown; attempts: number; createdAt: Date }>>`
+        UPDATE jobs AS j
+        SET status = 'running', lease_token = ${token}::uuid,
+            run_at = now() + interval '5 minutes', attempts = j.attempts + 1
+        FROM (
+            SELECT id FROM jobs
+            WHERE status = 'pending' AND run_at <= now() AND type IN (${Prisma.join(types)})
+            ORDER BY CASE
+                WHEN type = 'email_otp' THEN 0
+                WHEN type IN ('email', 'email_notice') THEN 1
+                WHEN type = 'broadcast_notifications' THEN 2
+                ELSE 3 END, run_at ASC, id ASC
+            FOR UPDATE SKIP LOCKED LIMIT 1
+        ) AS candidate
+        WHERE j.id = candidate.id
+        RETURNING j.id, j.type, j.payload, j.attempts, j.created_at AS "createdAt"`;
     if (!job)
         return false;
     try {
@@ -90,7 +97,7 @@ export async function tick(): Promise<boolean> {
         await withTransactionRetry(tx => tx.job.updateMany({ where: { id: job.id, leaseToken: token }, data: { status: 'done', leaseToken: null, lastError: null } }));
     }
     catch {
-        await withTransactionRetry(tx => tx.job.updateMany({ where: { id: job.id, leaseToken: token }, data: { status: job.attempts + 1 >= 8 ? 'failed' : 'pending', leaseToken: null, runAt: new Date(Date.now() + Math.min(3600000, 1000 * 2 ** job.attempts)), lastError: 'Job processing failed' } }));
+        await withTransactionRetry(tx => tx.job.updateMany({ where: { id: job.id, leaseToken: token }, data: { status: job.attempts >= 8 ? 'failed' : 'pending', leaseToken: null, runAt: new Date(Date.now() + Math.min(3600000, 1000 * 2 ** (job.attempts - 1))), lastError: 'Job processing failed' } }));
     }
     return true;
 }

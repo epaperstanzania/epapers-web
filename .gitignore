@@ -16,8 +16,4 @@ worker/epapers-secrets.local.json
 worker/.secrets
 worker/.cloudflare/
 
-.vercel
-.env.example 
-.env*
-.vercel
-apps\web\sample.txt
+apps/web/sample.txt

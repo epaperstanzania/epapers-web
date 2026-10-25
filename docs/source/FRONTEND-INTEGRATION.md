@@ -36,7 +36,7 @@ Keep access JWT in memory. Send `Authorization: Bearer <accessToken>` for authen
 | `getModuleRequests` | `GET /admin/module-requests`, admin queue. |
 | `submitModuleRequest` | `POST /module-requests` with departmentId/programId/moduleCode/moduleName/integer academicYear/semester/description. Program and department must match. |
 | `resolveModuleRequest` | `PATCH /admin/module-requests/{id}` with status approved/rejected and required note. Approval creates the module when absent. |
-| `getAuditLogs` | `GET /admin/audit-logs`, cursor filters actorUserId/action/targetType/targetId. `createdAt` replaces timestamp; audit cannot be edited. |
+| `getAuditLogs` | `GET /admin/audit-logs`, important account/submission/data-change events only. `getMyAuditLogPage` uses `GET /users/me/audit-logs` and returns only the authenticated user's events. Results contain actor, action, target type and timestamp; audit cannot be edited. |
 | `getAdminStats` | `GET /admin/dashboard/stats`; adapt UI to pendingPapers/approvedPapers/users/lecturers/pendingVerifications/flags/takedowns/moduleRequests/downloads. |
 | `getAllUsers` | `GET /admin/users` with optional role/status/departmentId/q. Admin user DTO includes authorized identity/XP, no credentials. |
 | `manageUser` | Reauthenticated `PATCH /admin/users/{id}`. suspend/ban/reinstate → status SUSPENDED/BANNED/ACTIVE; change_role → role CONTRIBUTOR/LECTURER/ADMIN; verify_lecturer → role LECTURER, homeDepartmentId, lecturerVerified true; adjust_xp → positive `grantXp: {amount,requestId}`. Always reason; negative and zero XP are rejected. Prefer evidence-reviewed verification queue. |

@@ -9,6 +9,7 @@ import { api } from '../../services/api';
 import { AppNotification } from '../../types';
 import { Link } from '@epapers/ui/navigation';
 import { DEFAULT_AVATARS, resolveAvatarId, UsernameTile } from '../../components/common/UsernameTile';
+import { AccountActivity } from '../../components/common/AccountActivity';
 
 export const NotificationsPage: React.FC = () => {
   const { busy, run } = useApiAction();
@@ -224,5 +225,6 @@ export const SettingsPage: React.FC = () => {
       </div>
       <ChangePasswordForm />
       <AccountSecurity />
+      <AccountActivity />
     </div></BusyScope>);
 };

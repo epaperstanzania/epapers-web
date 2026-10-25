@@ -107,7 +107,7 @@ export const PaperDetailPage: React.FC<{ contributor?: boolean }> = ({ contribut
 
           <div className="flex items-center gap-2 text-xs text-[var(--color-text-muted)]  flex-wrap">
             <Link
-              to={contributor ? `/browse?q=${encodeURIComponent(paper.moduleCode)}` : `/modules/${paper.moduleCode}`}
+              to={contributor ? `/browse?q=${encodeURIComponent(paper.moduleCode)}` : `/modules/${paper.moduleId}`}
               className="text-[var(--color-primary)]  font-semibold hover:underline"
             >
               {paper.moduleName}

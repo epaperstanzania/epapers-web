@@ -169,7 +169,7 @@ export async function importModules(admin: User, input: z.infer<typeof adminSche
                 errors.push({ row: i + 2, message: 'Invalid module values' });
                 continue;
             }
-            const normalized = result.data.code.toLowerCase();
+            const normalized = `${program.id}:${result.data.code.toLowerCase()}`;
             if (codes.has(normalized)) {
                 errors.push({ row: i + 2, message: 'Duplicate code in CSV' });
                 continue;
@@ -177,9 +177,9 @@ export async function importModules(admin: User, input: z.infer<typeof adminSche
             codes.add(normalized);
             validated.push(result.data);
         }
-        const existing = await tx.module.findMany({ where: { codeNormalized: { in: [...codes] } } });
+        const existing = await tx.module.findMany({ where: { programId: { in: programs.map(p => p.id) }, codeNormalized: { in: validated.map(v => v.code.toLowerCase()) } } });
         for (const m of existing)
-            errors.push({ row: rows.findIndex(r => r[0]?.toLowerCase() === m.codeNormalized) + 2, message: 'Module code already exists' });
+            errors.push({ row: rows.findIndex(r => r[0]?.toLowerCase() === m.codeNormalized && programs.find(p => p.id === m.programId)?.codeNormalized === r[2]?.toLowerCase()) + 2, message: 'Module code already exists in this program' });
         if (errors.length) {
             if (!input.dryRun)
                 fail(422, 'INVALID_CSV', 'CSV validation failed; run dryRun for row errors');

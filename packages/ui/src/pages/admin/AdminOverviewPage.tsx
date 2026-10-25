@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from '@epapers/ui/navigation';
 import { api } from '../../services/api';
 import { AdminStats, AuditLogItem } from '../../types';
+import { auditActionLabel } from '../../components/common/AccountActivity';
 import {
   Split,
   Flag,
@@ -28,9 +29,9 @@ export const AdminOverviewPage: React.FC = () => {
   useEffect(() => {
     const load = apiTask(async () => {
       setLoading(true);
-      const [s, logs] = await Promise.all([api.getAdminStats(), api.getAuditLogs()]);
+      const [s, logs] = await Promise.all([api.getAdminStats(), api.getAuditLogPage(undefined, 5)]);
       setStats(s);
-      setAuditLogs(logs.slice(0, 5));
+      setAuditLogs(logs.items);
       setLoading(false);
     }, () => setLoading(false));
     load();
@@ -162,17 +163,17 @@ export const AdminOverviewPage: React.FC = () => {
               >
                 <div className="flex justify-between items-center">
                   <span className="font-bold text-[var(--color-text)] ">
-                    {log.action}
+                    {auditActionLabel(log.action)}
                   </span>
                   <span className="text-[10px] text-[var(--color-neutral)]">
                     {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
                 <p className="text-[var(--color-text-muted)]  font-mono text-[11px] truncate">
-                  {log.targetDescription}
+                  {log.targetType.replaceAll('_', ' ')}
                 </p>
                 <span className="text-[10px] text-[var(--color-neutral)] block">
-                  By @{log.adminUsername} · Reason: {log.reason}
+                  By @{log.actorUsername || 'System'}
                 </span>
               </div>
             ))}

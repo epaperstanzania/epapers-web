@@ -1,0 +1,119 @@
+{
+  "sourceSha256": "72251df50fc4794af773c699064aced6baef7a528adc11f7f93eef0f2541535b",
+  "omittedRows": [
+    [
+      "ODCE",
+      2884,
+      "CET06211",
+      "first conflicting source row"
+    ],
+    [
+      "ODCE",
+      2922,
+      "CET06211",
+      "duplicate with differing placement/name"
+    ],
+    [
+      "ODMINE",
+      3162,
+      "CET06105",
+      "first conflicting source row"
+    ],
+    [
+      "ODMINE",
+      3174,
+      "CET06105",
+      "duplicate with differing placement/name"
+    ],
+    [
+      "ODMINE",
+      3177,
+      "CET06105",
+      "duplicate with differing placement/name"
+    ],
+    [
+      "BENGOGE",
+      3678,
+      "CMU07423",
+      ""
+    ],
+    [
+      "ODCOE",
+      4038,
+      "COT05214",
+      "first conflicting source row"
+    ],
+    [
+      "ODCOE",
+      4044,
+      "COT05214",
+      "duplicate with differing placement/name"
+    ],
+    [
+      "ODIT",
+      4268,
+      "COT05214",
+      "first conflicting source row"
+    ],
+    [
+      "ODIT",
+      4271,
+      "COT05214",
+      "duplicate with differing placement/name"
+    ],
+    [
+      "BENGETE",
+      7639,
+      "COU07101",
+      "Computer Basics and Office Application 9 6"
+    ],
+    [
+      "BENGETE",
+      7778,
+      "COU07506",
+      "Digital Signal Processing 6 9 FUNDAMENTAL MODULES"
+    ],
+    [
+      "ODLPT",
+      11133,
+      "LPT05201",
+      "first conflicting source row"
+    ],
+    [
+      "ODLPT",
+      11143,
+      "LPT05201",
+      "duplicate with differing placement/name"
+    ],
+    [
+      "ODCE-SONGWE",
+      12187,
+      "GST06102",
+      "first conflicting source row"
+    ],
+    [
+      "ODCE-SONGWE",
+      12199,
+      "GST06102",
+      "duplicate with differing placement/name"
+    ],
+    [
+      "ODCE-SONGWE",
+      12226,
+      "CET06211",
+      "first conflicting source row"
+    ],
+    [
+      "ODCE-SONGWE",
+      12269,
+      "CET06211",
+      "duplicate with differing placement/name"
+    ],
+    [
+      "ODCE-SONGWE",
+      12278,
+      "CET06214",
+      ""
+    ]
+  ]
+}

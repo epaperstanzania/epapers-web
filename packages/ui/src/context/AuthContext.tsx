@@ -4,7 +4,6 @@ import type { UserProfile, Role } from '../types';
 import { api, profileFromDto } from '../services/api';
 import { request, setSession, restoreSession, subscribeSession, getAccessToken, type Session } from '../services/client';
 import { signIn, verifySignIn, needsEmailVerification, type LoginResult } from '../services/auth';
-import { usePathname } from 'next/navigation';
 
 interface AuthContextType {
   currentUser: UserProfile | null; role: Role; isAuthenticated: boolean; isGuest: boolean;
@@ -17,7 +16,6 @@ interface AuthContextType {
 }
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -46,10 +44,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }).catch(() => undefined);
     return () => { active = false; };
   }, [accessToken]);
-  useEffect(() => {
-    if (!accessToken || !currentUser?.id || !pathname || pathname.startsWith('/auth/')) return;
-    void request('/users/me/activity', { method: 'POST', auth: true, body: { path: pathname } }).catch(() => undefined);
-  }, [accessToken, currentUser?.id, pathname]);
   const refreshUser = async () => {
     const expectedToken = getAccessToken();
     const user = await api.getMe();

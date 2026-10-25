@@ -95,17 +95,17 @@ export async function CataloguePage({
         <header className={styles.moduleHeader}>
           <p className={styles.eyebrow}>{module.code}</p>
           <h1>{module.name}</h1>
-          <p>Semester {module.semester}{module.credits ? ` · ${module.credits} credits` : ''}</p>
+          <p>Year {module.levelYear ?? 1} ? Semester {((module.levelYear ?? 1) - 1) * 2 + module.semester}{module.credits ? ` · ${module.credits} credits` : ''}</p>
         </header>
         <ListHeading title="Available papers" count={result.items.length} />
         <PaperList items={result.items} />
-        <NextPage cursor={result.nextCursor} path={`/modules/${encodeURIComponent(module.code)}`} query={query} />
+        <NextPage cursor={result.nextCursor} path={`/modules/${module.id}`} query={query} />
       </>;
     } else if (kind === 'paper') {
       if (!uuid.safeParse(params.id).success) notFound();
       const paper = await catalogue.paper(params.id);
       content = <article className={styles.paperDetail}>
-        <Link className={styles.paperBack} href={`/modules/${encodeURIComponent(paper.module.code)}`}>
+        <Link className={styles.paperBack} href={`/modules/${paper.module.id}`}>
           {paper.module.code} — {paper.module.name}
         </Link>
         <h1>{paper.title}</h1>

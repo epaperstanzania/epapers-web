@@ -10,13 +10,24 @@ import { adminUser, verificationDto, announcementDto } from '@epapers/server/mod
 import { page, cursorId, activeDepartment } from '@epapers/server/modules/catalog/service';
 import { invalidateDownloads } from '@epapers/server/lib/download-cache';
 import { env } from '@epapers/config/server-env';
-import { scrub } from '@epapers/server/lib/logger';
 import { tokenHash } from '@epapers/auth/crypto';
 import { rateLimit } from '@epapers/server/lib/rate-limit';
 type List = {
     cursor?: string;
     limit: number;
 };
+const importantAuditActions = [
+    'REGISTER', 'REGISTER_GOOGLE', 'LOGIN', 'LOGIN_GOOGLE', 'ADMIN_LOGIN', 'LOGOUT', 'LOGOUT_ALL',
+    'PASSWORD_RESET', 'PASSWORD_CHANGED', 'USERNAME_CHANGED', 'PROFILE_UPDATED', 'PROFILE_IMAGE_UPDATED',
+    'PAPER_SUBMITTED', 'PAPER_DELETED', 'PAPER_PURGED', 'PAPER_APPROVED', 'PAPER_REJECTED', 'PAPER_EDITED', 'PAPER_MARKED_SPAM', 'SCAN_REJECTED',
+    'USER_UPDATED', 'SETTINGS_UPDATED', 'LECTURER_APPROVED', 'LECTURER_REJECTED',
+    'ANNOUNCEMENT_CREATED', 'ANNOUNCEMENT_UPDATED', 'ANNOUNCEMENT_DELETED',
+    'DEPARTMENT_CREATED', 'DEPARTMENT_UPDATED', 'PROGRAM_CREATED', 'PROGRAM_UPDATED',
+    'MODULE_CREATED', 'MODULE_UPDATED', 'MODULES_IMPORTED', 'STRUCTURE_DELETED',
+    'MODULE_REQUEST_CREATED', 'MODULE_REQUEST_APPROVED', 'MODULE_REQUEST_REJECTED',
+    'FLAG_RESOLVED', 'FLAG_DISMISSED', 'TAKEDOWN_APPROVED_REMOVED', 'TAKEDOWN_REJECTED',
+    'CONTACT_REVIEWED', 'ACCOUNT_DELETED',
+] as const;
 export function paging(q: List) { const id = cursorId(q.cursor); return { orderBy: { id: 'desc' as const }, take: q.limit + 1, ...(id ? { cursor: { id }, skip: 1 } : {}) }; }
 export async function users(admin: User, q: z.infer<typeof adminSchemas.list>) { authorize(admin, { roles: ['admin'] }); return page(await db.user.findMany({ where: { role: q.role, status: q.status, homeDepartmentId: q.departmentId, ...(q.q ? { OR: [{ usernameNormalized: { contains: q.q.toLowerCase() } }, { emailNormalized: { contains: q.q.toLowerCase() } }] } : {}) }, ...paging(q) }), q.limit, adminUser); }
 export async function user(admin: User, id: string) { authorize(admin, { roles: ['admin'] }); const u = await db.user.findUnique({ where: { id } }); if (!u)
@@ -67,7 +78,49 @@ export async function updateSettings(admin: User, input: z.infer<typeof adminSch
 } await audit(tx, admin.id, 'SETTINGS_UPDATED', 'settings', null, input.reason); }); return settings(admin); }
 export async function publicSettings() { const s = await db.appSetting.findMany({ where: { key: { in: ['lockdown', 'readOnly', 'bannerMessage'] } } }); return { lockdown: s.find(v => v.key === 'lockdown')?.value === true, readOnly: s.find(v => v.key === 'readOnly')?.value === true, bannerMessage: String(s.find(v => v.key === 'bannerMessage')?.value || '') }; }
 export async function security(admin: User) { authorize(admin, { roles: ['admin'] }); return { settings: await settings(admin), policy: { adminTotpRequired: true, reauthSeconds: 300, accessSeconds: 900, adminAccessSeconds: 300, refreshRotation: true, maxUploadBytes: env.MAX_UPLOAD_BYTES, dailyUploadQuota: env.DAILY_UPLOAD_QUOTA, publicSignedUrlSeconds: 600 }, recentEvents: (await db.auditLog.findMany({ where: { action: { in: ['ADMIN_REAUTH', 'USER_UPDATED', 'SETTINGS_UPDATED', 'ACCOUNT_DELETED'] } }, orderBy: { createdAt: 'desc' }, take: 25 })).map(a => ({ id: a.id, action: a.action, targetId: a.targetId, createdAt: a.createdAt.toISOString() })) }; }
-export async function auditLogs(admin: User, q: z.infer<typeof adminSchemas.audit>) { authorize(admin, { roles: ['admin'] }); return page(await db.auditLog.findMany({ where: { actorUserId: q.actorUserId, targetId: q.targetId, targetType: q.targetType, action: q.action }, include: { relatedActorUserId: { select: { username: true, role: true } } }, ...paging(q), orderBy: [{ createdAt: 'desc' }, { id: 'desc' }] }), q.limit, a => ({ id: a.id, actorUserId: a.actorUserId, actorUsername: a.relatedActorUserId?.username || null, actorRole: a.relatedActorUserId?.role.toLowerCase() || null, action: a.action, targetType: a.targetType, targetId: a.targetId, targetDescription: a.targetDescription, reason: a.reason, metadata: scrub(a.metadata), createdAt: a.createdAt.toISOString() })); }
+export async function auditLogs(admin: User, q: z.infer<typeof adminSchemas.audit>) {
+    authorize(admin, { roles: ['admin'] });
+    const rows = await db.auditLog.findMany({
+        where: {
+            actorUserId: q.actorUserId,
+            targetId: q.targetId,
+            targetType: q.targetType,
+            action: { in: [...importantAuditActions].filter(action => !q.action || action === q.action) },
+        },
+        include: { relatedActorUserId: { select: { username: true, role: true } } },
+        ...paging(q),
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+    return page(rows, q.limit, a => ({
+        id: a.id,
+        actorUserId: a.actorUserId,
+        actorUsername: a.relatedActorUserId?.username || null,
+        actorRole: a.relatedActorUserId?.role.toLowerCase() || null,
+        action: a.action,
+        targetType: a.targetType,
+        targetId: a.targetId,
+        createdAt: a.createdAt.toISOString(),
+    }));
+}
+export async function myAuditLogs(user: User, q: z.infer<typeof adminSchemas.audit>) {
+    authorize(user, {});
+    const rows = await db.auditLog.findMany({
+        where: { actorUserId: user.id, action: { in: [...importantAuditActions] } },
+        include: { relatedActorUserId: { select: { username: true, role: true } } },
+        ...paging(q),
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+    return page(rows, q.limit, a => ({
+        id: a.id,
+        actorUserId: a.actorUserId,
+        actorUsername: a.relatedActorUserId?.username || null,
+        actorRole: a.relatedActorUserId?.role.toLowerCase() || null,
+        action: a.action,
+        targetType: a.targetType,
+        targetId: a.targetId,
+        createdAt: a.createdAt.toISOString(),
+    }));
+}
 export async function stats(admin: User) { authorize(admin, { roles: ['admin'] }); const [pendingPapers, approvedPapers, usersCount, lecturers, pendingVerifications, flags, takedowns, moduleRequests, downloads] = await Promise.all([db.paper.count({ where: { status: 'PENDING' } }), db.paper.count({ where: { status: 'APPROVED' } }), db.user.count(), db.user.count({ where: { role: 'LECTURER' } }), db.lecturerVerification.count({ where: { status: 'pending' } }), db.flaggedReport.count({ where: { status: 'pending' } }), db.takedownRequest.count({ where: { status: 'pending' } }), db.moduleRequest.count({ where: { status: 'pending' } }), db.paper.aggregate({ _sum: { downloadsCount: true } })]); return { pendingPapers, approvedPapers, users: usersCount, lecturers, pendingVerifications, flags, takedowns, moduleRequests, downloads: Number(downloads._sum.downloadsCount || 0) }; }
 export async function submitVerification(user: User, input: z.infer<typeof adminSchemas.verification>) { authorize(user, { roles: ['lecturer'], requireVerifiedEmail: true }); return withTransactionRetry(async (tx) => { const u = await tx.user.findUnique({ where: { id: user.id } }); if (!u)
     fail(401, 'UNAUTHORIZED', 'Authentication required'); authorize(u, { roles: ['lecturer'], requireVerifiedEmail: true }); if (u.lecturerVerifiedAt)

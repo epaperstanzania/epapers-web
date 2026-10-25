@@ -31,4 +31,34 @@ export async function purgeExpiredPapers() {
         }, { isolationLevel: 'Serializable', timeout: 20000 }));
     }
 }
-export async function expireSecurityRecords() { await withTransactionRetry(async (tx) => { await tx.userSession.updateMany({ where: { expiresAt: { lte: new Date() }, revokedAt: null }, data: { revokedAt: new Date() } }); await tx.job.updateMany({ where: { type: { in: ['email', 'email_otp', 'email_notice', 'email_broadcast'] }, status: { in: ['done', 'expired', 'failed'] }, createdAt: { lt: new Date(Date.now() - 7 * 86400000) } }, data: { payload: {} } }); await tx.adminAuthChallenge.deleteMany({ where: { expiresAt: { lt: new Date(Date.now() - 86400000) } } }); await tx.authChallenge.deleteMany({ where: { expiresAt: { lt: new Date(Date.now() - 86400000) } } }); }); }
+export async function expireSecurityRecords() {
+    const now = Date.now();
+    const twoDaysAgo = new Date(now - 2 * 86400000);
+    const auditRetentionCutoff = new Date(now - 90 * 86400000);
+    await withTransactionRetry(async (tx) => {
+        await tx.userSession.updateMany({
+            where: { expiresAt: { lte: new Date(now) }, revokedAt: null },
+            data: { revokedAt: new Date(now) },
+        });
+        await tx.job.updateMany({
+            where: {
+                type: { in: ['email', 'email_otp', 'email_notice', 'email_broadcast'] },
+                status: { in: ['done', 'expired', 'failed'] },
+                createdAt: { lt: new Date(now - 7 * 86400000) },
+            },
+            data: { payload: {} },
+        });
+        await tx.adminAuthChallenge.deleteMany({ where: { expiresAt: { lt: new Date(now - 86400000) } } });
+        await tx.authChallenge.deleteMany({ where: { expiresAt: { lt: new Date(now - 86400000) } } });
+        await tx.paperViewEvent.deleteMany({ where: { processedAt: { lt: twoDaysAgo } } });
+        await tx.paperDownloadEvent.deleteMany({ where: { processedAt: { lt: twoDaysAgo } } });
+        await tx.auditLog.deleteMany({
+            where: {
+                OR: [
+                    { action: 'PAGE_VIEW' },
+                    { createdAt: { lt: auditRetentionCutoff } },
+                ],
+            },
+        });
+    });
+}

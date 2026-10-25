@@ -117,8 +117,10 @@ Neither migration copies data from CockroachDB.
    Set both values in the migration environment and the public/API Vercel
    project. `DATABASE_URL` is used by the running Prisma client and
    `DIRECT_URL` by Prisma Migrate. For the shared transaction pooler, use
-   `pgbouncer=true&sslmode=require&connection_limit=1` as in `.env.example`
-   to keep each warm Vercel instance's connection footprint small.
+   `pgbouncer=true&sslmode=require` as in `.env.example`. Keep a shared
+   Prisma Client per warm Vercel instance. The former `connection_limit=1`
+   option failed URL validation in this project's Prisma runtime and must be
+   removed from Vercel and local `DATABASE_URL` values.
 2. On an empty target, run `pnpm --filter @epapers/database generate`, then
    `pnpm --filter @epapers/database migrate`. Verify the application tables,
    default `app_settings`, and three achievement definitions before enabling
@@ -163,6 +165,55 @@ password and email-code flow. It creates the same EPapers refresh-cookie and
 session records as password sign-in. The Supabase service-role key is not used
 for this flow and must not be placed in a public environment variable. The
 Cloudflare worker token check remains independent of Supabase Auth.
+
+### Google consent screen name
+
+The wording on Google's consent screen is controlled by **Google Auth Platform
+→ Branding**, not by the EPapers callback route. Set the app name to **EPapers**,
+add its support email, homepage, privacy-policy URL and logo, then submit the
+brand for verification. [Google's branding guide](https://support.google.com/cloud/answer/15549049)
+states that the verified app name/logo appear on the consent screen. Keep the
+Google OAuth client's redirect URI pointed to the Supabase Auth callback above.
+
+The line showing `udhugsfauuqsmbktulqu.supabase.co` is the Supabase Auth host.
+Changing the app name alone does not change that host. To brand the host too,
+activate a [Supabase custom domain or vanity subdomain](https://supabase.com/docs/guides/platform/custom-domains),
+add its `/auth/v1/callback` URL to the Google OAuth client, and update
+`NEXT_PUBLIC_SUPABASE_URL` on the web project. Supabase's custom domain is a
+paid add-on; keep the current project host until its replacement is activated.
+
+### 2026/27 DIT curriculum
+
+`docs/source/dit_prospectus_2026_2027.docx` is source data, not operational
+instructions. `scripts/extract-prospectus.py` checks its SHA-256 before
+regenerating `packages/database/prisma/seed/prospectus-2026-2027.json`.
+The checked extraction has 1,300 program/module mappings for 27 programs.
+Nineteen ambiguous source rows are excluded and recorded in
+`docs/source/prospectus-module-review.json`; resolve them against an authoritative
+DIT syllabus before entering them manually. Programs without module tables in
+the supplied prospectus remain available in the directory without invented
+modules.
+
+Apply `0002_modules_shared_codes` before importing: it allows the same module
+code in different programs, while keeping `(program, code)` unique. The seed
+is additive and repeatable; it inserts missing modules and fills missing
+`levelYear` only when the existing semester agrees with the source. It does
+not overwrite paper-linked modules. It stores semester 1 or 2 within each
+program year; the directory displays `year 1 → semesters 1–2`, `year 2 → 3–4`,
+and so on. For an authorized local migration environment with `.env.local`:
+
+```powershell
+node --env-file=.env.local packages/database/node_modules/prisma/build/index.js migrate deploy --schema packages/database/prisma/schema.prisma
+node --env-file=.env.local --conditions=react-server --import tsx packages/database/prisma/seed.ts
+```
+
+Admin stats, audit logs and curriculum routes read the same PostgreSQL database
+through the web/API project's server-side Prisma client. The admin portal
+proxies authenticated API requests to that project. For production to show
+this Supabase data, the web/API Vercel project's `DATABASE_URL` and `DIRECT_URL`
+must point to the migrated Supabase database, and the project must be redeployed
+after those environment variables are changed. Never put database credentials
+in the admin portal's client environment.
 
 ## Public catalogue cache
 

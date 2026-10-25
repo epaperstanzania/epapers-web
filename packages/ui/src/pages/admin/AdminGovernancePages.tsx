@@ -3,6 +3,7 @@ import { AdminSystemHealth } from './AdminSystemHealth';
 import { BusyScope, useApiAction } from '../../components/common/BusyScope';
 import { PageLoader } from '../../components/common/PageLoader';
 import { MobileFilterDrawer } from '../../components/common/MobileFilterDrawer';
+import { auditActionLabel } from '../../components/common/AccountActivity';
 import { apiTask } from '../../services/client';
 import { AdminSystemSettings } from './AdminSystemSettings';
 import React, { useState, useEffect } from 'react';
@@ -60,7 +61,7 @@ export const AdminAuditLogPage: React.FC = () => {
         </div>
         {loadError && <p role="alert" className="px-4 text-xs text-[var(--color-danger)]">{loadError}</p>}
         <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
-          Authenticated contributor, lecturer and admin page visits and account actions. Guest browsing is excluded.
+          Important account, submission, and data-change events only.
         </p>
       </div>
 
@@ -71,10 +72,8 @@ export const AdminAuditLogPage: React.FC = () => {
               <tr>
                 <th className="p-4">Timestamp</th>
                 <th className="p-4">User</th>
-                <th className="p-4">Role</th>
                 <th className="p-4">Action</th>
-                <th className="p-4">Target Resource</th>
-                <th className="p-4">Details</th>
+                <th className="p-4">Target</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border)] ">
@@ -84,19 +83,15 @@ export const AdminAuditLogPage: React.FC = () => {
                     {new Date(log.timestamp).toLocaleString()}
                   </td>
                   <td data-label="User" className="p-4 font-bold text-[var(--color-text)] ">
-                    @{log.adminUsername}
+                    {log.actorUsername ? `@${log.actorUsername}` : 'System'}
                   </td>
-                  <td data-label="Role" className="p-4 capitalize text-[var(--color-text-muted)]">{log.actorRole || 'system'}</td>
                   <td data-label="Action" className="p-4">
                     <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-[var(--color-sidebar)]  text-[var(--color-primary)] ">
-                      {log.action}
+                      {auditActionLabel(log.action)}
                     </span>
                   </td>
-                  <td data-label="Resource" className="p-4 font-mono text-[11px] text-[var(--color-text-muted)] ">
-                    {log.targetDescription}
-                  </td>
-                  <td data-label="Details" className="p-4 text-[var(--color-text-muted)] max-w-xs break-words">
-                    {log.reason}
+                  <td data-label="Target" className="p-4 capitalize text-[var(--color-text-muted)]">
+                    {log.targetType.replaceAll('_', ' ')}
                   </td>
                 </tr>
               ))}

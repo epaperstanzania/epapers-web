@@ -178,13 +178,10 @@ export interface ModuleRequest {
 
 export interface AuditLogItem {
   id: string;
-  adminUsername: string;
+  actorUsername: string | null;
+  actorRole: string | null;
   action: string;
-  actorRole?: string | null;
   targetType: string;
-  targetId: string | null;
-  targetDescription: string;
-  reason: string;
   timestamp: string;
 }
 

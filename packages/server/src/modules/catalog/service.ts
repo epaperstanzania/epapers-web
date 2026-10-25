@@ -28,9 +28,26 @@ export function page<T extends {
     return { items: items.map(dto), nextCursor: hasMore ? Buffer.from(JSON.stringify({ id: items.at(-1)!.id })).toString('base64url') : null };
 }
 function seek(cursor?: string) { const id = cursorId(cursor); return id ? { cursor: { id }, skip: 1 } : {}; }
-export async function departments(q: z.infer<typeof catalogSchemas.departments>) { return page(await db.department.findMany({ where: activeDepartment, orderBy: { id: 'asc' }, take: q.limit + 1, ...seek(q.cursor) }), q.limit, departmentDto); }
-export async function programs(q: z.infer<typeof catalogSchemas.programs>) { return page(await db.program.findMany({ where: { ...activeProgram, departmentId: q.departmentId, level: q.level }, orderBy: { id: 'asc' }, take: q.limit + 1, ...seek(q.cursor) }), q.limit, programDto); }
-export async function modules(q: z.infer<typeof catalogSchemas.modules>) { return page(await db.module.findMany({ where: { ...activeModule, programId: q.programId, semester: q.semester, program: { ...activeProgram, departmentId: q.departmentId } }, orderBy: { id: 'asc' }, take: q.limit + 1, ...seek(q.cursor) }), q.limit, moduleDto); }
+export async function departments(q: z.infer<typeof catalogSchemas.departments>) {
+    const rows = await db.department.findMany({ where: activeDepartment, orderBy: { id: 'asc' }, take: q.limit + 1, ...seek(q.cursor) });
+    const visible = rows.slice(0, q.limit);
+    const counts = visible.length ? await db.$queryRaw<Array<{ id: string; programsCount: number; modulesCount: number; papersCount: number }>>`
+        SELECT d.id,
+          (SELECT count(*)::int FROM programs p WHERE p.department_id = d.id AND p.is_active AND p.deleted_at IS NULL) AS "programsCount",
+          (SELECT count(*)::int FROM modules m JOIN programs p ON p.id = m.program_id
+            WHERE p.department_id = d.id AND p.is_active AND p.deleted_at IS NULL AND m.is_active AND m.deleted_at IS NULL) AS "modulesCount",
+          (SELECT count(*)::int FROM papers paper JOIN modules m ON m.id = paper.module_id JOIN programs p ON p.id = m.program_id
+            WHERE p.department_id = d.id AND p.is_active AND p.deleted_at IS NULL AND m.is_active AND m.deleted_at IS NULL
+              AND paper.status = 'APPROVED' AND paper.deleted_at IS NULL) AS "papersCount"
+        FROM departments d WHERE d.id IN (${Prisma.join(visible.map(d => Prisma.sql`${d.id}::uuid`))})` : [];
+    const byId = new Map(counts.map(count => [count.id, count]));
+    return page(rows, q.limit, d => ({ ...departmentDto(d), programsCount: byId.get(d.id)?.programsCount ?? 0, modulesCount: byId.get(d.id)?.modulesCount ?? 0, papersCount: byId.get(d.id)?.papersCount ?? 0 }));
+}
+export async function programs(q: z.infer<typeof catalogSchemas.programs>) {
+    const rows = await db.program.findMany({ where: { ...activeProgram, departmentId: q.departmentId, level: q.level }, include: { _count: { select: { modules: { where: { isActive: true, deletedAt: null } } } } }, orderBy: { id: 'asc' }, take: q.limit + 1, ...seek(q.cursor) });
+    return page(rows, q.limit, p => ({ ...programDto(p), modulesCount: p._count.modules }));
+}
+export async function modules(q: z.infer<typeof catalogSchemas.modules>) { return page(await db.module.findMany({ where: { ...activeModule, programId: q.programId, semester: q.semester, program: { ...activeProgram, departmentId: q.departmentId } }, orderBy: q.programId ? [{ levelYear: 'asc' }, { semester: 'asc' }, { codeNormalized: 'asc' }, { id: 'asc' }] : [{ id: 'asc' }], take: q.limit + 1, ...seek(q.cursor) }), q.limit, moduleDto); }
 export async function department(id: string) { const d = await db.department.findFirst({ where: { id, ...activeDepartment } }); if (!d)
     fail(404, 'NOT_FOUND', 'Department not found'); return departmentDto(d); }
 export async function program(id: string) { const p = await db.program.findFirst({ where: { id, ...activeProgram } }); if (!p)
