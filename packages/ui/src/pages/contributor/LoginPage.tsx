@@ -95,7 +95,7 @@ export function LoginPage() {
             <path fill="#FBBC05" d="M12.6 27.7a12 12 0 0 1 0-7.4V15H5.8a20 20 0 0 0 0 18l6.8-5.3Z" />
             <path fill="#EA4335" d="M24 11.9c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 5.9 29.5 4 24 4A20 20 0 0 0 5.8 15l6.8 5.3c1.6-4.8 6.1-8.4 11.4-8.4Z" />
           </svg>
-oi          Continue with Google
+Continue with Google
         </button>
       </div>}
       <p className="text-center text-xs text-[var(--color-text-muted)]">New to Epapers? <Link to="/register" className="font-semibold text-[var(--color-primary)] hover:underline">Create an account</Link></p>
