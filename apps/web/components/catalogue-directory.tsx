@@ -123,6 +123,7 @@ export function DepartmentDirectory({ department, programs }: { department: Depa
 }
 
 export function ProgramDirectory({ program, modules }: { program: Program; modules: Module[] }) {
+  const years = [...new Set(modules.map(module => module.levelYear ?? 1))].sort((a, b) => a - b);
   return (
     <div className={styles.directory}>
       <DirectoryHeader
@@ -133,22 +134,29 @@ export function ProgramDirectory({ program, modules }: { program: Program; modul
         details={[program.awardTitle, program.campus]}
       />
       <DirectorySection eyebrow="The curriculum" title="Modules" description="Open a module to find its available examination papers.">
-        {modules.length ? (
-          <ul className={styles.cardGrid}>
-            {modules.map((module) => (
-              <CatalogueMotionCard key={module.id} className={styles.card}>
-                <Link className={styles.cardLink} href={`/modules/${encodeURIComponent(module.code)}`}>
-                  <span className={styles.code}>{module.code}</span>
-                  <span className={styles.cardTitle}>{module.name}</span>
-                  <span className={styles.cardFooter}>
-                    <span className={styles.semester}>Semester {module.semester}</span>
-                    <span className={styles.arrow} aria-hidden="true">↗</span>
-                  </span>
-                </Link>
-              </CatalogueMotionCard>
-            ))}
-          </ul>
-        ) : <EmptyState>No active modules are available.</EmptyState>}
+        {modules.length ? <div className={styles.curriculumYears}>
+          {years.map(year => <section key={year} className={styles.curriculumYear} aria-label={`Year ${year}`}>
+            <h3 className={styles.curriculumYearTitle}>Year {year}</h3>
+            {[1, 2].map(semester => {
+              const entries = modules.filter(module => (module.levelYear ?? 1) === year && module.semester === semester);
+              return entries.length ? <div key={semester} className={styles.curriculumTerm}>
+                <h4 className={styles.curriculumTermTitle}>Semester {(year - 1) * 2 + semester}</h4>
+                <ul className={styles.cardGrid}>
+                  {entries.map(module => <CatalogueMotionCard key={module.id} className={styles.card}>
+                    <Link className={styles.cardLink} href={`/modules/${module.id}`}>
+                      <span className={styles.code}>{module.code}</span>
+                      <span className={styles.cardTitle}>{module.name}</span>
+                      <span className={styles.cardFooter}>
+                        <span className={styles.semester}>{module.credits ? `${module.credits} credits` : 'View papers'}</span>
+                        <span className={styles.arrow} aria-hidden="true">↗</span>
+                      </span>
+                    </Link>
+                  </CatalogueMotionCard>)}
+                </ul>
+              </div> : null;
+            })}
+          </section>)}
+        </div> : <EmptyState>No active modules are available.</EmptyState>}
       </DirectorySection>
     </div>
   );
