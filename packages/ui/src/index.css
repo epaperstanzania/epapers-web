@@ -289,7 +289,10 @@ body { font-family: "Inter Variable", Inter, sans-serif; }
   .epapers-portal-main :where(.rounded-xl, .rounded-2xl).p-6 { padding: 1rem; }
   .epapers-responsive-table,
   .epapers-responsive-table tbody { display: block; width: 100%; }
-  .epapers-responsive-table thead { display: none; }
+  .epapers-responsive-table thead {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
   .epapers-responsive-table tbody { padding: .75rem; }
   .epapers-responsive-table tr {
     display: grid; gap: 0; min-width: 0; margin-bottom: .75rem;
