@@ -4,12 +4,12 @@
 
 The selected hosting profile is four independent Vercel projects:
 
-| Portal | Project / production hostname | Root directory |
-| --- | --- | --- |
-| Public and API | `epapertz.vercel.app` | `apps/web` |
-| Contributor and uploads | `epapertz-contributor.vercel.app` | `apps/contributor` |
-| Lecturer | `epapertz-lecturer.vercel.app` | `apps/lecturer` |
-| Administrator | `epapertz-admin.vercel.app` | `apps/admin` |
+| Portal | Project / production hostname | Vercel deployment alias | Root directory |
+| --- | --- | --- | --- |
+| Public and API | `epapers.co.tz` | `epapertz.vercel.app` | `apps/web` |
+| Contributor and uploads | `contributor.epapers.co.tz` | `epapertz-contributor.vercel.app` | `apps/contributor` |
+| Lecturer | `lecturer.epapers.co.tz` | `epapertz-lecturer.vercel.app` | `apps/lecturer` |
+| Administrator | `console.epapers.co.tz` | `epapertz-admin.vercel.app` | `apps/admin` |
 
 `deployment/portals.json` records these origins. Each app's `vercel.json` installs
 from the workspace root and builds only that portal's dependency graph. Enable
@@ -27,11 +27,12 @@ This prevents local `.env.local` values or stale Vercel overrides from breaking
 the Vercel deployment profile. Do not add conflicting origin/cookie overrides
 to the Vercel projects.
 
-When `epapers.co.tz` and its three subdomains are active, set
-`NEXT_PUBLIC_DOMAIN_PROFILE=custom` on **all four** Vercel projects and redeploy
-them together. The shared portal configuration then switches navigation,
-authentication callbacks, API origin and trusted origins to that one domain;
-keep the default profile for the current `*.vercel.app` deployment.
+The four custom domains are assigned to their matching Vercel projects and
+their DNS configuration is verified. Set
+`NEXT_PUBLIC_DOMAIN_PROFILE=custom` in Production on **all four** Vercel
+projects and redeploy them together. The shared portal configuration then
+switches navigation, authentication callbacks, API origin and trusted origins
+to the branded domains above. Keep `*.vercel.app` only as deployment aliases.
 
 Separate `vercel.app` hosts cannot share a cookie domain. Portal requests to
 `/api/v1` are proxied to the canonical API. A portal without a session starts at
@@ -147,12 +148,11 @@ Neither migration copies data from CockroachDB.
    Configure that Google client in the Supabase Google provider settings.
 5. In **Supabase → Authentication → URL Configuration**, set the Site URL to
    `https://epapertz.vercel.app` and add
-   `https://epapertz.vercel.app/api/v1/auth/callback/google` to Redirect URLs.
-   Add `https://epapertz.vercel.app/api/v1/auth/callback/google?returnTo=**`
+   `https://epapers.co.tz/api/v1/auth/callback/google` to Redirect URLs.
+   Add `https://epapers.co.tz/api/v1/auth/callback/google?returnTo=**`
    if cross-portal login uses the optional `returnTo` query. For local
-   development add the corresponding `http://localhost:3000` callback URLs;
-   add `https://epapers.co.tz/api/v1/auth/callback/google` when using the
-   custom domain. Keep production URLs exact apart from the query wildcard.
+   development add the corresponding `http://localhost:3000` callback URLs.
+   Keep production URLs exact apart from the query wildcard.
    Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` on the
    web project and local web env. The browser starts Google sign-in, Supabase
    sends a PKCE code to the EPapers callback, and EPapers exchanges it
@@ -176,11 +176,14 @@ states that the verified app name/logo appear on the consent screen. Keep the
 Google OAuth client's redirect URI pointed to the Supabase Auth callback above.
 
 The line showing `udhugsfauuqsmbktulqu.supabase.co` is the Supabase Auth host.
-Changing the app name alone does not change that host. To brand the host too,
-activate a [Supabase custom domain or vanity subdomain](https://supabase.com/docs/guides/platform/custom-domains),
-add its `/auth/v1/callback` URL to the Google OAuth client, and update
-`NEXT_PUBLIC_SUPABASE_URL` on the web project. Supabase's custom domain is a
-paid add-on; keep the current project host until its replacement is activated.
+Changing the app name alone does not change that host. To brand it, activate a
+[Supabase custom domain or vanity subdomain](https://supabase.com/docs/guides/platform/custom-domains)
+such as `auth.epapers.co.tz`, add
+`https://auth.epapers.co.tz/auth/v1/callback` to the Google OAuth client's
+Authorized redirect URIs, and update `NEXT_PUBLIC_SUPABASE_URL` on the web
+project only after Supabase has provisioned and verified the custom host.
+Supabase custom domains are a paid add-on; retain the current project host
+until the custom host is active.
 
 ### 2026/27 DIT curriculum
 

@@ -147,7 +147,7 @@ export const AboutPage: React.FC = () => (
         <span>·</span>
         <Link to="/how-it-works" className="hover:underline">User guide</Link>
         <span>·</span>
-        <Link to="/upload" className="hover:underline">Become a Contributor</Link>
+        <Link to="/login" className="hover:underline">Become a Contributor</Link>
       </div>
     </div>
   </div>
