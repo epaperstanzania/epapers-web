@@ -589,10 +589,10 @@ export const OfflinePage: React.FC = () => (
       <RefreshCw className="w-7 h-7" />
     </div>
     <h2 className="font-heading font-bold text-xl text-[var(--color-text)] ">
-      Offline Cellular Mode
+      You're offline
     </h2>
     <p className="text-xs text-[var(--color-text-muted)] max-w-md">
-      You are currently disconnected from campus networks. Previously cached examination papers remain readable in low-data mode.
+      Reconnect to browse examination papers. EPapers does not save account data or paper files for offline use.
     </p>
   </div>
 );
