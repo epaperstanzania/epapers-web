@@ -46,8 +46,8 @@ export function HomeHero() {
   return (
     <section className={styles.homeHero}>
       <div className={styles.heroContent}>
-        <p className={styles.heroEyebrow}>EPapers · Tusome Pamoja</p>
-        <h1>Prepare with confidence. <span>Learn from past papers.</span></h1>
+        <p className={styles.heroEyebrow}>Tusome Pamoja</p>
+        <h1>Prepare with confidence.</h1>
         <p>Explore examination papers by department, program and module. A shared academic archive, built by the DIT community.</p>
         <Link href="/departments">Browse departments <span aria-hidden="true">→</span></Link>
       </div>
