@@ -52,8 +52,9 @@ origins and isolated backend.
 
 Add these secrets to **Production** in the public project's Vercel settings:
 
-- `DATABASE_URL`, `DATA_ENCRYPTION_KEY`, `JWT_ACCESS_SECRET`,
+- `DATABASE_URL`, `DIRECT_URL`, `DATA_ENCRYPTION_KEY`, `JWT_ACCESS_SECRET`,
   `REFRESH_TOKEN_PEPPER`, `IP_HASH_SALT`.
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` for Google sign-in.
 - `EPAPERS_WORKER_TOKEN`, shared with the Cloudflare Cron Worker.
 - `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ENDPOINT`,
   `R2_INCOMING_BUCKET`, `R2_PUBLISHED_BUCKET`, `R2_PROFILE_BUCKET`.
@@ -96,6 +97,72 @@ release job, not the build command.
 On Vercel, rate limiting uses the platform-overwritten `x-vercel-forwarded-for`
 header. Keep `TRUST_PROXY=false` there; that option is for restricted Cloudflare
 ingress on other hosts.
+
+## Supabase PostgreSQL and Google sign-in
+
+The active Prisma migration history is now PostgreSQL-only. The previous
+CockroachDB migrations are preserved under
+`packages/database/prisma/cockroach-migrations` for reference and must not be
+applied to Supabase. The new `0000_postgresql_baseline` creates the current
+application tables, indexes, constraints and default settings in a **fresh**
+Supabase project's `public` schema. `0001_supabase_api_permissions` enables
+row-level security and removes browser-role grants on EPapers tables, including
+Prisma migration history. EPapers accesses these tables through Prisma using
+its server-side database role; Supabase Auth is used only for Google identity.
+Neither migration copies data from CockroachDB.
+
+1. Set `DATABASE_URL` to the Supabase transaction pooler on port 6543 and
+   `DIRECT_URL` to the direct connection or IPv4-compatible session pooler on
+   port 5432. Use the actual project password; do not put either URL in Git.
+   Set both values in the migration environment and the public/API Vercel
+   project. `DATABASE_URL` is used by the running Prisma client and
+   `DIRECT_URL` by Prisma Migrate. For the shared transaction pooler, use
+   `pgbouncer=true&sslmode=require&connection_limit=1` as in `.env.example`
+   to keep each warm Vercel instance's connection footprint small.
+2. On an empty target, run `pnpm --filter @epapers/database generate`, then
+   `pnpm --filter @epapers/database migrate`. Verify the application tables,
+   default `app_settings`, and three achievement definitions before enabling
+   traffic. Do not run the baseline against a populated target database.
+3. If retaining existing EPapers data, stop writes to the old database and
+   back up both databases. Run `node scripts/migrate-cockroach-data.mjs` for a
+   read-only snapshot check, then `node scripts/migrate-cockroach-data.mjs
+   --apply` to import into the empty Supabase tables. The script reads
+   `LEGACY_DATABASE_URL` from `apps/web/.env.local` and `DIRECT_URL` from the
+   root `.env.local` unless `SOURCE_DATABASE_URL` and `DIRECT_URL` are provided
+   as process environment variables. It preserves primary keys and imports
+   all application records in one rollback-safe transaction; it does not copy
+   CockroachDB migration metadata. Compare table counts and representative
+   papers, users and sessions with `node scripts/migrate-cockroach-data.mjs
+   --verify` before changing Vercel's `DATABASE_URL`. Content verification
+   excludes the old worker's continuously updated heartbeat value. If old
+   site writes continue after the first import, pause them and run the script
+   with `--sync` in a maintenance window. It upserts changed records, prunes
+   expired sign-in challenges, and stops if any other destination-only record
+   needs manual reconciliation.
+4. In **Google Cloud Console → OAuth client → Authorized redirect URIs**, use
+   `https://udhugsfauuqsmbktulqu.supabase.co/auth/v1/callback`. This is the
+   Google-to-Supabase callback; it does not replace the EPapers callback.
+   Configure that Google client in the Supabase Google provider settings.
+5. In **Supabase → Authentication → URL Configuration**, set the Site URL to
+   `https://epapertz.vercel.app` and add
+   `https://epapertz.vercel.app/api/v1/auth/callback/google` to Redirect URLs.
+   Add `https://epapertz.vercel.app/api/v1/auth/callback/google?returnTo=**`
+   if cross-portal login uses the optional `returnTo` query. For local
+   development add the corresponding `http://localhost:3000` callback URLs;
+   add `https://epapers.co.tz/api/v1/auth/callback/google` when using the
+   custom domain. Keep production URLs exact apart from the query wildcard.
+   Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` on the
+   web project and local web env. The browser starts Google sign-in, Supabase
+   sends a PKCE code to the EPapers callback, and EPapers exchanges it
+   server-side before issuing its own session cookie.
+
+The Google callback accepts only a verified Supabase user with a Google
+identity. It links an existing EPapers account only when that account's email
+is already verified, and never signs an administrator in without the existing
+password and email-code flow. It creates the same EPapers refresh-cookie and
+session records as password sign-in. The Supabase service-role key is not used
+for this flow and must not be placed in a public environment variable. The
+Cloudflare worker token check remains independent of Supabase Auth.
 
 ## Public catalogue cache
 
@@ -258,7 +325,7 @@ four trusted portal origins. Do not set a blanket SAMEORIGIN/X-Frame-Options or
 
 ## Backup and restore
 
-Use CockroachDB-compatible scheduled backups and private R2 retention/versioning
+Use PostgreSQL-compatible scheduled backups and private R2 retention/versioning
 appropriate to the deployment. Keep signing/encryption key recovery material in
 the secret manager with restricted access. Restore database and objects into an
 isolated environment first; check foreign keys, file references, archived papers,

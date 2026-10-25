@@ -10,7 +10,8 @@
     "./crypto": "./src/crypto.ts",
     "./client": "./src/client.ts",
     "./credentials": "./src/credentials.ts",
-    "./policy": "./src/policy.ts"
+    "./policy": "./src/policy.ts",
+    "./supabase": "./src/supabase.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",
@@ -18,11 +19,12 @@
     "lint": "eslint src --max-warnings=0"
   },
   "dependencies": {
-    "@epapers/database": "workspace:*",
     "@epapers/config": "workspace:*",
-    "jose": "6.1.3",
+    "@epapers/database": "workspace:*",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.118.0",
     "argon2": "0.41.1",
+    "jose": "6.1.3",
     "server-only": "0.0.1"
-  },
-  "devDependencies": {}
+  }
 }

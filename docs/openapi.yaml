@@ -412,6 +412,35 @@
         }
       }
     },
+    "/auth/callback/google": {
+      "get": {
+        "summary": "Exchange a Supabase Google authorization code and establish an EPapers session",
+        "security": [],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "returnTo",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "uri" }
+          }
+        ],
+        "responses": {
+          "303": {
+            "description": "Redirect to an allowed EPapers portal or back to login if verification fails",
+            "headers": {
+              "Location": { "schema": { "type": "string", "format": "uri" } },
+              "Set-Cookie": { "schema": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
     "/auth/login": {
       "post": {
         "security": [],

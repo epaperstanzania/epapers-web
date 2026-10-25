@@ -82,7 +82,7 @@ afterAll(async () => {
     vi.restoreAllMocks();
     await db.$disconnect();
 }, 60000);
-describe.skipIf(!enabled)('Phases 3–5 real CockroachDB with isolated storage adapter', () => {
+describe.skipIf(!enabled)('Phases 3–5 real PostgreSQL with isolated storage adapter', () => {
     it('requires owner completion and rejects invalid PDF files', async () => { const id = await upload(); await expect(complete(lecturer, id)).rejects.toThrow(); expect((await complete(contributor, id)).completed).toBe(true); const bad = await upload(contributor, Buffer.from('<html>%%EOF')); expect((await db.storedFile.findUniqueOrThrow({ where: { id: bad } })).scanStatus).toBe('REJECTED'); await expect(createPaper(contributor, { moduleId: module.id, title: 'Bad paper', category: 'UE', academicYear: 2024, semester: 1, examPeriod: '', examUploadId: bad })).rejects.toThrow(); }, 60000);
     it('submits duplicates as warnings and enforces lecturer department scope', async () => { const first = await submit(); expect(first.p.status).toBe('pending'); const second = await submit(); expect(second.p.duplicateWarning).toBe(true); const own = await submit(lecturer); expect(own.p.status).toBe('approved'); const cross = await submit(lecturer, otherModule); expect(cross.p.status).toBe('pending'); const q = await modules(catalogSchemas.modules.parse({ programId: module.programId, semester: 1 })); expect(q.items.every(m => m.programId === module.programId && m.semester === 1)).toBe(true); }, 60000);
     it('keeps files private before scans and atomically awards approval once', async () => {

@@ -1,17 +1,29 @@
 # Backups and restore exercises
 
-Native database backups and private R2 object backups must be managed separately. Database replicas alone do not recover accidental deletion. Choose a backup location/plan permitted by the CockroachDB Cloud account, independent credentials and retention, and record operator ownership, schedule, backup age and recovery objectives. Back up DATA_ENCRYPTION_KEY separately; database ciphertext is unusable without it. Do not put access secrets in SQL examples, logs or this repository.
+EPapers uses Supabase PostgreSQL for application data and Auth, and private
+Cloudflare R2 buckets for PDFs and profile images. Protect and restore the
+database and R2 objects separately. A database restore alone cannot recover
+an R2 object deleted after its backup. Keep `DATA_ENCRYPTION_KEY`, JWT and
+refresh-token secrets in an independent secret backup; database ciphertext
+cannot be read without the encryption key.
 
-CockroachDB native BACKUP creates a timestamp-consistent database/cluster snapshot and RESTORE can recover it into a separate target. Current syntax uses backup collections; the legacy `BACKUP ... TO` syntax was removed. Verify privileges and version/plan restrictions before configuring a schedule. R2 is S3-compatible but is not one of Cockroach Labs' tested backup providers, so do not assume compatibility: perform a native backup/restore using a supported destination or verify custom-endpoint support separately. Sources: [BACKUP](https://docs.cockroachlabs.com/docs/stable/backup), [RESTORE](https://docs.cockroachlabs.com/docs/stable/restore).
+Check the project's actual backup availability in Supabase Dashboard →
+Database → Backups. The retention and point-in-time restore options depend on
+the plan and configuration. For an independent logical copy, use the Supabase
+CLI `db dump` or a compatible PostgreSQL dump from an authorized environment.
+Document who owns the backup, where it is retained, its age, and the recovery
+objectives. See the [Supabase database backup guide](https://supabase.com/docs/guides/platform/backups).
 
-An operator recovery drill should:
+For a recovery drill, restore into a separate project without application
+traffic. Restore matching R2 object copies, configure isolated application
+origins, and keep the worker and outbound email disabled. Compare table counts,
+curriculum, papers, files, account state, audit logs, and stored-file object
+keys; sample actual downloads and authorization checks. Confirm the Prisma
+PostgreSQL baseline and later migrations are recorded as applied. Revoke
+restored sessions and challenges before exposing a copy to users, and rotate
+signing and refresh secrets if the copy could have been accessed by others.
+Record the measured recovery point and recovery time before production cutover.
 
-1. Record the last successful full/incremental backup and object-copy timestamps. Stop writes and the worker during the drill's recovery cutover; retain the original database.
-2. Restore the native backup to a new database/cluster, with no application traffic. Restore incoming/published object copies for matching stored_file keys. Use a dedicated test origin and SMTP-disabled worker so restored jobs cannot email real users.
-3. Verify migrations, enum/check/foreign-key constraints and partial indexes, curriculum/paper/file counts, account status and deletion flags, username history, positive ledger sums vs user totals, audit continuity, and retryable worker intents. Sample file hashes and real PDF downloads. Check that deleted/unclean/unapproved files are denied.
-4. Restore encryption keys through a secure channel. Revoke all restored sessions and challenge records; regenerate signing/refresh secrets before reopening traffic. Check that stale pending email/publication jobs are expired or safely replayable.
-5. Run the authorization/privacy suite against an isolated copied target, a migration compatibility check, EXPLAIN and search/download load checks. Record measured RPO (data lost) and RTO (time to usable service); get the deployment owner's cutover approval. Keep old target read-only for rollback under the retention policy.
-
-`npm run test:restore` refuses production and uses TEST_DATABASE_URL. It serializes a synthetic department/program/module snapshot, restores three related rows in a serializable transaction, checks a SHA-256 checksum and removes the fixture. `docs/RESTORE-DRILL.json` records its scope/time/result. This verifies a logical relation/serialization round-trip only. It never exports user data or copies R2 objects and cannot validate native backup files, operator privileges, full-database disaster recovery or RPO/RTO.
-
-Native managed backup/restore, external object replication and a full isolated recovery remain manual and unverified with the current credentials. No production backup schedule or automatic backup-trigger job is claimed. Establish and prove these before launch; the application must not be given broad cluster backup administration permissions merely to serve requests.
+The old CockroachDB backup procedure applies only to the pre-migration source
+database. Keep its snapshot until data import and post-cutover verification
+are complete; it is not a Supabase backup.

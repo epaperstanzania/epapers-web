@@ -60,7 +60,7 @@ afterAll(async () => {
     await db.$disconnect();
     await raw.$disconnect();
 }, 60000);
-describe.skipIf(!enabled)('Phases 6–8 real CockroachDB administration and retention', () => {
+describe.skipIf(!enabled)('Phases 6–8 real PostgreSQL administration and retention', () => {
     it('publishes announcements only within their window and preserves absent patch values',async()=>{
         const visible=await adminService.saveAnnouncement(admin,adminSchemas.announcement.parse({title:'Visible '+prefix,content:'Campus notice',startsAt:new Date(Date.now()-60000).toISOString(),reason:'test'}));announcementIds.push(visible.id);
         const expired=await adminService.saveAnnouncement(admin,adminSchemas.announcement.parse({title:'Expired '+prefix,content:'Old notice',startsAt:new Date(Date.now()-120000).toISOString(),endsAt:new Date(Date.now()-60000).toISOString(),reason:'test'}));announcementIds.push(expired.id);

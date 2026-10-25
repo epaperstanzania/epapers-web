@@ -5,9 +5,8 @@ export { withRetry } from '@epapers/database/retry';
 const globalDb = globalThis as unknown as {
     prisma?: PrismaClient;
 };
-const raw = globalDb.prisma ?? new PrismaClient();
-if (process.env.NODE_ENV !== 'production')
-    globalDb.prisma = raw;
+// Reuse one client per warm serverless instance and across development reloads.
+const raw = globalDb.prisma ?? (globalDb.prisma = new PrismaClient());
 const softModels = new Set(['User', 'Department', 'Program', 'Module', 'Paper', 'Announcement', 'ModuleRequest']);
 export const db = raw.$extends({ query: { $allModels: { async $allOperations({ model, operation, args, query }) {
                 if (softModels.has(model) && ['findUnique', 'findUniqueOrThrow', 'findFirst', 'findFirstOrThrow', 'findMany', 'count', 'aggregate', 'groupBy', 'update', 'updateMany'].includes(operation)) {

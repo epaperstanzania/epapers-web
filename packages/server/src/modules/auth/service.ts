@@ -163,6 +163,78 @@ export async function login(usernameOrEmail: string, password: string, adminOnly
         fail(401, 'INVALID_CREDENTIALS', 'Please log in again'); const issued = await issueSession(tx, current); await audit(tx, current.id, 'LOGIN'); return issued; });
     return { refreshToken: issued.refreshToken, session: { id: issued.session.id, expiresAt: issued.session.expiresAt }, accessToken: await signAccess(user, issued.session.id), user: privateUser(user) };
 }
+/** Link a verified Supabase Google identity to a local account and issue the usual EPapers session. */
+export async function loginWithGoogle(profile: {
+    id: string;
+    email: string;
+    emailVerifiedAt: Date;
+    fullName?: string;
+    avatarUrl?: string;
+}) {
+    const email = profile.email.trim().toLowerCase();
+    if (!email || !profile.emailVerifiedAt || !/^[0-9a-f-]{36}$/i.test(profile.id))
+        fail(401, 'INVALID_IDENTITY', 'Google account could not be verified');
+    await rateLimit('google-account:' + tokenHash(profile.id), 20, 900);
+    const candidateName = profile.fullName?.trim().slice(0, 120) || email.split('@')[0];
+    const displayName = candidateName.length >= 2 ? candidateName : 'Google user';
+    const result = await withTransactionRetry(async tx => {
+        const linked = await tx.oAuthIdentity.findUnique({ where: { provider_providerUserId: { provider: 'google', providerUserId: profile.id } } });
+        const existing = linked
+            ? await tx.user.findUnique({ where: { id: linked.userId } })
+            : await tx.user.findUnique({ where: { emailNormalized: email } });
+        if (linked && (!existing || existing.emailNormalized !== email))
+            fail(409, 'ACCOUNT_LINK_CONFLICT', 'This Google account needs account support before sign-in');
+        if (existing && !existing.emailVerifiedAt)
+            fail(409, 'VERIFY_EMAIL_FIRST', 'Verify your EPapers email before using Google sign-in');
+        if (existing?.role === 'ADMIN')
+            fail(403, 'ADMIN_VERIFICATION_REQUIRED', 'Administrators must use password and email verification');
+        if (existing) active(existing);
+        if (!existing) {
+            const settings = await tx.$queryRaw<Array<{ value: unknown }>> `SELECT value FROM app_settings WHERE key='lockdown'`;
+            if (settings[0]?.value === true) fail(403, 'LOCKDOWN', 'Registration is temporarily disabled');
+        }
+        const handleBase = (profile.fullName || email.split('@')[0]).toLowerCase()
+            .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 16) || 'user';
+        const username = handleBase + '_' + profile.id.replaceAll('-', '').slice(0, 12).toLowerCase();
+        // Existing Google users keep their password credential; only new accounts need a random unusable hash.
+        const user = existing ?? await tx.user.upsert({
+            where: { emailNormalized: email },
+            create: {
+                username,
+                usernameNormalized: username,
+                email,
+                emailNormalized: email,
+                fullName: displayName,
+                passwordHash: await hashPassword(opaqueToken() + 'A1'),
+                emailVerifiedAt: profile.emailVerifiedAt,
+                role: 'CONTRIBUTOR',
+            },
+            update: {},
+        });
+        active(user);
+        // Never allow an OAuth callback to bypass the administrator's email code.
+        if (user.role === 'ADMIN') fail(403, 'ADMIN_VERIFICATION_REQUIRED', 'Administrators must use password and email verification');
+        if (!existing) {
+            await tx.usernameRegistry.create({ data: { usernameNormalized: username, userId: user.id } });
+            await audit(tx, user.id, 'REGISTER_GOOGLE');
+        }
+        await tx.oAuthIdentity.upsert({
+            where: { provider_providerUserId: { provider: 'google', providerUserId: profile.id } },
+            create: { userId: user.id, provider: 'google', providerUserId: profile.id, avatarUrl: profile.avatarUrl || null },
+            update: { avatarUrl: profile.avatarUrl || null },
+        });
+        const issued = await issueSession(tx, user);
+        await audit(tx, user.id, 'LOGIN_GOOGLE');
+        return { user, ...issued };
+    });
+    return {
+        refreshToken: result.refreshToken,
+        session: { id: result.session.id, expiresAt: result.session.expiresAt },
+        accessToken: await signAccess(result.user, result.session.id),
+        user: privateUser(result.user),
+    };
+}
 export async function refresh(token: string) {
     const result = await withTransactionRetry(async (tx) => {
         const session = await tx.userSession.findUnique({ where: { refreshTokenHash: tokenHash(token) } });

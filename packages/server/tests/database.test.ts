@@ -6,7 +6,7 @@ import { POST as registerRoute } from '../../../apps/web/app/api/v1/auth/registe
 import { decrypt } from '@epapers/server/lib/encryption';
 import { randomUUID } from 'node:crypto';
 import { hashPassword, tokenHash } from '@epapers/auth/crypto';
-import { login as beginLogin, verifyAdminLogin, verifyAdminReauthentication, refresh, authenticate, verifyOtp, resetPassword, updateProfile, reauthenticate } from '@epapers/server/modules/auth/service';
+import { login as beginLogin, loginWithGoogle, verifyAdminLogin, verifyAdminReauthentication, refresh, authenticate, verifyOtp, resetPassword, updateProfile, reauthenticate } from '@epapers/server/modules/auth/service';
 async function login(username: string, password: string) { const result = await beginLogin(username, password); if ('verificationRequired' in result) throw new Error('Unexpected admin challenge'); return result; }
 const jobs: string[] = [];
 const enabled = process.env.EPAPERS_DB_TESTS_ENABLED === 'true';
@@ -23,10 +23,26 @@ afterAll(async () => { if (enabled) {
         await db.userSession.deleteMany({ where: { userId: id } });
         await db.user.delete({ where: { id } });
     } await db.$disconnect(); });
-describe.skipIf(!enabled)('real CockroachDB foundation and auth', () => {
-    it('runs on CockroachDB and enforces positive XP', async () => { const version = await db.$queryRaw<Array<{
+describe.skipIf(!enabled)('real PostgreSQL foundation and auth', () => {
+    it('runs on PostgreSQL and enforces positive XP', async () => { const version = await db.$queryRaw<Array<{
         version: string;
-    }>> `SELECT version()`; expect(version[0].version).toContain('CockroachDB'); const u = await user(); await expect(db.$executeRaw `INSERT INTO xp_ledger(user_id,amount,event_type) VALUES (${u.id}::UUID,-1,'ADMIN_ADJUSTMENT')`).rejects.toThrow(); });
+    }>> `SELECT version()`; expect(version[0].version).toContain('PostgreSQL'); const u = await user(); await expect(db.$executeRaw `INSERT INTO xp_ledger(user_id,amount,event_type) VALUES (${u.id}::UUID,-1,'ADMIN_ADJUSTMENT')`).rejects.toThrow(); });
+    it('links Google users to one local account and keeps administrator verification mandatory', async () => {
+        const externalId = randomUUID();
+        const email = randomUUID().slice(0, 12) + '@example.com';
+        const profile = { id: externalId, email, emailVerifiedAt: new Date(), fullName: 'Google Fixture', avatarUrl: 'https://example.com/avatar.png' };
+        const first = await loginWithGoogle(profile);
+        created.push(first.user.id);
+        const second = await loginWithGoogle(profile);
+        expect(second.user.id).toBe(first.user.id);
+        expect(await db.oAuthIdentity.count({ where: { userId: first.user.id, provider: 'google' } })).toBe(1);
+        expect((await authenticate(second.accessToken)).user.id).toBe(first.user.id);
+
+        const admin = await user();
+        await db.user.update({ where: { id: admin.id }, data: { role: 'ADMIN', emailVerifiedAt: new Date() } });
+        await expect(loginWithGoogle({ ...profile, id: randomUUID(), email: admin.email })).rejects.toThrow();
+        expect(await db.oAuthIdentity.count({ where: { userId: admin.id } })).toBe(0);
+    });
     it('registers via handler, queues encrypted OTP, verifies email, and prevents role escalation', async () => {
         const suffix = randomUUID().replaceAll('-', '').slice(0, 12);
         const email = suffix + '@example.com';

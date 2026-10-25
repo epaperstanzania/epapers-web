@@ -20,3 +20,4 @@ worker/.cloudflare/
 .env.example 
 .env*
 .vercel
+apps\web\sample.txt

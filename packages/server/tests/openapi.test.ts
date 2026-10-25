@@ -18,7 +18,7 @@ describe('generated handover contract',()=>{
   }
  });
  it('resolves all local schema references',()=>{
-  for(const item of Object.values(document.paths))for(const operation of Object.values(item))expect(operation.responses?.['200']?.content?.['application/json'] || operation.responses?.['200']?.content?.['image/jpeg']).toBeDefined();
+  for(const item of Object.values(document.paths))for(const operation of Object.values(item))expect(operation.responses?.['200']?.content?.['application/json'] || operation.responses?.['200']?.content?.['image/jpeg'] || Object.keys(operation.responses || {}).some(status => Number(status) >= 300 && Number(status) < 400)).toBeTruthy();
   const text=JSON.stringify(document);for(const [,name] of text.matchAll(/"\$ref":"#\/components\/schemas\/([^"/]+)"/g))expect(document.components.schemas[name],name).toBeDefined();
  });
  it('documents admin bearer access and sensitive reauth headers',()=>{

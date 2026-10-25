@@ -4,8 +4,9 @@ generator client {
 }
 
 datasource db {
-  provider = "cockroachdb"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum AccountRole {
@@ -101,8 +102,8 @@ model Module {
   codeNormalized String    @map("code_normalized")
   name           String
   nameNormalized String    @map("name_normalized")
-  semester       Int       @db.Int2
-  levelYear      Int?      @map("level_year") @db.Int2
+  semester       Int       @db.SmallInt
+  levelYear      Int?      @map("level_year") @db.SmallInt
   credits        Decimal?  @db.Decimal(5, 2)
   isActive       Boolean   @default(true) @map("is_active")
   deletedAt      DateTime? @map("deleted_at") @db.Timestamptz
@@ -136,8 +137,8 @@ model User {
   emailVerifiedAt     DateTime?     @map("email_verified_at") @db.Timestamptz
   lecturerVerifiedAt  DateTime?     @map("lecturer_verified_at") @db.Timestamptz
   homeDepartmentId    String?       @map("home_department_id") @db.Uuid
-  bio                 String        @default("") @db.String(1000)
-  avatarId            String?       @map("avatar_id") @db.String(32)
+  bio                 String        @default("") @db.VarChar(1000)
+  avatarId            String?       @map("avatar_id") @db.VarChar(32)
   xp                  Int           @default(0)
   allTimeXp           Int           @default(0) @map("all_time_xp")
   usernameChangedAt   DateTime?     @map("username_changed_at") @db.Timestamptz
@@ -148,6 +149,7 @@ model User {
   homeDepartment      Department?   @relation(fields: [homeDepartmentId], references: [id], onDelete: SetNull)
   papers              Paper[]
   sessions            UserSession[]
+  oauthIdentities     OAuthIdentity[]
   @@index([role, status])
   @@index([homeDepartmentId])
   @@map("users")
@@ -226,6 +228,20 @@ model UserSession {
 
 }
 
+model OAuthIdentity {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  provider       String
+  providerUserId String   @map("provider_user_id") @db.Uuid
+  avatarUrl      String?  @map("avatar_url")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@unique([userId, provider])
+  @@index([userId])
+  @@map("oauth_identities")
+}
 model StoredFile {
   id               String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   ownerUserId      String?    @map("owner_user_id") @db.Uuid
@@ -256,9 +272,9 @@ model Paper {
   uploadedByUserId     String        @map("uploaded_by_user_id") @db.Uuid
   title                String
   category             PaperCategory
-  testNumber           Int?          @map("test_number") @db.Int2
-  academicYearStart    Int           @map("academic_year_start") @db.Int2
-  semester             Int           @db.Int2
+  testNumber           Int?          @map("test_number") @db.SmallInt
+  academicYearStart    Int           @map("academic_year_start") @db.SmallInt
+  semester             Int           @db.SmallInt
   examPeriod           String        @default("") @map("exam_period")
   examFileId           String        @unique @map("exam_file_id") @db.Uuid
   markingSchemeFileId  String?       @unique @map("marking_scheme_file_id") @db.Uuid
@@ -337,7 +353,7 @@ model AdminAuthChallenge {
   codeHash String @map("code_hash")
   credentialHash String @map("credential_hash")
   expiresAt DateTime @map("expires_at") @db.Timestamptz
-  attempts BigInt @default(0) @db.Int8
+  attempts BigInt @default(0) @db.BigInt
   consumedAt DateTime? @map("consumed_at") @db.Timestamptz
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -353,7 +369,7 @@ model AuthChallenge {
   kind String
   tokenHash String @map("token_hash")
   expiresAt DateTime @map("expires_at") @db.Timestamptz
-  attempts BigInt @default(0) @db.Int8
+  attempts BigInt @default(0) @db.BigInt
   consumedAt DateTime? @map("consumed_at") @db.Timestamptz
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   @@map("auth_challenges")
@@ -395,7 +411,7 @@ model AuditLog {
 model XpLedger {
   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId String @map("user_id") @db.Uuid
-  amount BigInt @db.Int8
+  amount BigInt @db.BigInt
   eventType String @map("event_type")
   reason String @default("")
   title String @default("")
@@ -481,9 +497,9 @@ model ModuleRequest {
   programId String @map("program_id") @db.Uuid
   moduleCode String @map("module_code")
   moduleName String @map("module_name")
-  academicYearStart Int @map("academic_year_start") @db.Int2
+  academicYearStart Int @map("academic_year_start") @db.SmallInt
   description String
-  semester Int @db.Int2
+  semester Int @db.SmallInt
   status String @default("pending")
   reviewedByUserId String? @map("reviewed_by_user_id") @db.Uuid
   reviewedAt DateTime? @map("reviewed_at") @db.Timestamptz
@@ -626,7 +642,7 @@ model ContactMessage {
 
 model RateLimitCounter {
   key String @id
-  hits BigInt @default(1) @db.Int8
+  hits BigInt @default(1) @db.BigInt
   expiresAt DateTime @map("expires_at") @db.Timestamptz
   @@map("rate_limit_counters")
   @@index([expiresAt])
@@ -635,7 +651,7 @@ model RateLimitCounter {
 
 model EmailDailyCounter {
   day DateTime @id @db.Date
-  sent BigInt @default(0) @db.Int8
+  sent BigInt @default(0) @db.BigInt
   @@map("email_daily_counters")
 }
 

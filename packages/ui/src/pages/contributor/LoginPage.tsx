@@ -7,6 +7,7 @@ import { PasswordInput } from '../../components/common/PasswordInput';
 import { EmailCodeInput } from '../../components/common/EmailCodeInput';
 import { needsEmailVerification, type EmailChallenge } from '../../services/auth';
 import { safeReturnUrl, roleHome } from '@epapers/config/portals';
+import { supabaseBrowserClient, supabaseConfigured } from '@epapers/auth/supabase';
 
 export function LoginPage() {
   const [username, setUsername] = useState(''), [password, setPassword] = useState('');
@@ -29,6 +30,22 @@ export function LoginPage() {
       else { setPassword(''); navigate(safeReturnUrl(searchParams.get('returnTo'), roleHome(result.user.role))); }
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'Sign-in failed. Please try again.'); }
     finally { setPending(false); }
+  };
+  const startGoogleLogin = async () => {
+    if (pending) return;
+    setPending(true); setError('');
+    try {
+      const callback = new URL('/api/v1/auth/callback/google', window.location.origin);
+      if (returnTo) callback.searchParams.set('returnTo', safeReturnUrl(returnTo));
+      const { error: oauthError } = await supabaseBrowserClient().auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: callback.href },
+      });
+      if (oauthError) throw oauthError;
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Google sign-in failed. Please try again.');
+      setPending(false);
+    }
   };
   const verify = async () => {
     if (!challenge || pending) return;
@@ -68,6 +85,13 @@ export function LoginPage() {
           {challenge && <button type="button" className="w-full text-xs text-[var(--color-text-muted)]" onClick={() => { setChallenge(null); setCode(''); setPassword(''); setError(''); }}>Back to sign in</button>}
         </fieldset>
       </form>
+      {!challenge && supabaseConfigured() && <div className="space-y-3">
+        <div className="flex items-center gap-3 text-xs text-[var(--color-text-muted)]"><span className="h-px flex-1 bg-[var(--color-border)]" />or<span className="h-px flex-1 bg-[var(--color-border)]" /></div>
+        <button type="button" disabled={pending} onClick={() => void startGoogleLogin()}
+          className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-canvas)] px-4 py-3 text-sm font-semibold text-[var(--color-text)] hover:border-[var(--color-primary)] disabled:opacity-60">
+          Continue with Google
+        </button>
+      </div>}
       <p className="text-center text-xs text-[var(--color-text-muted)]">New to Epapers? <Link to="/register" className="font-semibold text-[var(--color-primary)] hover:underline">Create an account</Link></p>
     </div>
   </div>;

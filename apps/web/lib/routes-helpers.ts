@@ -207,6 +207,10 @@ export function sessionResponse(result: {
     session: { expiresAt: Date };
 }) {
     const response = NextResponse.json({ data: { accessToken: result.accessToken, user: result.user } });
+    return setSessionCookie(response, result);
+}
+
+export function setSessionCookie(response: NextResponse, result: { refreshToken: string; session: { expiresAt: Date } }) {
     response.cookies.set('epapers_refresh', result.refreshToken, {
         ...refreshCookieOptions(),
         maxAge: Math.max(0, Math.floor((result.session.expiresAt.getTime() - Date.now()) / 1000)),
