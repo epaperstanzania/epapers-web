@@ -30,9 +30,9 @@ to the Vercel projects.
 The four custom domains are assigned to their matching Vercel projects and
 their DNS configuration is verified. Set
 `NEXT_PUBLIC_DOMAIN_PROFILE=custom` in Production on **all four** Vercel
-projects and redeploy them together. The shared portal configuration then
-switches navigation, authentication callbacks, API origin and trusted origins
-to the branded domains above. Keep `*.vercel.app` only as deployment aliases.
+projects before deploying. The shared portal configuration then switches
+navigation, authentication callbacks, API origin and trusted origins to the
+branded domains above. Keep `*.vercel.app` only as deployment aliases.
 
 Separate `vercel.app` hosts cannot share a cookie domain. Portal requests to
 `/api/v1` are proxied to the canonical API. A portal without a session starts at
@@ -146,8 +146,9 @@ Neither migration copies data from CockroachDB.
    `https://udhugsfauuqsmbktulqu.supabase.co/auth/v1/callback`. This is the
    Google-to-Supabase callback; it does not replace the EPapers callback.
    Configure that Google client in the Supabase Google provider settings.
+   Keep the existing Supabase callback until its custom auth domain is active.
 5. In **Supabase → Authentication → URL Configuration**, set the Site URL to
-   `https://epapertz.vercel.app` and add
+   `https://epapers.co.tz` and add
    `https://epapers.co.tz/api/v1/auth/callback/google` to Redirect URLs.
    Add `https://epapers.co.tz/api/v1/auth/callback/google?returnTo=**`
    if cross-portal login uses the optional `returnTo` query. For local
