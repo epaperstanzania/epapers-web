@@ -280,12 +280,13 @@ body { font-family: "Inter Variable", Inter, sans-serif; }
 
 @media (max-width: 63.99rem) {
   .epapers-mobile-filter { display: block; }
-  .epapers-portal-main { min-width: 0; padding: 1rem clamp(.75rem, 4vw, 1.5rem) 2rem; }
+  .epapers-portal-main { min-width: 0; padding: 1rem clamp(.75rem, 4vw, 1.5rem) 2rem; overflow-wrap: anywhere; }
   .epapers-portal-main .epapers-page-transition { min-width: 0; }
   .epapers-portal-main :where(.grid, .grid > *) { min-width: 0; }
   .epapers-portal-main :where(img, video, canvas) { max-width: 100%; }
 }
 @media (max-width: 47.99rem) {
+  .epapers-portal-main :where(.rounded-xl, .rounded-2xl).p-6 { padding: 1rem; }
   .epapers-responsive-table,
   .epapers-responsive-table tbody { display: block; width: 100%; }
   .epapers-responsive-table thead { display: none; }

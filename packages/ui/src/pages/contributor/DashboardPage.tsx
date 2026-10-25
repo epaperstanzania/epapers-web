@@ -190,6 +190,7 @@ export const DashboardPage: React.FC = () => {
               <div role="group" aria-label="Filter achievements" className="grid grid-cols-2 sm:flex items-center gap-1.5 p-1 bg-[var(--color-sidebar)] rounded-xl text-xs font-medium">
                 <button
                   onClick={() => setAchievementFilter('all')}
+                  aria-pressed={achievementFilter === 'all'}
                   className={`min-h-11 px-2.5 py-2 rounded-lg transition-colors cursor-pointer ${
                     achievementFilter === 'all'
                       ? 'bg-[var(--color-surface)] text-[var(--color-primary)] font-semibold border border-[var(--color-border)]'
@@ -200,6 +201,7 @@ export const DashboardPage: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setAchievementFilter('unlocked')}
+                  aria-pressed={achievementFilter === 'unlocked'}
                   className={`min-h-11 px-2.5 py-2 rounded-lg transition-colors cursor-pointer ${
                     achievementFilter === 'unlocked'
                       ? 'bg-[var(--color-surface)] text-[var(--color-primary)] font-semibold border border-[var(--color-border)]'
@@ -210,6 +212,7 @@ export const DashboardPage: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setAchievementFilter('progress')}
+                  aria-pressed={achievementFilter === 'progress'}
                   className={`min-h-11 px-2.5 py-2 rounded-lg transition-colors cursor-pointer ${
                     achievementFilter === 'progress'
                       ? 'bg-[var(--color-surface)] text-[var(--color-primary)] font-semibold border border-[var(--color-border)]'
@@ -220,6 +223,7 @@ export const DashboardPage: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setAchievementFilter('locked')}
+                  aria-pressed={achievementFilter === 'locked'}
                   className={`min-h-11 px-2.5 py-2 rounded-lg transition-colors cursor-pointer ${
                     achievementFilter === 'locked'
                       ? 'bg-[var(--color-surface)] text-[var(--color-primary)] font-semibold border border-[var(--color-border)]'
