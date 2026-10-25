@@ -1,5 +1,5 @@
-const CACHE = 'epapers-static-v1';
-const PRECACHE = ['/offline.html', '/icons/app-192.png', '/icons/app-512.png'];
+const CACHE = 'epapers-static-v2';
+const PRECACHE = ['/offline.html', '/icons/app-rounded-192.png', '/icons/app-rounded-512.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(PRECACHE)).then(() => self.skipWaiting()));

@@ -9,6 +9,8 @@ import { ApiForm } from '../../components/common/ApiForm';
 import { request } from '../../services/client';
 import { KeyRound } from 'lucide-react';
 import { EmailCodeInput } from '../../components/common/EmailCodeInput';
+import { GoogleMark } from '../../components/common/GoogleMark';
+import { supabaseBrowserClient, supabaseConfigured } from '@epapers/auth/supabase';
 
 export { LoginPage } from './LoginPage';
 
@@ -17,12 +19,40 @@ export const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
+  const [googleUsername, setGoogleUsername] = useState('');
+  const [googlePending, setGooglePending] = useState(false);
+  const [googleError, setGoogleError] = useState('');
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     // Move to 6-box OTP verification
     navigate(`/verify?email=${encodeURIComponent(email)}&username=${encodeURIComponent(username)}`);
+  };
+
+  const startGoogleSignup = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (googlePending) return;
+    const chosen = googleUsername.trim().toLowerCase();
+    if (!/^[a-z0-9_]{3,30}$/.test(chosen)) {
+      setGoogleError('Use 3–30 letters, numbers, or underscores for your username.');
+      return;
+    }
+    setGooglePending(true);
+    setGoogleError('');
+    try {
+      await request('/auth/google-signup/intent', { method: 'POST', body: { username: chosen }, retry: false });
+      const callback = new URL('/api/v1/auth/callback/google', window.location.origin);
+      const { error } = await supabaseBrowserClient().auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: callback.href },
+      });
+      if (error) throw error;
+    } catch (reason) {
+      setGoogleError(reason instanceof Error ? reason.message : 'Google sign-up failed. Please try again.');
+      setGooglePending(false);
+    }
   };
 
   return (
@@ -39,6 +69,23 @@ export const RegisterPage: React.FC = () => {
             Join DIT peers archiving academic examinations. Usernames cannot be modified after creation.
           </p>
         </div>
+
+        {searchParams.get('notice') && <p role="status" className="rounded-lg bg-[var(--color-warning-soft)] p-3 text-xs text-[var(--color-text)]">{searchParams.get('notice')}</p>}
+
+        {supabaseConfigured() && <div className="space-y-4">
+          <form onSubmit={event => void startGoogleSignup(event)} className="space-y-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-canvas)] p-4">
+            <label htmlFor="google-signup-username" className="block text-xs font-semibold text-[var(--color-text)]">Choose your username</label>
+            <input id="google-signup-username" type="text" required minLength={3} maxLength={30} autoComplete="username" autoCapitalize="none" spellCheck={false}
+              value={googleUsername} onChange={event => setGoogleUsername(event.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+              placeholder="e.g. juma_dit" className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-2.5 text-sm text-[var(--color-text)]" />
+            <p className="text-xs text-[var(--color-text-muted)]">Your name and verified email will come from Google. No password needed.</p>
+            {googleError && <p role="alert" className="text-xs text-[var(--color-danger)]">{googleError}</p>}
+            <button type="submit" disabled={googlePending} className="flex w-full items-center justify-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-semibold text-[var(--color-text)] hover:border-[var(--color-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)] disabled:opacity-60">
+              <GoogleMark className="h-6 w-6 shrink-0" />{googlePending ? 'Connecting to Google…' : 'Sign up with Google'}
+            </button>
+          </form>
+          <div className="flex items-center gap-3 text-xs text-[var(--color-text-muted)]"><span className="h-px flex-1 bg-[var(--color-border)]" />or sign up with email<span className="h-px flex-1 bg-[var(--color-border)]" /></div>
+        </div>}
 
         <ApiForm endpoint="/auth/register" payload={(form) => ({ username, email, password, fullName: form.get('fullName') })} onSubmit={handleRegister} className="space-y-4">
           <label className="block text-xs font-semibold text-[var(--color-text)]">

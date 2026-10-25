@@ -12,6 +12,7 @@ import { otpEmail, resetEmail, adminCodeEmail } from '@epapers/server/lib/email/
 import { privateUser } from '@epapers/server/modules/auth/dto';
 import { audit, challenge } from '@epapers/server/modules/auth/repository';
 import { removeProfileImage } from '@epapers/server/modules/auth/avatar';
+import { username as usernameSchema } from '@epapers/server/modules/auth/schemas';
 const generic = { message: 'If eligible, an email will be sent. Delivery may be delayed.' };
 
 type PortalGrant = { token: string; challenge: string; redirectUri: string; expiresAt: number; sessionExpiresAt: string };
@@ -170,6 +171,7 @@ export async function loginWithGoogle(profile: {
     emailVerifiedAt: Date;
     fullName?: string;
     avatarUrl?: string;
+    username?: string;
 }) {
     const email = profile.email.trim().toLowerCase();
     if (!email || !profile.emailVerifiedAt || !/^[0-9a-f-]{36}$/i.test(profile.id))
@@ -196,7 +198,11 @@ export async function loginWithGoogle(profile: {
         const handleBase = (profile.fullName || email.split('@')[0]).toLowerCase()
             .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
             .replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 16) || 'user';
-        const username = handleBase + '_' + profile.id.replaceAll('-', '').slice(0, 12).toLowerCase();
+        const preferred = profile.username ? usernameSchema.safeParse(profile.username.toLowerCase()) : null;
+        if (preferred && !preferred.success) fail(422, 'INVALID_USERNAME', 'Choose a valid username');
+        const username = preferred?.data ?? handleBase + '_' + profile.id.replaceAll('-', '').slice(0, 12).toLowerCase();
+        if (!existing && await tx.usernameRegistry.findUnique({ where: { usernameNormalized: username } }))
+            fail(409, 'USERNAME_TAKEN', 'Username is unavailable');
         // Existing Google users keep their password credential; only new accounts need a random unusable hash.
         const user = existing ?? await tx.user.upsert({
             where: { emailNormalized: email },
