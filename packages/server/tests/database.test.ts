@@ -31,12 +31,16 @@ describe.skipIf(!enabled)('real PostgreSQL foundation and auth', () => {
         const externalId = randomUUID();
         const email = randomUUID().slice(0, 12) + '@example.com';
         const profile = { id: externalId, email, emailVerifiedAt: new Date(), fullName: 'Google Fixture', avatarUrl: 'https://example.com/avatar.png' };
-        const first = await loginWithGoogle(profile);
+        const chosenUsername = 'google_' + randomUUID().replaceAll('-', '').slice(0, 12);
+        const first = await loginWithGoogle({ ...profile, username: chosenUsername });
         created.push(first.user.id);
+        expect(first.user.username).toBe(chosenUsername);
         const second = await loginWithGoogle(profile);
         expect(second.user.id).toBe(first.user.id);
+        expect(second.user.username).toBe(chosenUsername);
         expect(await db.oAuthIdentity.count({ where: { userId: first.user.id, provider: 'google' } })).toBe(1);
         expect((await authenticate(second.accessToken)).user.id).toBe(first.user.id);
+        await expect(loginWithGoogle({ ...profile, id: randomUUID(), email: randomUUID().slice(0, 12) + '@example.com', username: chosenUsername })).rejects.toThrow();
 
         const admin = await user();
         await db.user.update({ where: { id: admin.id }, data: { role: 'ADMIN', emailVerifiedAt: new Date() } });
