@@ -352,9 +352,25 @@
   padding: clamp(1.4rem, 4vw, 2.6rem);
   box-shadow: var(--shadow-neutral);
 }
-.paperDetail { display: grid; gap: 1.2rem; }
-.paperDetail h1 { max-width: 35ch; margin: 0; color: var(--color-text); font-size: clamp(1.7rem, 4vw, 2.8rem); line-height: 1.2; overflow-wrap: anywhere; }
-.paperDetail p { margin: 0; color: var(--color-text-muted); line-height: 1.55; overflow-wrap: anywhere; }
+.paperDetail { display: grid; gap: clamp(1.1rem, 3vw, 1.6rem); max-width: 62rem; margin-inline: auto; }
+.paperDetailHeader { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; }
+.paperArchiveLabel { border: 1px solid var(--color-border); border-radius: 999px; background: var(--color-input); padding: .4rem .75rem; color: var(--color-text-muted); font-size: .75rem; font-weight: 750; letter-spacing: .04em; }
+.paperDetailIntro { display: grid; justify-items: start; gap: .75rem; padding-block: .25rem .4rem; }
+.paperCode { display: inline-flex; min-height: 2rem; align-items: center; border-radius: .6rem; background: var(--color-primary-tint); padding: .35rem .7rem; color: var(--color-primary); font-family: var(--font-mono, ui-monospace, monospace); font-size: .8rem; font-weight: 800; letter-spacing: .04em; }
+.paperDetail h1 { max-width: 35ch; margin: 0; color: var(--color-text); font-size: clamp(1.7rem, 4vw, 2.8rem); line-height: 1.15; letter-spacing: -.03em; overflow-wrap: anywhere; }
+.paperModuleName { color: var(--color-primary); font-size: clamp(1rem, 2vw, 1.2rem); font-weight: 700; line-height: 1.45; text-decoration: none; text-underline-offset: .2rem; }
+.paperModuleName:hover { text-decoration: underline; }
+.paperFacts { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .2rem; }
+.paperFacts span { display: inline-flex; min-height: 2rem; align-items: center; border: 1px solid var(--color-border); border-radius: 999px; background: var(--color-input); padding: .35rem .7rem; color: var(--color-text-muted); font-size: .8rem; font-weight: 650; }
+.paperFacts span:first-child { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
+.paperStudyMeta { display: grid; grid-template-columns: minmax(0, 1fr); gap: .75rem; margin: 0; }
+.paperStudyMeta > div { min-width: 0; border: 1px solid var(--color-border); border-radius: .9rem; background: var(--color-input); padding: .85rem 1rem; }
+.paperStudyMeta dt { color: var(--color-text-muted); font-size: .72rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+.paperStudyMeta dd { margin: .25rem 0 0; color: var(--color-text); font-size: .9rem; font-weight: 650; line-height: 1.45; overflow-wrap: anywhere; }
+.paperContributor { display: flex; min-width: 0; align-items: center; gap: .75rem; border-top: 1px solid var(--color-border); padding-top: 1rem; }
+.contributorAvatar { display: grid; width: 2.75rem; height: 2.75rem; flex: 0 0 auto; place-items: center; border-radius: 50%; background: var(--color-primary-tint); color: var(--color-primary); font-size: 1rem; font-weight: 800; }
+.paperContributor p { margin: 0 0 .15rem; color: var(--color-text-muted); font-size: .75rem; line-height: 1.4; }
+.verifiedContributor { margin-left: auto; border-radius: 999px; background: var(--color-success-soft); padding: .35rem .65rem; color: var(--color-success); font-size: .72rem; font-weight: 750; }
 .paperBack { color: var(--color-primary); font-weight: 700; text-decoration: underline; text-underline-offset: .2rem; overflow-wrap: anywhere; }
 .statusCard { max-width: 38rem; }
 .statusCard h1 { margin: 0; color: var(--color-text); font-size: clamp(1.5rem, 4vw, 2rem); }
@@ -365,6 +381,7 @@
   .filtersGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .formFooter { flex-direction: row; align-items: center; justify-content: space-between; }
   .actions { flex-direction: row; align-items: center; }
+  .paperStudyMeta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (min-width: 48rem) { .paperGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 64rem) { .filtersGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

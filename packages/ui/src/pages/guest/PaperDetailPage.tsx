@@ -8,6 +8,8 @@ import { Paper, FlaggedReport } from '../../types';
 import { ApiForm } from '../../components/common/ApiForm';
 import { CategoryChip, StatusChip, LecturerBadge } from '../../components/common/Chips';
 import { UsernameTile } from '../../components/common/UsernameTile';
+import { PaperShareButton } from '../../components/common/PaperShareButton';
+import { portalOrigins } from '@epapers/config/portals';
 import {
   Download,
   Share2,
@@ -33,6 +35,7 @@ export const PaperDetailPage: React.FC<{ contributor?: boolean }> = ({ contribut
   const [flagReason, setFlagReason] = useState<FlaggedReport['reason']>('blurry_scan');
   const [flagDetails, setFlagDetails] = useState('');
   const [flagSubmitted, setFlagSubmitted] = useState(false);
+  const shareUrl = paper ? new URL(`/papers/${paper.id}`, portalOrigins.web).href : '';
 
   useEffect(() => {
     async function fetchPaper() {
@@ -132,7 +135,13 @@ export const PaperDetailPage: React.FC<{ contributor?: boolean }> = ({ contribut
             <span>{paper.downloadsCount} downloads</span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <PaperShareButton
+              url={shareUrl}
+              title={paper.title}
+              description={`${paper.moduleCode} · ${paper.moduleName} · ${paper.academicYear}`}
+              className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-[var(--color-border)] px-3 py-2 text-xs font-semibold text-[var(--color-primary)] transition-colors hover:bg-[var(--color-input)]"
+            />
             <button
               onClick={() => setFlagModalOpen(true)}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--color-border)]  text-[var(--color-text-muted)]  text-xs font-medium hover:bg-[var(--color-input)]  transition-colors cursor-pointer"

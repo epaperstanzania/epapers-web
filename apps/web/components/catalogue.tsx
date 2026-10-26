@@ -105,14 +105,60 @@ export async function CataloguePage({
       if (!uuid.safeParse(params.id).success) notFound();
       const paper = await catalogue.paper(params.id);
       content = <article className={styles.paperDetail}>
-        <Link className={styles.paperBack} href={`/modules/${paper.module.id}`}>
-          {paper.module.code} — {paper.module.name}
-        </Link>
-        <h1>{paper.title}</h1>
-        <p>{categoryLabel(paper.category, paper.testNumber)} · {paper.academicYear}/{paper.academicYear + 1} · Semester {paper.semester} · {paper.examPeriod}</p>
-        <p>{paper.department.name} · {paper.program.name}</p>
-        {paper.uploader && <p>Contributed by <Link className={styles.paperBack} href={`/u/${encodeURIComponent(paper.uploader.username)}`}>@{paper.uploader.username}</Link>{paper.uploader.isLecturerVerified ? ' · Verified lecturer' : ''}</p>}
-        <PaperActions id={paper.id} available={paper.downloadAvailable} hasMarkingScheme={paper.hasMarkingScheme} />
+        <header className={styles.paperDetailHeader}>
+          <Link className={styles.paperBack} href={`/modules/${paper.module.id}`}>
+            <span aria-hidden="true">←</span> {paper.module.code} — {paper.module.name}
+          </Link>
+          <span className={styles.paperArchiveLabel}>EPapers archive</span>
+        </header>
+
+        <div className={styles.paperDetailIntro}>
+          <span className={styles.paperCode}>{paper.module.code}</span>
+          <h1>{paper.title}</h1>
+          <Link className={styles.paperModuleName} href={`/modules/${paper.module.id}`}>
+            {paper.module.name}
+          </Link>
+          <div className={styles.paperFacts} aria-label="Paper details">
+            <span>{categoryLabel(paper.category, paper.testNumber)}</span>
+            <span>{paper.academicYear}/{paper.academicYear + 1}</span>
+            <span>Semester {paper.semester}</span>
+            {paper.examPeriod && <span>{paper.examPeriod}</span>}
+          </div>
+        </div>
+
+        <dl className={styles.paperStudyMeta}>
+          <div>
+            <dt>Department</dt>
+            <dd>{paper.department.name}</dd>
+          </div>
+          <div>
+            <dt>Programme</dt>
+            <dd>{paper.program.name}</dd>
+          </div>
+        </dl>
+
+        {paper.uploader && (
+          <div className={styles.paperContributor}>
+            <span className={styles.contributorAvatar} aria-hidden="true">
+              {paper.uploader.username.slice(0, 1).toUpperCase()}
+            </span>
+            <div>
+              <p>Shared by the community</p>
+              <Link className={styles.paperBack} href={`/u/${encodeURIComponent(paper.uploader.username)}`}>
+                @{paper.uploader.username}
+              </Link>
+            </div>
+            {paper.uploader.isLecturerVerified && <span className={styles.verifiedContributor}>Verified lecturer</span>}
+          </div>
+        )}
+
+        <PaperActions
+          id={paper.id}
+          available={paper.downloadAvailable}
+          hasMarkingScheme={paper.hasMarkingScheme}
+          title={paper.title}
+          description={`${paper.module.code} · ${paper.module.name} · ${paper.academicYear}/${paper.academicYear + 1}`}
+        />
       </article>;
     } else {
       notFound();
