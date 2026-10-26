@@ -107,7 +107,9 @@ export async function CataloguePage({
       content = <article className={styles.paperDetail}>
         <header className={styles.paperDetailHeader}>
           <Link className={styles.paperBack} href={`/modules/${paper.module.id}`}>
-            <span aria-hidden="true">←</span> {paper.module.code} — {paper.module.name}
+            <span aria-hidden="true">←</span>
+            <span className={styles.paperBackMobile}>Back to module</span>
+            <span className={styles.paperBackDesktop}>{paper.module.code} — {paper.module.name}</span>
           </Link>
           <span className={styles.paperArchiveLabel}>EPapers archive</span>
         </header>
@@ -115,42 +117,71 @@ export async function CataloguePage({
         <div className={styles.paperDetailIntro}>
           <span className={styles.paperCode}>{paper.module.code}</span>
           <h1>{paper.title}</h1>
-          <Link className={styles.paperModuleName} href={`/modules/${paper.module.id}`}>
+          <Link className={`${styles.paperModuleName} ${styles.paperModuleNameDetail}`} href={`/modules/${paper.module.id}`}>
             {paper.module.name}
           </Link>
           <div className={styles.paperFacts} aria-label="Paper details">
             <span>{categoryLabel(paper.category, paper.testNumber)}</span>
             <span>{paper.academicYear}/{paper.academicYear + 1}</span>
             <span>Semester {paper.semester}</span>
-            {paper.examPeriod && <span>{paper.examPeriod}</span>}
+            {paper.examPeriod && <span className={styles.paperExamPeriod}>{paper.examPeriod}</span>}
           </div>
         </div>
 
-        <dl className={styles.paperStudyMeta}>
-          <div>
-            <dt>Department</dt>
-            <dd>{paper.department.name}</dd>
-          </div>
-          <div>
-            <dt>Programme</dt>
-            <dd>{paper.program.name}</dd>
-          </div>
-        </dl>
-
-        {paper.uploader && (
-          <div className={styles.paperContributor}>
-            <span className={styles.contributorAvatar} aria-hidden="true">
-              {paper.uploader.username.slice(0, 1).toUpperCase()}
-            </span>
+        <div className={styles.paperDetailsDesktop}>
+          <dl className={styles.paperStudyMeta}>
             <div>
-              <p>Shared by the community</p>
-              <Link className={styles.paperBack} href={`/u/${encodeURIComponent(paper.uploader.username)}`}>
-                @{paper.uploader.username}
-              </Link>
+              <dt>Department</dt>
+              <dd>{paper.department.name}</dd>
             </div>
-            {paper.uploader.isLecturerVerified && <span className={styles.verifiedContributor}>Verified lecturer</span>}
-          </div>
-        )}
+            <div>
+              <dt>Programme</dt>
+              <dd>{paper.program.name}</dd>
+            </div>
+          </dl>
+          {paper.uploader && (
+            <div className={styles.paperContributor}>
+              <span className={styles.contributorAvatar} aria-hidden="true">
+                {paper.uploader.username.slice(0, 1).toUpperCase()}
+              </span>
+              <div>
+                <p>Shared by the community</p>
+                <Link className={styles.paperBack} href={`/u/${encodeURIComponent(paper.uploader.username)}`}>
+                  @{paper.uploader.username}
+                </Link>
+              </div>
+              {paper.uploader.isLecturerVerified && <span className={styles.verifiedContributor}>Verified lecturer</span>}
+            </div>
+          )}
+        </div>
+
+        <details className={styles.paperDetailsMobile}>
+          <summary>More details</summary>
+          <dl className={styles.paperStudyMeta}>
+            <div>
+              <dt>Department</dt>
+              <dd>{paper.department.name}</dd>
+            </div>
+            <div>
+              <dt>Programme</dt>
+              <dd>{paper.program.name}</dd>
+            </div>
+          </dl>
+          {paper.uploader && (
+            <div className={styles.paperContributor}>
+              <span className={styles.contributorAvatar} aria-hidden="true">
+                {paper.uploader.username.slice(0, 1).toUpperCase()}
+              </span>
+              <div>
+                <p>Shared by the community</p>
+                <Link className={styles.paperBack} href={`/u/${encodeURIComponent(paper.uploader.username)}`}>
+                  @{paper.uploader.username}
+                </Link>
+              </div>
+              {paper.uploader.isLecturerVerified && <span className={styles.verifiedContributor}>Verified lecturer</span>}
+            </div>
+          )}
+        </details>
 
         <PaperActions
           id={paper.id}

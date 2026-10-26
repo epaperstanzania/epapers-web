@@ -71,18 +71,18 @@ export function PaperActions({
   };
 
   return (
-    <section aria-label="Paper actions" className="space-y-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-input)] p-4 sm:p-5">
+    <section aria-label="Paper actions" className="space-y-3 border-t border-[var(--color-border)] pt-3 sm:space-y-4 sm:rounded-2xl sm:border sm:bg-[var(--color-input)] sm:p-4 sm:pt-4 lg:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+        <div className="hidden sm:block">
           <h2 className="text-sm font-bold text-[var(--color-text)]">Access this paper</h2>
           <p className="mt-1 text-xs leading-5 text-[var(--color-text-muted)]">
             Download the exam or share this page with classmates.
           </p>
         </div>
-        <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
           <button
             type="button"
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[var(--color-primary-dark)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="col-span-1 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[var(--color-primary)] px-3 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[var(--color-primary-dark)] disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
             disabled={busy || !available}
             onClick={() => void download('exam')}
           >
@@ -92,7 +92,7 @@ export function PaperActions({
           {hasMarkingScheme && (
             <button
               type="button"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[var(--color-input-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm font-semibold text-[var(--color-text)] transition-colors hover:bg-[var(--color-hover)] disabled:cursor-not-allowed disabled:opacity-50"
+              className="hidden min-h-11 items-center justify-center gap-2 rounded-xl border border-[var(--color-input-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm font-semibold text-[var(--color-text)] transition-colors hover:bg-[var(--color-hover)] disabled:cursor-not-allowed disabled:opacity-50 sm:inline-flex"
               disabled={busy || !available}
               onClick={() => void download('marking_scheme')}
             >
@@ -104,10 +104,27 @@ export function PaperActions({
             url={shareUrl}
             title={title}
             description={description}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[var(--color-input-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm font-semibold text-[var(--color-text)] transition-colors hover:bg-[var(--color-hover)]"
+            className="col-span-1 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[var(--color-input-border)] bg-[var(--color-surface)] px-3 py-2.5 text-sm font-semibold text-[var(--color-text)] transition-colors hover:bg-[var(--color-hover)] sm:px-4"
           />
         </div>
       </div>
+
+      {hasMarkingScheme && (
+        <details className="sm:hidden">
+          <summary className="inline-flex min-h-10 cursor-pointer items-center text-xs font-semibold text-[var(--color-text-muted)]">
+            More download options
+          </summary>
+          <button
+            type="button"
+            className="mt-1 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-input-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm font-semibold text-[var(--color-text)] disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={busy || !available}
+            onClick={() => void download('marking_scheme')}
+          >
+            <Download aria-hidden="true" className="h-4 w-4" />
+            Download marking scheme
+          </button>
+        </details>
+      )}
 
       {!available && (
         <p role="status" className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-muted)]">
