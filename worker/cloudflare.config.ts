@@ -7,7 +7,7 @@ export default defineConfig({
         entrypoint,
         compatibilityDate: '2026-10-24',
         env: {
-            EPAPERS_API_ORIGIN: bindings.text('https://epapertz.vercel.app'),
+            EPAPERS_API_ORIGIN: bindings.text('https://www.epapers.co.tz'),
             EPAPERS_WORKER_TOKEN: bindings.secret(),
         },
         triggers: [triggers.scheduled({ schedule: '*/1 * * * *' })],

@@ -1,6 +1,5 @@
 'use client';
 import { PageLoader } from '../../components/common/PageLoader';
-import { apiTask } from '../../services/client';
 import React, { useState, useEffect } from 'react';
 import { Link } from '@epapers/ui/navigation';
 import { api } from '../../services/api';
@@ -25,20 +24,41 @@ export const AdminOverviewPage: React.FC = () => {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [auditLogError, setAuditLogError] = useState(false);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
-    const load = apiTask(async () => {
-      setLoading(true);
-      const [s, logs] = await Promise.all([api.getAdminStats(), api.getAuditLogPage(undefined, 5)]);
-      setStats(s);
-      setAuditLogs(logs.items);
-      setLoading(false);
-    }, () => setLoading(false));
-    load();
-  }, []);
+    let active = true;
+    setLoading(true);
+    setStats(null);
+    setAuditLogs([]);
+    setAuditLogError(false);
+
+    const loadStats = api.getAdminStats().then(s => {
+      if (active) setStats(s);
+    });
+    const loadAuditLogs = api.getAuditLogPage(undefined, 5).then(logs => {
+      if (active) setAuditLogs(logs.items);
+    }).catch(() => {
+      if (active) {
+        setAuditLogs([]);
+        setAuditLogError(true);
+      }
+    });
+
+    void loadStats.catch(() => undefined).finally(() => {
+      if (active) setLoading(false);
+    });
+    return () => { active = false; };
+  }, [retry]);
 
   if (loading) return <PageLoader variant="dashboard" label="Loading content…" />;
-  if (!stats) return <p role="alert" className="p-6 text-[var(--color-danger)]">Overview could not be loaded. Refresh to try again.</p>;
+  if (!stats) return (
+    <div role="alert" className="p-6 text-[var(--color-danger)]">
+      <p>Overview statistics could not be loaded. Refresh to try again.</p>
+      <button type="button" className="mt-3 underline" onClick={() => setRetry(value => value + 1)}>Try again</button>
+    </div>
+  );
 
   return (
     <div className="min-w-0 space-y-5 sm:space-y-8">
@@ -156,6 +176,7 @@ export const AdminOverviewPage: React.FC = () => {
           </div>
 
           <div className="space-y-3">
+            {auditLogError && <p role="status" className="text-xs text-[var(--color-text-muted)]">Recent audit logs could not be loaded.</p>}
             {auditLogs.map((log) => (
               <div
                 key={log.id}
