@@ -18,6 +18,7 @@ const origins = [
   'https://epapertz-lecturer.vercel.app',
   'https://epapertz-admin.vercel.app',
   'https://epapers.co.tz',
+  'https://www.epapers.co.tz',
   'https://contributor.epapers.co.tz',
   'https://lecturer.epapers.co.tz',
   'https://console.epapers.co.tz',

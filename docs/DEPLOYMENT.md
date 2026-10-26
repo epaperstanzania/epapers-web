@@ -6,7 +6,7 @@ The selected hosting profile is four independent Vercel projects:
 
 | Portal | Project / production hostname | Vercel deployment alias | Root directory |
 | --- | --- | --- | --- |
-| Public and API | `epapers.co.tz` | `epapertz.vercel.app` | `apps/web` |
+| Public and API | `epapers.co.tz` (`www.epapers.co.tz` alias) | `epapertz.vercel.app` | `apps/web` |
 | Contributor and uploads | `contributor.epapers.co.tz` | `epapertz-contributor.vercel.app` | `apps/contributor` |
 | Lecturer | `lecturer.epapers.co.tz` | `epapertz-lecturer.vercel.app` | `apps/lecturer` |
 | Administrator | `console.epapers.co.tz` | `epapertz-admin.vercel.app` | `apps/admin` |
@@ -33,6 +33,13 @@ their DNS configuration is verified. Set
 projects before deploying. The shared portal configuration then switches
 navigation, authentication callbacks, API origin and trusted origins to the
 branded domains above. Keep `*.vercel.app` only as deployment aliases.
+Add `www.epapers.co.tz` to the **public/API Vercel project** as another custom
+domain and point its DNS to the Vercel target shown there. The web app redirects
+`www` requests, including `/login`, to `https://epapers.co.tz` while preserving
+the path and query. This keeps Google PKCE and host-only session cookies on one
+web host. The exact `www` origin is also trusted for API/CORS compatibility;
+other subdomains are not implicitly trusted. Vercel/DNS domain assignment is a
+separate step from deploying this code.
 
 Separate `vercel.app` hosts cannot share a cookie domain. Portal requests to
 `/api/v1` are proxied to the canonical API. A portal without a session starts at
@@ -153,7 +160,9 @@ Neither migration copies data from CockroachDB.
    Add `https://epapers.co.tz/api/v1/auth/callback/google?returnTo=**`
    if cross-portal login uses the optional `returnTo` query. For local
    development add the corresponding `http://localhost:3000` callback URLs.
-   Keep production URLs exact apart from the query wildcard.
+   Keep production URLs exact apart from the query wildcard. `www` redirects to
+   the apex host before Google sign-in starts, so the OAuth callback remains on
+   the apex host where its PKCE cookie was set.
    Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` on the
    web project and local web env. The browser starts Google sign-in, Supabase
    sends a PKCE code to the EPapers callback, and EPapers exchanges it
@@ -339,7 +348,8 @@ NEXT_PUBLIC_ADMIN_ORIGIN=https://console.epapers.co.tz
 ```
 
 On web/worker set `APP_ORIGIN` and `API_ORIGIN` to `https://epapers.co.tz`, and
-`PORTAL_ORIGINS` to the exact comma-separated four origins above. A host-only
+`PORTAL_ORIGINS` to the exact comma-separated four origins above plus
+`https://www.epapers.co.tz`. A host-only
 refresh cookie is sufficient because every refresh is sent to the canonical web
 host. If infrastructure requires a shared cookie, `COOKIE_DOMAIN=.epapers.co.tz`
 is supported; use the same setting for login, refresh and logout. Cookies remain
@@ -352,13 +362,13 @@ untrusted-client identity, and account limits still apply. Configure this before
 public release to avoid a shared public IP limit.
 
 Keep all three R2 buckets private. Incoming and profile bucket CORS must allow PUT from the four
-exact origins, with Content-Type and If-None-Match headers. Storage requests omit
+portal origins and the exact `https://www.epapers.co.tz` alias, with Content-Type and If-None-Match headers. Storage requests omit
 API cookies/tokens. Apply an appropriate private-object lifecycle consistent with
 database retention. Published URLs remain short-lived; do not configure public
 bucket access as a shortcut.
 
 The secure session iframe at `/auth/session-bridge` must be embeddable by the
-four trusted portal origins. Do not set a blanket SAMEORIGIN/X-Frame-Options or
+four trusted portal origins and the `www` alias. Do not set a blanket SAMEORIGIN/X-Frame-Options or
 `frame-ancestors 'self'` policy on that route. Other pages should deny framing.
 
 ## Release verification

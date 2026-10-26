@@ -13,7 +13,12 @@ export const customPortalOrigins = {
   lecturer: 'https://lecturer.epapers.co.tz',
   admin: 'https://console.epapers.co.tz',
 } satisfies Record<Portal, string>;
+export const customWebAlias = 'https://www.epapers.co.tz';
 export const deployedPortalOrigins = process.env.NEXT_PUBLIC_DOMAIN_PROFILE === 'custom' ? customPortalOrigins : vercelPortalOrigins;
+export const deployedTrustedOrigins = [
+  ...Object.values(deployedPortalOrigins),
+  ...(deployedPortalOrigins === customPortalOrigins ? [customWebAlias] : []),
+];
 export const vercelPublicEnv = {
   NEXT_PUBLIC_API_BASE_URL: '/api/v1',
   NEXT_PUBLIC_AUTH_MODE: 'proxy',
@@ -29,6 +34,10 @@ export const portalOrigins = {
   lecturer: vercel ? deployedPortalOrigins.lecturer : process.env.NEXT_PUBLIC_LECTURER_ORIGIN || (production ? customPortalOrigins.lecturer : 'http://localhost:3003'),
   admin: vercel ? deployedPortalOrigins.admin : process.env.NEXT_PUBLIC_ADMIN_ORIGIN || (production ? customPortalOrigins.admin : 'http://localhost:3004'),
 } satisfies Record<Portal, string>;
+export const trustedPortalOrigins = [
+  ...Object.values(portalOrigins),
+  ...(portalOrigins.web === customPortalOrigins.web ? [customWebAlias] : []),
+];
 for (const [portal, origin] of Object.entries(portalOrigins)) {
   const url = new URL(origin);
   if (url.origin !== origin || url.username || url.password || (production && url.protocol !== 'https:') || !['https:', 'http:'].includes(url.protocol)) throw new Error(`Invalid public origin for ${portal}`);
@@ -50,9 +59,9 @@ export function safeReturnUrl(input: string | null | undefined, fallback = porta
   if (!input || input.startsWith('//') || input.includes('\\') || [...input].some(character => character.charCodeAt(0) < 32)) return fallback;
   try {
     const url = new URL(input, portalOrigins.web);
-    if (url.username || url.password || !Object.values(portalOrigins).includes(url.origin)) return fallback;
+    if (url.username || url.password || !trustedPortalOrigins.includes(url.origin)) return fallback;
     // Never send the user back into an authentication redirect loop.
-    if (url.origin === portalOrigins.web && /^\/(login|register|verify|forgot-password|reset-password)(\/|$)/.test(url.pathname)) return fallback;
+    if ((url.origin === portalOrigins.web || url.origin === customWebAlias) && /^\/(login|register|verify|forgot-password|reset-password)(\/|$)/.test(url.pathname)) return fallback;
     return url.href;
   } catch { return fallback; }
 }

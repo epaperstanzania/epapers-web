@@ -11,7 +11,7 @@ export function portalEnvironment(target = 'development') {
     NEXT_PUBLIC_ADMIN_ORIGIN: origins.admin,
     APP_ORIGIN: origins.web,
     API_ORIGIN: origins.web,
-    PORTAL_ORIGINS: Object.values(origins).join(','),
+    PORTAL_ORIGINS: [...Object.values(origins), ...(target === 'development' ? [] : portals.web.aliases || [])].join(','),
     COOKIE_DOMAIN: '',
   };
 }

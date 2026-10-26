@@ -1,5 +1,5 @@
 {
-  "web": { "project": "epapertz", "root": "apps/web", "origin": "https://epapers.co.tz", "port": 3000 },
+  "web": { "project": "epapertz", "root": "apps/web", "origin": "https://epapers.co.tz", "aliases": ["https://www.epapers.co.tz"], "port": 3000 },
   "contributor": { "project": "epapertz-contributor", "root": "apps/contributor", "origin": "https://contributor.epapers.co.tz", "port": 3002 },
   "lecturer": { "project": "epapertz-lecturer", "root": "apps/lecturer", "origin": "https://lecturer.epapers.co.tz", "port": 3003 },
   "admin": { "project": "epapertz-admin", "root": "apps/admin", "origin": "https://console.epapers.co.tz", "port": 3004 }

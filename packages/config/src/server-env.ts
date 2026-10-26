@@ -1,6 +1,6 @@
 import 'server-only';
 import { z } from 'zod';
-import { deployedPortalOrigins } from './portals';
+import { customWebAlias, deployedPortalOrigins, deployedTrustedOrigins } from './portals';
 const boolFromString = z.string().transform((value, ctx) => {
     if (value === 'true')
         return true;
@@ -50,7 +50,7 @@ const schema = z.object({
         try {
             const url = new URL(origin);
             if (url.origin !== origin || url.username || url.password || !['http:', 'https:'].includes(url.protocol) || (value.NODE_ENV === 'production' && url.protocol !== 'https:')) throw new Error();
-            if (value.NODE_ENV === 'production' && !['https://epapers.co.tz','https://contributor.epapers.co.tz','https://lecturer.epapers.co.tz','https://console.epapers.co.tz','https://epapertz.vercel.app','https://epapertz-contributor.vercel.app','https://epapertz-lecturer.vercel.app','https://epapertz-admin.vercel.app'].includes(origin)) throw new Error();
+            if (value.NODE_ENV === 'production' && ![customWebAlias,'https://epapers.co.tz','https://contributor.epapers.co.tz','https://lecturer.epapers.co.tz','https://console.epapers.co.tz','https://epapertz.vercel.app','https://epapertz-contributor.vercel.app','https://epapertz-lecturer.vercel.app','https://epapertz-admin.vercel.app'].includes(origin)) throw new Error();
         } catch { ctx.addIssue({ code: 'custom', path: ['PORTAL_ORIGINS'], message: 'Expected exact trusted portal origins' }); }
     }
     if (value.NODE_ENV === 'production' && !['', '.epapers.co.tz', 'epapers.co.tz'].includes(value.COOKIE_DOMAIN)) ctx.addIssue({ code: 'custom', path: ['COOKIE_DOMAIN'], message: 'Invalid cookie domain' });
@@ -70,7 +70,7 @@ const runtimeEnv = vercelEnv ? {
     ...process.env,
     APP_ORIGIN: deployedPortalOrigins.web,
     API_ORIGIN: deployedPortalOrigins.web,
-    PORTAL_ORIGINS: Object.values(deployedPortalOrigins).join(','),
+    PORTAL_ORIGINS: deployedTrustedOrigins.join(','),
     COOKIE_DOMAIN: '',
     TRUST_PROXY: 'false',
 } : process.env;
