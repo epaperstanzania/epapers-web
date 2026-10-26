@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from '@epapers/ui/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
-import { AchievementBadge, UserProfile } from '../../types';
+import { AchievementBadge, PaperSuggestion, UserProfile } from '../../types';
 import { UsernameTile } from '../../components/common/UsernameTile';
 import { LevelBadge } from '../../components/common/LevelBadge';
 import { ArrowRight } from 'lucide-react';
@@ -14,6 +14,8 @@ export const DashboardPage: React.FC = () => {
   const { currentUser } = useAuth();
   const [achievements, setAchievements] = useState<AchievementBadge[]>([]);
   const [leaderboard, setLeaderboard] = useState<UserProfile[]>([]);
+  const [suggestions, setSuggestions] = useState<PaperSuggestion[]>([]);
+  const [suggestionsError, setSuggestionsError] = useState(false);
   const [achievementFilter, setAchievementFilter] = useState<'all' | 'unlocked' | 'progress' | 'locked'>('all');
   const [loading, setLoading] = useState(true);
 
@@ -22,12 +24,15 @@ export const DashboardPage: React.FC = () => {
   useEffect(() => {
     const loadData = apiTask(async () => {
       setLoading(true);
-      const [achs, leads] = await Promise.all([
+      setSuggestionsError(false);
+      const [achs, leads, requested] = await Promise.all([
         api.getAchievements(),
         api.getLeaderboard(),
+        api.getPaperSuggestions().catch(() => { setSuggestionsError(true); return []; }),
       ]);
       setAchievements(achs);
       setLeaderboard(leads);
+      setSuggestions(requested);
       setLoading(false);
     }, () => setLoading(false));
     loadData();
@@ -346,48 +351,29 @@ export const DashboardPage: React.FC = () => {
               Suggested Contributions
             </h3>
             <p className="text-xs text-[var(--color-text-muted)]">
-              High-demand examination papers requested by fellow students.
+              Recent examination papers requested by students, ranked by demand.
             </p>
 
             <div className="space-y-2.5 pt-1">
-              <div className="p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-input)] space-y-1">
-                <span className="font-semibold text-xs text-[var(--color-text)] block">
-                  COE 07202 UE 2024
-                </span>
-                <p className="text-[11px] text-[var(--color-text-muted)]">
-                  Requested by 42 DIT Computing students this week.
-                </p>
-                <Link
-                  to="/upload?moduleCode=COE+07202"
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-primary)] hover:underline pt-1"
-                >
-                  <span>Upload Paper</span>
-                  <ArrowRight className="w-3 h-3" />
-                </Link>
-              </div>
-
-              <div className="p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-input)] space-y-1">
-                <span className="font-semibold text-xs text-[var(--color-text)] block">
-                  CS 174 Test 1 Solution
-                </span>
-                <p className="text-[11px] text-[var(--color-text-muted)]">
-                  Marking scheme missing for existing Semester 1 test.
-                </p>
-                <Link
-                  to="/upload?moduleCode=CS+174&scheme=true"
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-primary)] hover:underline pt-1"
-                >
-                  <span>Attach Key</span>
-                  <ArrowRight className="w-3 h-3" />
-                </Link>
-              </div>
+              {suggestions.length ? suggestions.map(item => {
+                const params = new URLSearchParams({ moduleId: item.moduleId, moduleCode: item.moduleCode, category: item.category, academicYear: String(item.academicYear) });
+                if (item.testNumber) params.set('testNumber', String(item.testNumber));
+                if (item.wantsMarkingScheme) params.set('scheme', 'true');
+                return <div key={`${item.moduleId}-${item.category}-${item.testNumber}-${item.academicYear}-${item.wantsMarkingScheme}`} className="p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-input)] space-y-1">
+                  <span className="font-semibold text-xs text-[var(--color-text)] block">{item.moduleCode} · {item.category === 'TEST' ? `Test ${item.testNumber}` : item.category} · {item.academicYear}{item.wantsMarkingScheme ? ' marking scheme' : ''}</span>
+                  <p className="text-[11px] text-[var(--color-text-muted)]">{item.requestsThisWeek} {item.requestsThisWeek === 1 ? 'request' : 'requests'} this week for {item.moduleName}.</p>
+                  <Link to={`/upload?${params}`} className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-primary)] hover:underline pt-1">
+                    <span>{item.wantsMarkingScheme ? 'Upload Paper + Key' : 'Upload Paper'}</span><ArrowRight className="w-3 h-3" />
+                  </Link>
+                </div>;
+              }) : <p className="rounded-lg border border-dashed border-[var(--color-border)] p-4 text-xs text-[var(--color-text-muted)]">{suggestionsError ? 'Paper requests could not be loaded right now.' : 'No paper requests this week yet. New requests will appear here.'}</p>}
             </div>
           </div>
 
-          {/* DIT Archival Standards Checklist */}
+          {/* Eapers Archival Standards Checklist */}
           <div className="min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 sm:p-5 space-y-2.5 shadow-[var(--shadow-neutral)]">
             <h3 className="font-bold text-sm text-[var(--color-text)]">
-              DIT Archival Standards
+              Eapers Archival Standards
             </h3>
 
             <ul className="space-y-2 text-xs text-[var(--color-text-muted)]">

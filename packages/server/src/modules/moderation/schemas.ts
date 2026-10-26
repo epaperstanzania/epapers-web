@@ -9,10 +9,14 @@ export const moderationSchemas = {
     flags: z.strictObject({ paperId: uuid, reason: z.enum(['blurry_scan', 'wrong_module', 'copyright', 'duplicate', 'offensive', 'incomplete']), details: z.string().trim().max(2000).default('') }),
     takedowns: z.strictObject({ paperId: uuid, requesterFullName: z.string().trim().min(2).max(160), requesterEmail: z.string().email().max(254), affiliation: z.string().trim().max(240), reason: z.string().trim().min(10).max(4000), evidence: z.string().trim().max(4000).default('') }),
     moduleRequests: z.strictObject({ departmentId: uuid, programId: uuid, moduleCode: z.string().trim().min(2).max(30).regex(/^[A-Za-z0-9_-]+$/), moduleName: z.string().trim().min(2).max(240), academicYear: z.number().int().min(2000).max(2200), semester: z.number().int().min(1).max(2), description: z.string().trim().max(2000) }),
+    paperRequests: z.strictObject({ moduleId: uuid, category: z.enum(['TEST', 'UE', 'SUPP']), testNumber: z.number().int().min(1).max(2).optional(), academicYear: z.number().int().min(2000).max(new Date().getUTCFullYear()), wantsMarkingScheme: z.boolean().default(false), description: z.string().trim().max(400).default('') }).superRefine((value, ctx) => {
+        if ((value.category === 'TEST') !== (value.testNumber !== undefined)) ctx.addIssue({ code: 'custom', path: ['testNumber'], message: 'Select Test 1 or Test 2 only for a test paper' });
+    }),
     queue: z.strictObject({ ...pagination, status: z.string().max(30).optional(), programId: uuid.optional(), departmentId: uuid.optional() }),
     resolveFlag: z.strictObject({ status: z.enum(['resolved', 'dismissed']), note: z.string().trim().min(1).max(2000) }),
     resolveTakedown: z.strictObject({ status: z.enum(['approved_removed', 'rejected']), note: z.string().trim().min(1).max(2000) }),
     resolveModule: z.strictObject({ status: z.enum(['approved', 'rejected']), note: z.string().trim().min(1).max(2000) }),
+    resolvePaperRequest: z.strictObject({ status: z.enum(['fulfilled', 'dismissed']), note: z.string().trim().max(400).default('') }),
     leaderboard: z.strictObject({ ...pagination, period: z.enum(['week', 'month', 'all']).default('all') }),
     readNotification: z.strictObject({ read: z.literal(true) }),
 };

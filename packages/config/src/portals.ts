@@ -8,16 +8,22 @@ export const vercelPortalOrigins = {
   admin: 'https://epapertz-admin.vercel.app',
 } satisfies Record<Portal, string>;
 export const customPortalOrigins = {
-  web: 'https://epapers.co.tz',
+  web: 'https://www.epapers.co.tz',
   contributor: 'https://contributor.epapers.co.tz',
   lecturer: 'https://lecturer.epapers.co.tz',
   admin: 'https://console.epapers.co.tz',
 } satisfies Record<Portal, string>;
-export const customWebAlias = 'https://www.epapers.co.tz';
+export const customPortalAliases = {
+  web: 'https://epapers.co.tz',
+  contributor: 'https://www.contributor.epapers.co.tz',
+  lecturer: 'https://www.lecturer.epapers.co.tz',
+  admin: 'https://www.console.epapers.co.tz',
+} satisfies Record<Portal, string>;
+export const customWebAlias = customPortalAliases.web;
 export const deployedPortalOrigins = process.env.NEXT_PUBLIC_DOMAIN_PROFILE === 'custom' ? customPortalOrigins : vercelPortalOrigins;
 export const deployedTrustedOrigins = [
   ...Object.values(deployedPortalOrigins),
-  ...(deployedPortalOrigins === customPortalOrigins ? [customWebAlias] : []),
+  ...(deployedPortalOrigins === customPortalOrigins ? Object.values(customPortalAliases) : []),
 ];
 export const vercelPublicEnv = {
   NEXT_PUBLIC_API_BASE_URL: '/api/v1',
@@ -36,7 +42,7 @@ export const portalOrigins = {
 } satisfies Record<Portal, string>;
 export const trustedPortalOrigins = [
   ...Object.values(portalOrigins),
-  ...(portalOrigins.web === customPortalOrigins.web ? [customWebAlias] : []),
+  ...(portalOrigins.web === customPortalOrigins.web ? Object.values(customPortalAliases) : []),
 ];
 for (const [portal, origin] of Object.entries(portalOrigins)) {
   const url = new URL(origin);

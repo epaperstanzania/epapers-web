@@ -1,10 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { ChangePasswordForm } from '../../components/common/ChangePasswordForm';
+import { UsernameChangeForm } from '../../components/common/UsernameChangeForm';
 import { PageLoader } from '../../components/common/PageLoader';
 import { request, sensitiveRequest } from '../../services/client';
 
-type Settings = { lockdown?: boolean; readOnly?: boolean; bannerMessage?: string; usernameCooldownDays?: number; retentionDays?: number };
+type Settings = { lockdown?: boolean; readOnly?: boolean; bannerMessage?: string; retentionDays?: number };
 export function AdminSystemSettings() {
   const [settings, setSettings] = useState<Settings>({});
   const [loaded, setLoaded] = useState(false), [busy, setBusy] = useState(false);
@@ -33,12 +34,12 @@ export function AdminSystemSettings() {
         <label className="flex gap-2 text-sm"><input type="checkbox" checked={settings.lockdown === true} onChange={e => setSettings({ ...settings, lockdown: e.target.checked })} />Lockdown: pause registration and uploads</label>
         <label className="flex gap-2 text-sm"><input type="checkbox" checked={settings.readOnly === true} onChange={e => setSettings({ ...settings, readOnly: e.target.checked })} />Read only: pause affected writes</label>
         <label className="block text-sm">Public banner<input value={settings.bannerMessage || ''} maxLength={500} onChange={e => setSettings({ ...settings, bannerMessage: e.target.value })} className="mt-1 w-full rounded border p-2" /></label>
-        <label className="block text-sm">Username change cooldown (days)<input type="number" min={1} max={365} value={settings.usernameCooldownDays ?? 30} onChange={e => setSettings({ ...settings, usernameCooldownDays: Number(e.target.value) })} className="ml-3 rounded border p-2" /></label>
         <label className="block text-sm">Retention (days)<input type="number" min={1} max={3650} value={settings.retentionDays ?? 90} onChange={e => setSettings({ ...settings, retentionDays: Number(e.target.value) })} className="ml-3 rounded border p-2" /></label>
         <label className="block text-sm">Audit reason<textarea value={reason} required minLength={1} maxLength={2000} onChange={e => setReason(e.target.value)} className="mt-1 w-full rounded border p-2" /></label>
         <button type="submit" className="rounded bg-[var(--color-primary)] px-4 py-2 text-sm text-white">{busy ? 'Saving…' : 'Save settings'}</button>
       </fieldset>
     </form>
+    <UsernameChangeForm />
     <ChangePasswordForm />
   </section>;
 }

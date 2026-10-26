@@ -6,10 +6,10 @@ The selected hosting profile is four independent Vercel projects:
 
 | Portal | Project / production hostname | Vercel deployment alias | Root directory |
 | --- | --- | --- | --- |
-| Public and API | `epapers.co.tz` (`www.epapers.co.tz` alias) | `epapertz.vercel.app` | `apps/web` |
-| Contributor and uploads | `contributor.epapers.co.tz` | `epapertz-contributor.vercel.app` | `apps/contributor` |
-| Lecturer | `lecturer.epapers.co.tz` | `epapertz-lecturer.vercel.app` | `apps/lecturer` |
-| Administrator | `console.epapers.co.tz` | `epapertz-admin.vercel.app` | `apps/admin` |
+| Public and API | `www.epapers.co.tz` (`epapers.co.tz` alias) | `epapertz.vercel.app` | `apps/web` |
+| Contributor and uploads | `contributor.epapers.co.tz` (`www.contributor.epapers.co.tz` alias) | `epapertz-contributor.vercel.app` | `apps/contributor` |
+| Lecturer | `lecturer.epapers.co.tz` (`www.lecturer.epapers.co.tz` alias) | `epapertz-lecturer.vercel.app` | `apps/lecturer` |
+| Administrator | `console.epapers.co.tz` (`www.console.epapers.co.tz` alias) | `epapertz-admin.vercel.app` | `apps/admin` |
 
 `deployment/portals.json` records these origins. Each app's `vercel.json` installs
 from the workspace root and builds only that portal's dependency graph. Enable
@@ -27,19 +27,20 @@ This prevents local `.env.local` values or stale Vercel overrides from breaking
 the Vercel deployment profile. Do not add conflicting origin/cookie overrides
 to the Vercel projects.
 
-The four custom domains are assigned to their matching Vercel projects and
-their DNS configuration is verified. Set
+Assign the four canonical custom domains and their aliases to their matching
+Vercel projects, then verify DNS and certificate status in Vercel. Set
 `NEXT_PUBLIC_DOMAIN_PROFILE=custom` in Production on **all four** Vercel
 projects before deploying. The shared portal configuration then switches
 navigation, authentication callbacks, API origin and trusted origins to the
 branded domains above. Keep `*.vercel.app` only as deployment aliases.
-Add `www.epapers.co.tz` to the **public/API Vercel project** as another custom
-domain and point its DNS to the Vercel target shown there. The web app redirects
-`www` requests, including `/login`, to `https://epapers.co.tz` while preserving
-the path and query. This keeps Google PKCE and host-only session cookies on one
-web host. The exact `www` origin is also trusted for API/CORS compatibility;
-other subdomains are not implicitly trusted. Vercel/DNS domain assignment is a
-separate step from deploying this code.
+Assign each hostname in the table to its matching Vercel project and point DNS
+to the targets Vercel shows. `www.epapers.co.tz` is the public/API canonical
+host. The other three canonical hosts remain without `www`; their `www` aliases
+redirect to those hosts. The apex `epapers.co.tz` redirects to the public `www`
+host if both are attached to the same project. These exact aliases are trusted
+for API/CORS, but arbitrary subdomains are not. Redirecting before sign-in keeps
+PKCE and host-only session cookies on one host per portal. DNS and Vercel domain
+assignment are separate from deploying this code.
 
 Separate `vercel.app` hosts cannot share a cookie domain. Portal requests to
 `/api/v1` are proxied to the canonical API. A portal without a session starts at
@@ -73,12 +74,12 @@ Use real, independently generated keys; templates are not production values.
 Do not add backend secrets to the other three projects. Vercel deployment does
 not provision a database, run migrations, or configure bucket CORS. Email
 delivery and PDF scan/publication are driven by the Cloudflare Cron Worker below.
-Allow the four selected HTTPS origins in private incoming-bucket PUT CORS.
+Allow the four selected HTTPS portal origins and their four exact aliases in private incoming-bucket PUT CORS.
 For a safe dry run, apply command, and verification of the live incoming-bucket policy, see [R2 browser upload CORS](source/R2-UPLOAD-CORS.md). This bucket policy is separate from the profile bucket and is not changed by a Vercel deployment.
 Create a third private R2 bucket named `profile` and set `R2_PROFILE_BUCKET=profile`
 on the public/API project. R2 bucket names must be lowercase. Its PUT CORS
 policy must allow `Content-Type` and `If-None-Match` request headers from the
-four portal origins (and local development origins when testing locally).
+four portal origins, their aliases (and local development origins when testing locally).
 Profile images use direct signed PUTs and a public same-origin read route; do
 not enable public bucket access. Configure a short lifecycle rule for abandoned
 `pending/` objects; successful uploads move to `profiles/`.
@@ -155,14 +156,15 @@ Neither migration copies data from CockroachDB.
    Configure that Google client in the Supabase Google provider settings.
    Keep the existing Supabase callback until its custom auth domain is active.
 5. In **Supabase → Authentication → URL Configuration**, set the Site URL to
-   `https://epapers.co.tz` and add
-   `https://epapers.co.tz/api/v1/auth/callback/google` to Redirect URLs.
-   Add `https://epapers.co.tz/api/v1/auth/callback/google?returnTo=**`
+   `https://www.epapers.co.tz` and add
+   `https://epapers.co.tz/api/v1/auth/callback/google` and
+   `https://www.epapers.co.tz/api/v1/auth/callback/google` to Redirect URLs.
+   Add the same two URLs with `?returnTo=**` appended
    if cross-portal login uses the optional `returnTo` query. For local
    development add the corresponding `http://localhost:3000` callback URLs.
-   Keep production URLs exact apart from the query wildcard. `www` redirects to
-   the apex host before Google sign-in starts, so the OAuth callback remains on
-   the apex host where its PKCE cookie was set.
+   Keep production URLs exact apart from the query wildcard. Each Google
+   callback must return to the same web host that started sign-in so its PKCE
+   cookie is available.
    Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` on the
    web project and local web env. The browser starts Google sign-in, Supabase
    sends a PKCE code to the EPapers callback, and EPapers exchanges it
@@ -330,6 +332,12 @@ backfills legacy papers whose title or exam period explicitly identifies a
 number; ambiguous legacy tests remain unnumbered. All portals use the same
 schema and API version.
 
+Migration `0004_paper_requests` adds the paper-demand table. Apply it before
+deploying the new request form or dashboard: `/request-module` then offers
+module and paper requests, the contributor dashboard ranks pending paper
+requests from the last seven days, and admin can review both request types.
+Approving a matching paper automatically fulfills open paper requests.
+
 ## Environment ownership
 
 Web and worker require the server keys documented in their `.env.example` files.
@@ -340,16 +348,16 @@ database credentials or signing keys to those UI deployments.
 Set these public values at build time in all portals:
 
 ```text
-NEXT_PUBLIC_API_BASE_URL=https://epapers.co.tz/api/v1
-NEXT_PUBLIC_WEB_ORIGIN=https://epapers.co.tz
+NEXT_PUBLIC_API_BASE_URL=https://www.epapers.co.tz/api/v1
+NEXT_PUBLIC_WEB_ORIGIN=https://www.epapers.co.tz
 NEXT_PUBLIC_CONTRIBUTOR_ORIGIN=https://contributor.epapers.co.tz
 NEXT_PUBLIC_LECTURER_ORIGIN=https://lecturer.epapers.co.tz
 NEXT_PUBLIC_ADMIN_ORIGIN=https://console.epapers.co.tz
 ```
 
-On web/worker set `APP_ORIGIN` and `API_ORIGIN` to `https://epapers.co.tz`, and
-`PORTAL_ORIGINS` to the exact comma-separated four origins above plus
-`https://www.epapers.co.tz`. A host-only
+On web/worker set `APP_ORIGIN` and `API_ORIGIN` to `https://www.epapers.co.tz`, and
+`PORTAL_ORIGINS` to the exact comma-separated four origins above plus their four
+aliases. A host-only
 refresh cookie is sufficient because every refresh is sent to the canonical web
 host. If infrastructure requires a shared cookie, `COOKIE_DOMAIN=.epapers.co.tz`
 is supported; use the same setting for login, refresh and logout. Cookies remain
@@ -362,13 +370,13 @@ untrusted-client identity, and account limits still apply. Configure this before
 public release to avoid a shared public IP limit.
 
 Keep all three R2 buckets private. Incoming and profile bucket CORS must allow PUT from the four
-portal origins and the exact `https://www.epapers.co.tz` alias, with Content-Type and If-None-Match headers. Storage requests omit
+portal origins and their exact aliases, with Content-Type and If-None-Match headers. Storage requests omit
 API cookies/tokens. Apply an appropriate private-object lifecycle consistent with
 database retention. Published URLs remain short-lived; do not configure public
 bucket access as a shortcut.
 
 The secure session iframe at `/auth/session-bridge` must be embeddable by the
-four trusted portal origins and the `www` alias. Do not set a blanket SAMEORIGIN/X-Frame-Options or
+four trusted portal origins and their aliases. Do not set a blanket SAMEORIGIN/X-Frame-Options or
 `frame-ancestors 'self'` policy on that route. Other pages should deny framing.
 
 ## Release verification

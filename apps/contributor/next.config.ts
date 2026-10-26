@@ -1,4 +1,4 @@
-import { portalHeaders } from '@epapers/config/next-headers';
+import { portalAliasRedirects, portalHeaders } from '@epapers/config/next-headers';
 import type { NextConfig } from 'next';
 import path from 'node:path';
 import { portalAuthMode, portalOrigins, vercelPublicEnv } from '@epapers/config/portals';
@@ -19,6 +19,6 @@ const config: NextConfig = {
   async rewrites() {
     return portalAuthMode === 'proxy' ? [{ source: '/api/v1/:path*', destination: portalOrigins.web + '/api/v1/:path*' }] : [];
   },
-  async redirects() { return []; },
+  async redirects() { return portalAliasRedirects('contributor'); },
 };
 export default config;

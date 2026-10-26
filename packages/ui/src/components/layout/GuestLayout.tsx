@@ -29,7 +29,7 @@ export const GuestLayout: React.FC<{ children: React.ReactNode }> = ({ children 
     { label: 'Search Papers', to: '/search', icon: Search },
     { label: 'Departments', to: '/departments', icon: BookOpen },
     { label: 'Popular Papers', to: '/popular', icon: TrendingUp },
-    { label: 'Request Module', to: '/request-module', icon: PlusCircle },
+    { label: 'Request Content', to: '/request-module', icon: PlusCircle },
     { label: 'User guide', to: '/how-it-works', icon: HelpCircle },
     { label: 'FAQ', to: '/faq', icon: FileQuestion },
     { label: 'About EPapers', to: '/about', icon: Info },

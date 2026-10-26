@@ -34,7 +34,7 @@ const ADMIN_NAV_GROUPS = [
       { label: 'Review Queue', to: '/admin/review', icon: Split },
       { label: 'Flagged Reports', to: '/admin/flags', icon: Flag },
       { label: 'Takedowns', to: '/admin/takedowns', icon: FileMinus },
-      { label: 'Module Requests', to: '/admin/module-requests', icon: PlusSquare },
+      { label: 'Archive Requests', to: '/admin/module-requests', icon: PlusSquare },
     ],
   },
   {

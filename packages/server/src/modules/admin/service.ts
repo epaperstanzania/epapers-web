@@ -70,7 +70,7 @@ export async function manageUser(admin: User, id: string, input: z.infer<typeof 
         return adminUser(updated);
     });
 }
-export async function settings(admin: User) { authorize(admin, { roles: ['admin'] }); const rows = await db.appSetting.findMany({ where: { key: { in: ['usernameCooldownDays', 'retentionDays', 'lockdown', 'readOnly', 'bannerMessage'] } } }); return Object.fromEntries(rows.map(s => [s.key, s.value])); }
+export async function settings(admin: User) { authorize(admin, { roles: ['admin'] }); const rows = await db.appSetting.findMany({ where: { key: { in: ['retentionDays', 'lockdown', 'readOnly', 'bannerMessage'] } } }); return Object.fromEntries(rows.map(s => [s.key, s.value])); }
 export async function updateSettings(admin: User, input: z.infer<typeof adminSchemas.settings>, proof?: AdminProof) { authorize(admin, { roles: ['admin'] }); input = adminSchemas.settings.parse(input); await withTransactionRetry(async (tx) => { await adminGuard(tx, admin, requireProof(proof)); for (const [key, value] of Object.entries(input)) {
     if (key === 'reason' || value === undefined)
         continue;
@@ -121,7 +121,22 @@ export async function myAuditLogs(user: User, q: z.infer<typeof adminSchemas.aud
         createdAt: a.createdAt.toISOString(),
     }));
 }
-export async function stats(admin: User) { authorize(admin, { roles: ['admin'] }); const [pendingPapers, approvedPapers, usersCount, lecturers, pendingVerifications, flags, takedowns, moduleRequests, downloads] = await Promise.all([db.paper.count({ where: { status: 'PENDING' } }), db.paper.count({ where: { status: 'APPROVED' } }), db.user.count(), db.user.count({ where: { role: 'LECTURER' } }), db.lecturerVerification.count({ where: { status: 'pending' } }), db.flaggedReport.count({ where: { status: 'pending' } }), db.takedownRequest.count({ where: { status: 'pending' } }), db.moduleRequest.count({ where: { status: 'pending' } }), db.paper.aggregate({ _sum: { downloadsCount: true } })]); return { pendingPapers, approvedPapers, users: usersCount, lecturers, pendingVerifications, flags, takedowns, moduleRequests, downloads: Number(downloads._sum.downloadsCount || 0) }; }
+export async function stats(admin: User) {
+    authorize(admin, { roles: ['admin'] });
+    const [pendingPapers, approvedPapers, usersCount, lecturers, pendingVerifications, flags, takedowns, moduleRequests, paperRequests, downloads] = await Promise.all([
+        db.paper.count({ where: { status: 'PENDING' } }),
+        db.paper.count({ where: { status: 'APPROVED' } }),
+        db.user.count(),
+        db.user.count({ where: { role: 'LECTURER' } }),
+        db.lecturerVerification.count({ where: { status: 'pending' } }),
+        db.flaggedReport.count({ where: { status: 'pending' } }),
+        db.takedownRequest.count({ where: { status: 'pending' } }),
+        db.moduleRequest.count({ where: { status: 'pending' } }),
+        db.paperRequest.count({ where: { status: 'pending' } }),
+        db.paper.aggregate({ _sum: { downloadsCount: true } }),
+    ]);
+    return { pendingPapers, approvedPapers, users: usersCount, lecturers, pendingVerifications, flags, takedowns, moduleRequests, paperRequests, downloads: Number(downloads._sum.downloadsCount || 0) };
+}
 export async function submitVerification(user: User, input: z.infer<typeof adminSchemas.verification>) { authorize(user, { roles: ['lecturer'], requireVerifiedEmail: true }); return withTransactionRetry(async (tx) => { const u = await tx.user.findUnique({ where: { id: user.id } }); if (!u)
     fail(401, 'UNAUTHORIZED', 'Authentication required'); authorize(u, { roles: ['lecturer'], requireVerifiedEmail: true }); if (u.lecturerVerifiedAt)
     fail(409, 'ALREADY_VERIFIED', 'Lecturer is already verified'); if (!await tx.department.findFirst({ where: { id: input.departmentId, ...activeDepartment } }))

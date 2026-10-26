@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { db, withTransactionRetry } from '@epapers/database';
 import { storage } from '@epapers/server/lib/storage';
 import { presign, complete, createPaper, download, view } from '@epapers/server/modules/uploads/service';
-import { review, resolveTakedown, moduleRequest, resolveModule, queue, flag, takedown } from '@epapers/server/modules/moderation/service';
+import { review, resolveTakedown, moduleRequest, resolveModule, queue, flag, takedown, paperRequest, paperRequestSuggestions, paperRequestQueue, resolvePaperRequest } from '@epapers/server/modules/moderation/service';
 import { notifications, achievements, leaderboard, readNotification } from '@epapers/server/modules/gamification/service';
 import { papers, modules, moduleDetail } from '@epapers/server/modules/catalog/service';
 import { catalogSchemas } from '@epapers/server/modules/catalog/schemas';
@@ -72,6 +72,7 @@ afterAll(async () => {
             await tx.notification.deleteMany({ where: { userId: { in: users } } });
             await tx.userAchievement.deleteMany({ where: { userId: { in: users } } });
             await tx.auditLog.deleteMany({ where: { OR: [{ actorUserId: { in: users } }, { targetId: { in: paperIds } }] } });
+            await tx.paperRequest.deleteMany({ where: { moduleId: { in: [module.id, otherModule.id] } } });
             await tx.moduleRequest.deleteMany({ where: { id: { in: requestIds } } });
             await tx.paper.deleteMany({ where: { id: { in: paperIds } } });
             await tx.storedFile.deleteMany({ where: { ownerUserId: { in: users } } });
@@ -179,6 +180,18 @@ describe.skipIf(!enabled)('Phases 3–5 real PostgreSQL with isolated storage ad
         expect(JSON.stringify(leaders)).not.toContain('email');
         await withTransactionRetry(tx => tx.user.update({ where: { id: contributor.id }, data: { status: 'SUSPENDED' } }));
         expect((await leaderboard(lecturer, moderationSchemas.leaderboard.parse({ limit: 100 }))).items.some(u => u.username === contributor.username)).toBe(false);
+    }, 60000);
+    it('stores real paper demand and lets admins review it', async () => {
+        const input = { moduleId: otherModule.id, category: 'SUPP' as const, academicYear: 2023, wantsMarkingScheme: false, description: 'Past supplementary exam' };
+        const first = await paperRequest(input, lecturer);
+        expect((await paperRequest(input, lecturer)).id).toBe(first.id);
+        await paperRequest(input);
+        const suggestions = await paperRequestSuggestions(lecturer);
+        expect(suggestions.find(item => item.moduleId === otherModule.id && item.academicYear === 2023)?.requestsThisWeek).toBe(2);
+        const queued = await paperRequestQueue(admin, moderationSchemas.queue.parse({ limit: 100 }));
+        expect(queued.items.some(item => item.id === first.id)).toBe(true);
+        await resolvePaperRequest(admin, first.id, { status: 'dismissed', note: 'Reviewed' });
+        expect((await db.paperRequest.findUniqueOrThrow({ where: { id: first.id } })).status).toBe('dismissed');
     }, 60000);
     it('cleans only abandoned, uncompleted uploads', async () => { const id = randomUUID(); files.push(id); await withTransactionRetry(tx => tx.storedFile.create({ data: { id, ownerUserId: lecturer.id, bucketName: env.R2_INCOMING_BUCKET, objectKey: 'incoming/' + lecturer.id + '/' + id + '.pdf', originalFilename: 'abandoned.pdf', contentType: 'application/pdf', sizeBytes: 20, createdAt: new Date(Date.now() - 90000000) } })); await cleanAbandoned(); expect(await db.storedFile.findUnique({ where: { id } })).toBeNull(); }, 60000);
 });

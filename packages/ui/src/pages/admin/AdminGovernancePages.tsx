@@ -8,7 +8,7 @@ import { apiTask } from '../../services/client';
 import { AdminSystemSettings } from './AdminSystemSettings';
 import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api';
-import { AuditLogItem, ModuleRequest, Paper, UserProfile } from '../../types';
+import { AuditLogItem, ModuleRequest, Paper, PaperRequestItem, UserProfile } from '../../types';
 import {
   History,
   Radio,
@@ -201,10 +201,15 @@ export const AdminModuleRequestsPage: React.FC = () => {
   const { busy, run } = useApiAction();
   const [loading, setLoading] = useState(true);
   const [requests, setRequests] = useState<ModuleRequest[]>([]);
+  const [paperRequests, setPaperRequests] = useState<PaperRequestItem[]>([]);
+  const [requestType, setRequestType] = useState<'module' | 'paper'>('module');
+  const [loadError, setLoadError] = useState(false);
 
   const loadReqs = apiTask(async () => {
-    const list = await api.getModuleRequests();
-    setRequests(list);
+    const [modules, papers] = await Promise.allSettled([api.getModuleRequests(), api.getPaperRequests()]);
+    if (modules.status === 'fulfilled') setRequests(modules.value);
+    if (papers.status === 'fulfilled') setPaperRequests(papers.value);
+    setLoadError(modules.status === 'rejected' || papers.status === 'rejected');
   }, () => setLoading(false));
 
   useEffect(() => {
@@ -216,19 +221,31 @@ export const AdminModuleRequestsPage: React.FC = () => {
     await api.resolveModuleRequest(id, status);
     loadReqs();
   });
+  const handlePaperResolve = run(async (id: string, status: 'fulfilled' | 'dismissed') => {
+    const note = status === 'dismissed' ? window.prompt('Reason for dismissing this paper request:') : '';
+    if (note === null) return;
+    await api.resolvePaperRequest(id, status, note || '');
+    loadReqs();
+  });
 
   if (loading) return <PageLoader variant="rows" />;
   return (<BusyScope busy={busy}><div className="space-y-6">
       <div className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl p-6 shadow-xs">
         <h1 className="font-heading font-extrabold text-2xl text-[var(--color-text)] ">
-          Course Module Creation Requests
+          Archive Requests
         </h1>
         <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
-          Student requests for new curriculum course codes. Approving creates the module in the database.
+          Review missing curriculum modules and requested examination papers.
         </p>
       </div>
 
-      <div className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl divide-y divide-[var(--color-border)] ">
+      <div role="tablist" aria-label="Request category" className="grid grid-cols-2 gap-2 rounded-xl bg-[var(--color-input)] p-1">
+        {(['module', 'paper'] as const).map(type => <button key={type} type="button" role="tab" aria-selected={requestType === type} onClick={() => setRequestType(type)} className={`min-h-11 rounded-lg px-3 text-sm font-semibold ${requestType === type ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm' : 'text-[var(--color-text-muted)]'}`}>{type === 'module' ? `Modules (${requests.filter(item => item.status === 'pending').length})` : `Papers (${paperRequests.filter(item => item.status === 'pending').length})`}</button>)}
+      </div>
+      {loadError && <p role="alert" className="rounded-lg bg-[var(--color-danger-soft)] p-3 text-sm text-[var(--color-danger)]">Some requests could not be loaded. Retry this page after checking the API and database migration.</p>}
+
+      {requestType === 'module' ? <div className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl divide-y divide-[var(--color-border)] ">
+        {!requests.length && <p className="p-5 text-sm text-[var(--color-text-muted)]">No module requests yet.</p>}
         {requests.map((r) => (
           <div key={r.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
@@ -267,7 +284,21 @@ export const AdminModuleRequestsPage: React.FC = () => {
             </div>
           </div>
         ))}
-      </div>
+      </div> : <div className="divide-y divide-[var(--color-border)] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
+        {!paperRequests.length && <p className="p-5 text-sm text-[var(--color-text-muted)]">No paper requests yet.</p>}
+        {paperRequests.map(item => <div key={item.id} className="flex flex-col gap-4 p-4 sm:p-5 md:flex-row md:items-center md:justify-between">
+          <div className="min-w-0 space-y-1">
+            <p className="text-sm font-bold text-[var(--color-text)]">{item.moduleCode} · {item.category === 'TEST' ? `Test ${item.testNumber}` : item.category} · {item.academicYear}{item.wantsMarkingScheme ? ' · Marking scheme' : ''}</p>
+            <p className="text-xs text-[var(--color-text-muted)]">{item.moduleName} · Semester {item.semester} · {item.requestedBy ? `@${item.requestedBy}` : 'Guest'} · {new Date(item.createdAt).toLocaleDateString()}</p>
+            {item.description && <p className="text-xs text-[var(--color-text-muted)]">{item.description}</p>}
+            {item.reviewNote && <p className="text-xs text-[var(--color-text-muted)]">Review: {item.reviewNote}</p>}
+          </div>
+          {item.status === 'pending' ? <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => handlePaperResolve(item.id, 'fulfilled')} className="min-h-10 rounded-lg bg-[var(--color-success)] px-3 text-xs font-bold text-white">Mark fulfilled</button>
+            <button type="button" onClick={() => handlePaperResolve(item.id, 'dismissed')} className="min-h-10 rounded-lg border border-[var(--color-input-border)] px-3 text-xs font-semibold text-[var(--color-text)]">Dismiss</button>
+          </div> : <span className="text-xs font-bold uppercase text-[var(--color-text-muted)]">{item.status}</span>}
+        </div>)}
+      </div>}
     </div></BusyScope>);
 };
 

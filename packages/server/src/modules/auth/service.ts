@@ -13,6 +13,7 @@ import { privateUser } from '@epapers/server/modules/auth/dto';
 import { audit, challenge } from '@epapers/server/modules/auth/repository';
 import { removeProfileImage } from '@epapers/server/modules/auth/avatar';
 import { username as usernameSchema } from '@epapers/server/modules/auth/schemas';
+import { nextUsernameChangeAt } from '@epapers/server/modules/auth/username-policy';
 const generic = { message: 'If eligible, an email will be sent. Delivery may be delayed.' };
 
 type PortalGrant = { token: string; challenge: string; redirectUri: string; expiresAt: number; sessionExpiresAt: string };
@@ -344,12 +345,9 @@ export async function updateProfile(userId: string, input: {
         if (input.avatarId?.startsWith('p_') && input.avatarId !== user.avatarId)
             fail(422, 'INVALID_AVATAR', 'Upload a profile image before selecting it');
         if (input.username && input.username.toLowerCase() !== user.usernameNormalized) {
-            const settings = await tx.$queryRaw<Array<{
-                value: number;
-            }>> `SELECT value FROM app_settings WHERE key='usernameCooldownDays'`;
-            const days = settings[0]?.value ?? 30;
-            if (user.usernameChangedAt && Date.now() - user.usernameChangedAt.getTime() < days * 86400000)
-                fail(409, 'USERNAME_COOLDOWN', 'Username change cooldown is active');
+            const nextChangeAt = nextUsernameChangeAt(user.usernameChangedAt);
+            if (nextChangeAt && nextChangeAt.getTime() > Date.now())
+                fail(409, 'USERNAME_COOLDOWN', `You can change your username again after ${nextChangeAt.toISOString()}.`);
             const taken = await tx.$queryRaw<Array<{
                 user_id: string;
             }>> `SELECT user_id FROM username_registry WHERE username_normalized=${input.username.toLowerCase()}`;

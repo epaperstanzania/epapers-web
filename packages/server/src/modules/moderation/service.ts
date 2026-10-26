@@ -35,8 +35,14 @@ export async function review(admin: User, id: string, input: z.infer<typeof mode
             return { id, status: p.status.toLowerCase(), examFileId: p.examFileId, markingSchemeFileId: p.markingSchemeFileId };
         const updated = await tx.paper.update({ where: { id }, data: { status, title: input.title, moduleId: input.moduleId, rejectionReason: input.action === 'edited' ? p.rejectionReason : ['REJECTED', 'SPAM'].includes(status) ? input.reason : null, reviewedByUserId: admin.id, reviewedAt: new Date() } });
         const r = await tx.paperReview.create({ data: { paperId: id, reviewerUserId: admin.id, action: input.action, reason: input.reason, correctedTitle: input.title, correctedModuleCode: input.moduleId ? (await tx.module.findUniqueOrThrow({ where: { id: input.moduleId } })).code : undefined } });
-        if (input.action === 'approved')
+        if (input.action === 'approved') {
             await grantApproval(tx, updated);
+            await tx.paperRequest.updateMany({ where: {
+                status: 'pending', moduleId: updated.moduleId, category: updated.category,
+                testNumber: updated.testNumber ?? 0, academicYearStart: updated.academicYearStart,
+                ...(updated.markingSchemeFileId ? {} : { wantsMarkingScheme: false }),
+            }, data: { status: 'fulfilled', reviewedByUserId: admin.id, reviewedAt: new Date(), reviewNote: 'Matching paper approved' } });
+        }
         if (input.action !== 'edited')
             await tx.notification.create({ data: { userId: p.uploadedByUserId, title: status === 'APPROVED' ? 'Paper approved' : 'Paper reviewed', type: status === 'APPROVED' ? 'paper_approved' : 'paper_rejected', message: status === 'APPROVED' ? 'Your contribution was approved.' : input.reason, link: '/papers/' + id } });
         await audit(tx, admin.id, 'PAPER_' + input.action.toUpperCase(), 'paper', id, input.reason);
@@ -64,6 +70,54 @@ export async function moduleRequest(input: z.infer<typeof moderationSchemas.modu
     authorize(user, {}); return withTransactionRetry(async (tx) => { if (!await tx.program.findFirst({ where: { id: input.programId, departmentId: input.departmentId, ...activeProgram } }))
     fail(422, 'INVALID_PROGRAM', 'Program must belong to the selected department'); if (await tx.module.findFirst({ where: { programId: input.programId, codeNormalized: input.moduleCode.toLowerCase() } }))
     fail(409, 'MODULE_EXISTS', 'Module code already exists'); const r = await tx.moduleRequest.create({ data: { programId: input.programId, requestedByUserId: user?.id, moduleCode: input.moduleCode, moduleName: input.moduleName, academicYearStart: input.academicYear, semester: input.semester, description: input.description } }); if (user) await audit(tx, user.id, 'MODULE_REQUEST_CREATED', 'module_request', r.id, ''); return { id: r.id, status: r.status }; }); }
+export async function paperRequest(input: z.infer<typeof moderationSchemas.paperRequests>, user?: User) {
+    if (user) authorize(user, {});
+    const module = await db.module.findFirst({ where: { id: input.moduleId, ...activeModule } });
+    if (!module) fail(422, 'INVALID_MODULE', 'Choose an active module');
+    const testNumber = input.testNumber ?? 0;
+    if (await db.paper.findFirst({ where: { moduleId: module.id, category: input.category, testNumber: input.testNumber ?? null, academicYearStart: input.academicYear, ...publicPaper, ...(input.wantsMarkingScheme ? { markingSchemeFileId: { not: null } } : {}) }, select: { id: true } }))
+        fail(409, 'PAPER_AVAILABLE', 'This paper is already available in the archive');
+    return withTransactionRetry(async tx => {
+        if (user) {
+            const existing = await tx.paperRequest.findFirst({ where: { requestedByUserId: user.id, moduleId: module.id, category: input.category, testNumber, academicYearStart: input.academicYear, wantsMarkingScheme: input.wantsMarkingScheme } });
+            if (existing) return { id: existing.id, status: existing.status };
+        }
+        const created = await tx.paperRequest.create({ data: { moduleId: module.id, requestedByUserId: user?.id, category: input.category, testNumber, academicYearStart: input.academicYear, wantsMarkingScheme: input.wantsMarkingScheme, description: input.description } });
+        if (user) await audit(tx, user.id, 'PAPER_REQUEST_CREATED', 'paper_request', created.id, '');
+        return { id: created.id, status: created.status };
+    });
+}
+export async function paperRequestSuggestions(user: User) {
+    authorize(user, { roles: ['contributor', 'lecturer', 'admin'] });
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const groups = await db.paperRequest.groupBy({ by: ['moduleId', 'category', 'testNumber', 'academicYearStart', 'wantsMarkingScheme'], where: { status: 'pending', createdAt: { gte: since }, module: activeModule }, _count: { id: true }, orderBy: { _count: { id: 'desc' } }, take: 5 });
+    const modules = await db.module.findMany({ where: { id: { in: groups.map(group => group.moduleId) } }, select: { id: true, code: true, name: true, semester: true } });
+    const byId = new Map(modules.map(module => [module.id, module]));
+    return groups.flatMap(group => { const module = byId.get(group.moduleId); return module ? [{ moduleId: module.id, moduleCode: module.code, moduleName: module.name, semester: module.semester, category: group.category, testNumber: group.testNumber || null, academicYear: group.academicYearStart, wantsMarkingScheme: group.wantsMarkingScheme, requestsThisWeek: group._count.id }] : []; });
+}
+export async function paperRequestQueue(admin: User, q: z.infer<typeof moderationSchemas.queue>) {
+    authorize(admin, { roles: ['admin'] });
+    if (q.status && !['pending', 'fulfilled', 'dismissed'].includes(q.status)) fail(422, 'INVALID_STATUS', 'Invalid queue status');
+    const id = cursorId(q.cursor);
+    return page(await db.paperRequest.findMany({ where: { status: q.status, module: { programId: q.programId, program: { departmentId: q.departmentId } } }, include: { module: { select: { code: true, name: true, semester: true } }, requester: { select: { username: true } } }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], take: q.limit + 1, ...(id ? { cursor: { id }, skip: 1 } : {}) }), q.limit, r => ({ id: r.id, moduleId: r.moduleId, moduleCode: r.module.code, moduleName: r.module.name, semester: r.module.semester, category: r.category, testNumber: r.testNumber || null, academicYear: r.academicYearStart, wantsMarkingScheme: r.wantsMarkingScheme, description: r.description, requestedBy: r.requester?.username || null, status: r.status, reviewNote: r.reviewNote, createdAt: r.createdAt.toISOString() }));
+}
+export async function resolvePaperRequest(admin: User, id: string, input: z.infer<typeof moderationSchemas.resolvePaperRequest>) {
+    authorize(admin, { roles: ['admin'] });
+    return withTransactionRetry(async tx => {
+        await adminCurrent(tx, admin.id);
+        const request = await tx.paperRequest.findUnique({ where: { id } });
+        if (!request) fail(404, 'NOT_FOUND', 'Request not found');
+        if (request.status !== 'pending') {
+            if (request.status === input.status) return { id, status: request.status };
+            fail(409, 'ALREADY_REVIEWED', 'Request already reviewed');
+        }
+        if (input.status === 'fulfilled' && !await tx.paper.findFirst({ where: { moduleId: request.moduleId, category: request.category, testNumber: request.testNumber || null, academicYearStart: request.academicYearStart, ...publicPaper, ...(request.wantsMarkingScheme ? { markingSchemeFileId: { not: null } } : {}) }, select: { id: true } }))
+            fail(409, 'PAPER_NOT_AVAILABLE', 'Approve a matching paper before marking this request fulfilled');
+        await tx.paperRequest.update({ where: { id }, data: { status: input.status, reviewNote: input.note, reviewedByUserId: admin.id, reviewedAt: new Date() } });
+        await audit(tx, admin.id, 'PAPER_REQUEST_' + input.status.toUpperCase(), 'paper_request', id, input.note);
+        return { id, status: input.status };
+    });
+}
 export async function queue(admin: User, kind: 'flags' | 'takedowns' | 'module-requests', q: z.infer<typeof moderationSchemas.queue>) {
     authorize(admin, { roles: ['admin'] });
     const id = cursorId(q.cursor), pagination = { take: q.limit + 1, orderBy: { id: 'desc' as const }, ...(id ? { cursor: { id }, skip: 1 } : {}) };

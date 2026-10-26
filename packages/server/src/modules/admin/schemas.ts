@@ -16,7 +16,7 @@ export const adminSchemas = {
     program: z.strictObject({ ...program, reason }), programPatch: change(z.strictObject({ ...program, campus: program.campus.removeDefault(), isActive: program.isActive.removeDefault() }).partial().shape),
     module: z.strictObject({ ...module, reason }), modulePatch: change(z.strictObject({ ...module, isActive: module.isActive.removeDefault() }).partial().shape),
     csv: z.strictObject({ csv: z.string().min(1).max(12000), dryRun: z.boolean().default(true), reason }),
-    settings: change({ usernameCooldownDays: z.number().int().min(1).max(365).optional(), retentionDays: z.number().int().min(1).max(3650).optional(), lockdown: z.boolean().optional(), readOnly: z.boolean().optional(), bannerMessage: z.string().max(500).optional() }),
+    settings: change({ retentionDays: z.number().int().min(1).max(3650).optional(), lockdown: z.boolean().optional(), readOnly: z.boolean().optional(), bannerMessage: z.string().max(500).optional() }),
     announcement: z.strictObject({ ...announcement, reason, sendEmail: z.boolean().default(false), requestId: uuid.optional() }), announcementPatch: change(z.strictObject({ ...announcement, type: announcement.type.removeDefault(), isActive: announcement.isActive.removeDefault() }).partial().shape),
     verification: z.strictObject({ departmentId: uuid, evidence: z.string().trim().min(10).max(2000) }),
     verificationReview: z.strictObject({ status: z.enum(['approved', 'rejected']), reason }),

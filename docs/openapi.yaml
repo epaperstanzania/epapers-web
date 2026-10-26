@@ -6861,6 +6861,52 @@
         }
       }
     },
+    "/auth/google-signup/intent": {
+      "post": {
+        "summary": "Reserve a username for Google sign-up",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["username"], "properties": { "username": { "type": "string", "minLength": 3, "maxLength": 30, "pattern": "^[a-zA-Z0-9_]+$" } } } } } },
+        "responses": { "200": { "description": "Username reserved in a short-lived HttpOnly cookie", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "object", "properties": { "ready": { "type": "boolean" } } } } } } } } }
+      }
+    },
+    "/users/me/audit-logs": {
+      "get": {
+        "summary": "Read the signed-in user's account activity",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Paginated account activity", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "object", "properties": { "items": { "type": "array", "items": { "type": "object" } }, "nextCursor": { "type": ["string", "null"] } } } } } } } } }
+      }
+    },
+    "/paper-requests": {
+      "post": {
+        "summary": "Request a missing examination paper or marking scheme",
+        "description": "Optional bearer authentication associates the request with the current account.",
+        "security": [{}, { "bearerAuth": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["moduleId", "category", "academicYear"], "properties": { "moduleId": { "type": "string", "format": "uuid" }, "category": { "type": "string", "enum": ["TEST", "UE", "SUPP"] }, "testNumber": { "type": "integer", "enum": [1, 2] }, "academicYear": { "type": "integer" }, "wantsMarkingScheme": { "type": "boolean" }, "description": { "type": "string", "maxLength": 400 } } } } } },
+        "responses": { "200": { "description": "Request recorded", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "object", "properties": { "id": { "type": "string", "format": "uuid" }, "status": { "type": "string" } } } } } } } } }
+      }
+    },
+    "/paper-requests/suggestions": {
+      "get": {
+        "summary": "Recent paper requests for contributor suggestions",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Most requested papers this week", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "array", "items": { "type": "object" } } } } } } } }
+      }
+    },
+    "/admin/paper-requests": {
+      "get": {
+        "summary": "Review paper requests",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Paginated paper request queue", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "object", "properties": { "items": { "type": "array", "items": { "type": "object" } }, "nextCursor": { "type": ["string", "null"] } } } } } } } } }
+      }
+    },
+    "/admin/paper-requests/{id}": {
+      "patch": {
+        "summary": "Resolve a paper request",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["status"], "properties": { "status": { "type": "string", "enum": ["fulfilled", "dismissed"] }, "note": { "type": "string", "maxLength": 400 } } } } } },
+        "responses": { "200": { "description": "Resolved request", "content": { "application/json": { "schema": { "type": "object", "properties": { "data": { "type": "object", "properties": { "id": { "type": "string", "format": "uuid" }, "status": { "type": "string" } } } } } } } } }
+      }
+    },
     "/module-requests": {
       "post": {
         "summary": "/module-requests",
@@ -13233,6 +13279,12 @@
                   "username": {
                     "type": "string"
                   },
+                  "nextUsernameChangeAt": {
+                    "anyOf": [
+                      { "type": "string", "format": "date-time" },
+                      { "type": "null" }
+                    ]
+                  },
                   "email": {
                     "type": "string",
                     "format": "email",
@@ -13288,6 +13340,7 @@
                 "required": [
                   "id",
                   "username",
+                  "nextUsernameChangeAt",
                   "email",
                   "fullName",
                   "bio",
@@ -13334,6 +13387,12 @@
           },
           "username": {
             "type": "string"
+          },
+          "nextUsernameChangeAt": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ]
           },
           "email": {
             "type": "string",
@@ -13390,6 +13449,7 @@
         "required": [
           "id",
           "username",
+          "nextUsernameChangeAt",
           "email",
           "fullName",
           "bio",
@@ -13451,6 +13511,12 @@
               "username": {
                 "type": "string"
               },
+              "nextUsernameChangeAt": {
+                "anyOf": [
+                  { "type": "string", "format": "date-time" },
+                  { "type": "null" }
+                ]
+              },
               "email": {
                 "type": "string",
                 "format": "email",
@@ -13506,6 +13572,7 @@
             "required": [
               "id",
               "username",
+              "nextUsernameChangeAt",
               "email",
               "fullName",
               "bio",
@@ -17826,11 +17893,6 @@
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
-          "usernameCooldownDays": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
           "retentionDays": {
             "type": "integer",
             "minimum": -9007199254740991,
@@ -17876,11 +17938,6 @@
           "settings": {
             "type": "object",
             "properties": {
-              "usernameCooldownDays": {
-                "type": "integer",
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
-              },
               "retentionDays": {
                 "type": "integer",
                 "minimum": -9007199254740991,
@@ -18911,6 +18968,12 @@
               "username": {
                 "type": "string"
               },
+              "nextUsernameChangeAt": {
+                "anyOf": [
+                  { "type": "string", "format": "date-time" },
+                  { "type": "null" }
+                ]
+              },
               "email": {
                 "type": "string",
                 "format": "email",
@@ -18966,6 +19029,7 @@
             "required": [
               "id",
               "username",
+              "nextUsernameChangeAt",
               "email",
               "fullName",
               "bio",
@@ -19577,11 +19641,6 @@
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
-          "usernameCooldownDays": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 365
-          },
           "retentionDays": {
             "type": "integer",
             "minimum": 1,

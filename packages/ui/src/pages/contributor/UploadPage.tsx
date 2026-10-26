@@ -2,7 +2,7 @@
 import { PageLoader } from '../../components/common/PageLoader';
 import { BusyScope } from '../../components/common/BusyScope';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate } from '@epapers/ui/navigation';
+import { Link, useNavigate, useSearchParams } from '@epapers/ui/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { Department, Program, Module, ExamCategory } from '../../types';
@@ -18,6 +18,9 @@ const stepTitles = [
 export const UploadPage: React.FC = () => {
   const { currentUser, role } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const suggestionModuleId = searchParams.get('moduleId');
+  const suggestionPrefilled = useRef(false);
   const [step, setStep] = useState(1);
   const stepHeadingRef = useRef<HTMLHeadingElement>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -64,11 +67,41 @@ export const UploadPage: React.FC = () => {
   const academicYears = useMemo(() => {
     const currentYear = new Date().getFullYear();
     const startYear = new Date().getMonth() >= 8 ? currentYear : currentYear - 1;
-    return Array.from({ length: 7 }, (_, index) => {
+    const years = Array.from({ length: 7 }, (_, index) => {
       const first = startYear - index;
       return `${first}/${first + 1}`;
     });
-  }, []);
+    const requested = Number(searchParams.get('academicYear'));
+    if (Number.isInteger(requested) && requested >= 2000 && requested <= currentYear) {
+      const value = `${requested}/${requested + 1}`;
+      if (!years.includes(value)) years.push(value);
+    }
+    return years;
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (suggestionPrefilled.current) return;
+    if (!suggestionModuleId) return;
+    suggestionPrefilled.current = true;
+    let active = true;
+    api.getModule(suggestionModuleId).then(result => {
+      if (!active || !result) return;
+      const module = result.module;
+      setSelectedDeptId(module.departmentId);
+      setSelectedProgramId(module.programId);
+      setSemester(module.semester);
+      setSelectedModuleId(module.id);
+      const requestedYear = Number(searchParams.get('academicYear'));
+      if (Number.isInteger(requestedYear) && requestedYear >= 2000 && requestedYear <= new Date().getFullYear()) setAcademicYear(`${requestedYear}/${requestedYear + 1}`);
+      const requestedCategory = searchParams.get('category');
+      if (requestedCategory === 'TEST' || requestedCategory === 'UE' || requestedCategory === 'SUPP') {
+        setCategory(requestedCategory);
+        if (requestedCategory === 'TEST') setTestNumber(searchParams.get('testNumber') === '2' ? 2 : 1);
+      }
+      setStep(6);
+    }).catch(() => { /* The regular upload flow remains available. */ });
+    return () => { active = false; };
+  }, [suggestionModuleId]);
 
   useEffect(() => {
     let active = true;
@@ -478,6 +511,7 @@ export const UploadPage: React.FC = () => {
 
         {step === 7 && (
           <div className="space-y-5">
+            {searchParams.get('scheme') === 'true' && <p role="note" className="rounded-lg border border-[var(--color-primary)] bg-[var(--color-active)] p-3 text-sm text-[var(--color-text)]">This request needs a marking scheme. Include both the exam PDF and its answer key so moderation can fulfill it.</p>}
             <FileChoice label="Exam paper PDF (required)" file={paperFile} onChoose={(event) => setSelectedFile(event, false)} onRemove={() => setPaperFile(null)} />
             <FileChoice label="Marking scheme PDF (optional)" helper="Adding a marking scheme helps students even more." file={markingSchemeFile} onChoose={(event) => setSelectedFile(event, true)} onRemove={() => setMarkingSchemeFile(null)} optional />
             {submitError && <p role="alert" className="rounded-lg bg-[var(--color-danger-soft)] p-3 text-sm text-[var(--color-danger)]">{submitError}</p>}

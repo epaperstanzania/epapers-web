@@ -59,6 +59,23 @@ test('module requests keep the signed-in contributor identity while allowing gue
   assert.equal(calls[1].body.moduleCode, 'COE08204');
 });
 
+test('paper demand is submitted and read from the API without fabricated suggestions', async () => {
+  const calls = [];
+  globalThis.fetch = async (url, options) => {
+    calls.push({ url, options });
+    return ok(url.endsWith('/suggestions') ? [{ moduleId: 'module', requestsThisWeek: 2 }] : { id: 'request-id', status: 'pending' });
+  };
+  const input = { moduleId: 'module', category: 'TEST', testNumber: 1, academicYear: 2024, wantsMarkingScheme: true, description: 'Answer key needed' };
+  await api.submitPaperRequest(input);
+  setSession(session('contributor-token'));
+  const suggestions = await api.getPaperSuggestions();
+  assert.deepEqual(JSON.parse(calls[0].options.body), input);
+  assert.equal(calls[0].url, '/api/v1/paper-requests');
+  assert.equal(calls[1].url, '/api/v1/paper-requests/suggestions');
+  assert.equal(calls[1].options.headers.Authorization, 'Bearer contributor-token');
+  assert.equal(suggestions[0].requestsThisWeek, 2);
+});
+
 test('search translates filters, removes ALL, and follows every cursor', async () => {
   const calls = [];
   globalThis.fetch = async (url, options) => {

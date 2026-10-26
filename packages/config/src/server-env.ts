@@ -1,6 +1,7 @@
 import 'server-only';
 import { z } from 'zod';
-import { customWebAlias, deployedPortalOrigins, deployedTrustedOrigins } from './portals';
+import { customPortalOrigins, customPortalAliases, deployedPortalOrigins, deployedTrustedOrigins, vercelPortalOrigins } from './portals';
+const productionOrigins = new Set([...Object.values(customPortalOrigins), ...Object.values(customPortalAliases), ...Object.values(vercelPortalOrigins)]);
 const boolFromString = z.string().transform((value, ctx) => {
     if (value === 'true')
         return true;
@@ -50,7 +51,7 @@ const schema = z.object({
         try {
             const url = new URL(origin);
             if (url.origin !== origin || url.username || url.password || !['http:', 'https:'].includes(url.protocol) || (value.NODE_ENV === 'production' && url.protocol !== 'https:')) throw new Error();
-            if (value.NODE_ENV === 'production' && ![customWebAlias,'https://epapers.co.tz','https://contributor.epapers.co.tz','https://lecturer.epapers.co.tz','https://console.epapers.co.tz','https://epapertz.vercel.app','https://epapertz-contributor.vercel.app','https://epapertz-lecturer.vercel.app','https://epapertz-admin.vercel.app'].includes(origin)) throw new Error();
+            if (value.NODE_ENV === 'production' && !productionOrigins.has(origin)) throw new Error();
         } catch { ctx.addIssue({ code: 'custom', path: ['PORTAL_ORIGINS'], message: 'Expected exact trusted portal origins' }); }
     }
     if (value.NODE_ENV === 'production' && !['', '.epapers.co.tz', 'epapers.co.tz'].includes(value.COOKIE_DOMAIN)) ctx.addIssue({ code: 'custom', path: ['COOKIE_DOMAIN'], message: 'Invalid cookie domain' });

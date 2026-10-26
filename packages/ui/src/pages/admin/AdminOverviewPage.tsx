@@ -135,7 +135,7 @@ export const AdminOverviewPage: React.FC = () => {
               {stats.pendingTakedowns} takedown requests awaiting review
             </Link>
             <Link to="/admin/module-requests" className="rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] p-4 text-sm font-semibold text-[var(--color-text)] hover:border-[var(--color-primary)]">
-              {stats.pendingModuleReqs} module requests awaiting review
+              {stats.pendingModuleReqs} module and {stats.pendingPaperReqs} paper requests awaiting review
             </Link>
           </div>
         </div>

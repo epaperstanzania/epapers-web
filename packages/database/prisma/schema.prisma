@@ -112,6 +112,7 @@ model Module {
   updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
   program        Program   @relation(fields: [programId], references: [id], onDelete: Restrict)
   papers         Paper[]
+  paperRequests  PaperRequest[]
   @@unique([id, programId])
   @@index([programId, semester, isActive])
   @@index([codeNormalized])
@@ -191,6 +192,8 @@ model User {
   moduleRequestReviewedByUserId ModuleRequest[] @relation("ModuleRequestReviewedByUserId")
 
   moduleRequestDeletedById ModuleRequest[] @relation("ModuleRequestDeletedById")
+  paperRequests PaperRequest[] @relation("PaperRequestRequester")
+  paperRequestReviews PaperRequest[] @relation("PaperRequestReviewer")
 
   paperReviewReviewerUserId PaperReview[] @relation("PaperReviewReviewerUserId")
 
@@ -521,6 +524,29 @@ model ModuleRequest {
 
   relatedDeletedById User? @relation("ModuleRequestDeletedById", fields: [deletedById], references: [id], onDelete: Restrict)
 
+}
+
+model PaperRequest {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  moduleId String @map("module_id") @db.Uuid
+  requestedByUserId String? @map("requested_by_user_id") @db.Uuid
+  category PaperCategory
+  testNumber Int @default(0) @map("test_number") @db.SmallInt
+  academicYearStart Int @map("academic_year_start") @db.SmallInt
+  wantsMarkingScheme Boolean @default(false) @map("wants_marking_scheme")
+  description String @default("") @db.VarChar(400)
+  status String @default("pending")
+  reviewedByUserId String? @map("reviewed_by_user_id") @db.Uuid
+  reviewedAt DateTime? @map("reviewed_at") @db.Timestamptz
+  reviewNote String @default("") @map("review_note") @db.VarChar(400)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  module Module @relation(fields: [moduleId], references: [id], onDelete: Restrict)
+  requester User? @relation("PaperRequestRequester", fields: [requestedByUserId], references: [id], onDelete: SetNull)
+  reviewer User? @relation("PaperRequestReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  @@unique([requestedByUserId, moduleId, category, academicYearStart, testNumber, wantsMarkingScheme], map: "paper_requests_user_topic_key")
+  @@index([status, createdAt(sort: Desc)], map: "paper_requests_status_recent_idx")
+  @@index([moduleId, category, academicYearStart, testNumber, status], map: "paper_requests_topic_status_idx")
+  @@map("paper_requests")
 }
 
 model PaperReview {

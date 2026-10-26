@@ -50,7 +50,7 @@ export const ContributorLayout: React.FC<{ children: React.ReactNode }> = ({ chi
     { label: 'Achievements', to: '/dashboard/achievements', icon: Award },
     { label: 'Leaderboard', to: '/leaderboard', icon: Trophy },
     { label: 'Browse Papers', to: '/browse', icon: BookOpen },
-    { label: 'Request Module', to: '/dashboard/request-module', icon: PlusCircle },
+    { label: 'Request Content', to: '/dashboard/request-module', icon: PlusCircle },
   ];
 
   const lecturerItems = [

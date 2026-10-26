@@ -1,4 +1,4 @@
-import type { Department, Program, Module, Paper, UserProfile, AchievementBadge, XpLedgerEntry, FlaggedReport, TakedownRequest, ModuleRequest, AuditLogItem, SystemAnnouncement, AppNotification, PaperFilters, Role, AdminStats } from '../types';
+import type { Department, Program, Module, Paper, UserProfile, AchievementBadge, XpLedgerEntry, FlaggedReport, TakedownRequest, ModuleRequest, PaperRequestItem, PaperSuggestion, ExamCategory, AuditLogItem, SystemAnnouncement, AppNotification, PaperFilters, Role, AdminStats } from '../types';
 import { ApiError, request, listAll, getSessionRole, sensitiveRequest } from './client';
 import { portalOrigins } from '@epapers/config/portals';
 
@@ -23,10 +23,10 @@ export type PaperDto = Pick<Paper, 'id' | 'title' | 'category' | 'testNumber' | 
   uploader: { username: string; avatarId?: string; isLecturerVerified: boolean } | null;
   createdAt: string; downloadAvailable: boolean; status?: string; rejectionReason?: string; duplicateWarning?: boolean;
 };
-type ProfileDto = { id?: string; username: string; email?: string; role?: Role; emailVerified?: boolean; isLecturerVerified?: boolean; lecturerVerified?: boolean; homeDepartmentId?: string; bio?: string; avatarId?: string | null; xp?: number; allTimeXp?: number; levelTitle: string; joinedAt?: string; status?: UserProfile['status']; rank?: number; approvedCount?: number };
+type ProfileDto = { id?: string; username: string; nextUsernameChangeAt?: string | null; email?: string; role?: Role; emailVerified?: boolean; isLecturerVerified?: boolean; lecturerVerified?: boolean; homeDepartmentId?: string; bio?: string; avatarId?: string | null; xp?: number; allTimeXp?: number; levelTitle: string; joinedAt?: string; status?: UserProfile['status']; rank?: number; approvedCount?: number };
 export function profileFromDto(p: ProfileDto): UserProfile {
   return {
-    id: p.id || p.username, username: p.username, email: p.email || '', role: p.role || 'contributor',
+    id: p.id || p.username, username: p.username, nextUsernameChangeAt: p.nextUsernameChangeAt, email: p.email || '', role: p.role || 'contributor',
     isEmailVerified: p.emailVerified || false, isLecturerVerified: p.isLecturerVerified || p.lecturerVerified || false,
     departmentId: p.homeDepartmentId || undefined, bio: p.bio || '', avatarId: p.avatarId || undefined, accentColor: '',
     xp: p.xp ?? 0, allTimeXp: p.allTimeXp ?? 0, level: ['Novice Archivist', 'Scholar', 'Senior Curator', 'Master Archivist'].indexOf(p.levelTitle) + 1 || 1,
@@ -192,6 +192,14 @@ export const api = {
   },
   async submitModuleRequest(r: Omit<ModuleRequest, 'id' | 'requestedAt' | 'status' | 'notes'>) { return request('/module-requests', { method: 'POST', auth: !!getSessionRole(), body: { departmentId: r.departmentId, programId: r.programId, moduleCode: normalizeModuleCode(r.moduleCode), moduleName: r.moduleName, academicYear: academicYearStart(r.academicYear), semester: r.semester, description: r.description } }); },
   async resolveModuleRequest(id: string, status: 'approved' | 'rejected', note = 'Curriculum request reviewed by administrator') { await request(`/admin/module-requests/${idPath(id)}`, { method: 'PATCH', auth: true, body: { status, note } }); },
+  async submitPaperRequest(input: { moduleId: string; category: ExamCategory; testNumber?: 1 | 2; academicYear: number; wantsMarkingScheme: boolean; description: string }) {
+    return request<{ id: string; status: string }>('/paper-requests', { method: 'POST', auth: !!getSessionRole(), body: input });
+  },
+  async getPaperSuggestions(): Promise<PaperSuggestion[]> { return request('/paper-requests/suggestions', { auth: true }); },
+  async getPaperRequests(): Promise<PaperRequestItem[]> { return listAll('/admin/paper-requests', {}, true); },
+  async resolvePaperRequest(id: string, status: 'fulfilled' | 'dismissed', note = '') {
+    return request(`/admin/paper-requests/${idPath(id)}`, { method: 'PATCH', auth: true, body: { status, note } });
+  },
   async getAuditLogPage(cursor?: string, limit = 100): Promise<{ items: AuditLogItem[]; nextCursor: string | null }> {
     const params = new URLSearchParams({ limit: String(limit) });
     if (cursor) params.set('cursor', cursor);
@@ -206,8 +214,8 @@ export const api = {
   },
   async getAuditLogs(): Promise<AuditLogItem[]> { return (await api.getAuditLogPage()).items; },
   async getAdminStats(): Promise<AdminStats> {
-    const s = await request<{ pendingPapers: number; approvedPapers: number; flags: number; takedowns: number; moduleRequests: number; lecturers: number; users: number; downloads: number }>('/admin/dashboard/stats', { auth: true });
-    return { pendingPapers: s.pendingPapers, totalPapers: s.approvedPapers, pendingFlags: s.flags, pendingTakedowns: s.takedowns, pendingModuleReqs: s.moduleRequests, verifiedLecturers: s.lecturers, totalUsers: s.users, totalDownloads: s.downloads };
+    const s = await request<{ pendingPapers: number; approvedPapers: number; flags: number; takedowns: number; moduleRequests: number; paperRequests: number; lecturers: number; users: number; downloads: number }>('/admin/dashboard/stats', { auth: true });
+    return { pendingPapers: s.pendingPapers, totalPapers: s.approvedPapers, pendingFlags: s.flags, pendingTakedowns: s.takedowns, pendingModuleReqs: s.moduleRequests, pendingPaperReqs: s.paperRequests, verifiedLecturers: s.lecturers, totalUsers: s.users, totalDownloads: s.downloads };
   },
   async getAllUsers(): Promise<UserProfile[]> { return (await listAll<ProfileDto>('/admin/users', {}, true)).map(profileFromDto); },
   async manageUser(id: string, action: 'suspend' | 'ban' | 'reinstate' | 'change_role' | 'verify_lecturer' | 'adjust_xp', reason: string, payload?: { newRole?: Role; xpAdjustment?: number }) {

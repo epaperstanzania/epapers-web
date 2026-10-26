@@ -84,6 +84,7 @@ export interface Paper {
 export interface UserProfile {
   id: string;
   username: string;
+  nextUsernameChangeAt?: string | null;
   email: string;
   role: Role;
   isEmailVerified: boolean;
@@ -176,6 +177,27 @@ export interface ModuleRequest {
   status: 'pending' | 'approved' | 'rejected';
 }
 
+export interface PaperRequestItem {
+  id: string;
+  moduleId: string;
+  moduleCode: string;
+  moduleName: string;
+  semester: 1 | 2;
+  category: ExamCategory;
+  testNumber: 1 | 2 | null;
+  academicYear: number;
+  wantsMarkingScheme: boolean;
+  description: string;
+  requestedBy: string | null;
+  status: 'pending' | 'fulfilled' | 'dismissed';
+  reviewNote: string;
+  createdAt: string;
+}
+
+export interface PaperSuggestion extends Pick<PaperRequestItem, 'moduleId' | 'moduleCode' | 'moduleName' | 'semester' | 'category' | 'testNumber' | 'academicYear' | 'wantsMarkingScheme'> {
+  requestsThisWeek: number;
+}
+
 export interface AuditLogItem {
   id: string;
   actorUsername: string | null;
@@ -225,6 +247,7 @@ export interface AdminStats {
   pendingFlags: number;
   pendingTakedowns: number;
   pendingModuleReqs: number;
+  pendingPaperReqs: number;
   verifiedLecturers: number;
   totalUsers: number;
   totalDownloads: number;

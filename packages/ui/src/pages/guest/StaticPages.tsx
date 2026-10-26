@@ -5,7 +5,7 @@ import { Link, useSearchParams } from '@epapers/ui/navigation';
 import { api } from '../../services/api';
 import { ApiForm } from '../../components/common/ApiForm';
 import { useAuth } from '../../context/AuthContext';
-import { Department, Program } from '../../types';
+import { Department, ExamCategory, Module, Program } from '../../types';
 import {
   HelpCircle,
   FileQuestion,
@@ -69,7 +69,7 @@ export const HowItWorksPage: React.FC = () => (
             Special Recognition
           </h3>
           <p className="text-xs text-[var(--color-text-muted)] leading-normal">
-            Contributors earn recognized archivist standing and advance tiers from Novice Archivist to Master Archivist on the DIT leaderboard.
+            Contributors earn recognized archivist standing and advance tiers from Novice Archivist to Master Archivist on theEpapers leaderboard.
           </p>
         </div>
       </div>
@@ -385,6 +385,7 @@ export const TakedownPage: React.FC = () => {
 
 export const RequestModulePage: React.FC<{ returnTo?: string; returnLabel?: string }> = ({ returnTo = '/departments', returnLabel = 'Browse modules' }) => {
   const [searchParams] = useSearchParams();
+  const [requestType, setRequestType] = useState<'module' | 'paper'>(searchParams.get('type') === 'paper' ? 'paper' : 'module');
   const { currentUser } = useAuth();
   const initialSemester = searchParams.get('semester');
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -467,12 +468,18 @@ export const RequestModulePage: React.FC<{ returnTo?: string; returnLabel?: stri
             <PlusCircle aria-hidden="true" className="h-5 w-5" />
           </span>
           <div>
-            <h1 className="text-xl font-bold text-[var(--color-text)]">Request a missing module</h1>
-            <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">Choose where it belongs, then add its details.</p>
+            <h1 className="text-xl font-bold text-[var(--color-text)]">Request archive content</h1>
+            <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">Ask for a missing module or a past examination paper.</p>
           </div>
         </div>
 
-        {submitted ? (
+        <div role="tablist" aria-label="Request type" className="mb-5 grid grid-cols-2 gap-2 rounded-xl bg-[var(--color-input)] p-1">
+          {(['module', 'paper'] as const).map(type => <button key={type} type="button" role="tab" aria-selected={requestType === type} onClick={() => { setRequestType(type); setError(''); }} className={`min-h-11 rounded-lg px-3 text-sm font-semibold transition-colors ${requestType === type ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'}`}>
+            {type === 'module' ? 'Request module' : 'Request paper'}
+          </button>)}
+        </div>
+
+        {requestType === 'paper' ? <RequestPaperForm returnTo={returnTo} returnLabel={returnLabel} /> : submitted ? (
           <div role="status" className="rounded-lg bg-[var(--color-success-soft)] p-5 text-center">
             <CheckCircle aria-hidden="true" className="mx-auto h-7 w-7 text-[var(--color-success)]" />
             <p className="mt-2 text-sm font-semibold text-[var(--color-text)]">Request sent for curriculum review.</p>
@@ -543,6 +550,67 @@ export const RequestModulePage: React.FC<{ returnTo?: string; returnLabel?: stri
       </section>
     </div>
   );
+};
+
+const RequestPaperForm: React.FC<{ returnTo: string; returnLabel: string }> = ({ returnTo, returnLabel }) => {
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [modules, setModules] = useState<Module[]>([]);
+  const [departmentId, setDepartmentId] = useState('');
+  const [programId, setProgramId] = useState('');
+  const [moduleId, setModuleId] = useState('');
+  const [category, setCategory] = useState<ExamCategory>('UE');
+  const [testNumber, setTestNumber] = useState<1 | 2>(1);
+  const [academicYear, setAcademicYear] = useState(String(new Date().getFullYear()));
+  const [wantsMarkingScheme, setWantsMarkingScheme] = useState(false);
+  const [description, setDescription] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
+  useEffect(() => { api.getDepartments().then(setDepartments).catch(() => setError('Departments could not be loaded. Please try again.')); }, []);
+  useEffect(() => {
+    let active = true;
+    setPrograms([]); setProgramId(''); setModules([]); setModuleId('');
+    if (departmentId) api.getPrograms(departmentId).then(items => { if (active) setPrograms(items); }).catch(() => { if (active) setError('Programs could not be loaded.'); });
+    return () => { active = false; };
+  }, [departmentId]);
+  useEffect(() => {
+    let active = true;
+    setModules([]); setModuleId('');
+    if (programId) api.getModules({ programId }).then(items => { if (active) setModules(items); }).catch(() => { if (active) setError('Modules could not be loaded.'); });
+    return () => { active = false; };
+  }, [programId]);
+  const fieldClass = 'min-h-11 w-full rounded-lg border border-[var(--color-input-border)] bg-[var(--color-input)] px-3 text-sm text-[var(--color-text)] disabled:opacity-50';
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!moduleId || busy) return;
+    setBusy(true); setError('');
+    try {
+      await api.submitPaperRequest({ moduleId, category, ...(category === 'TEST' ? { testNumber } : {}), academicYear: Number(academicYear), wantsMarkingScheme, description: description.trim() });
+      setSubmitted(true);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Paper request could not be sent.'); }
+    finally { setBusy(false); }
+  };
+  if (submitted) return <div role="status" className="rounded-lg bg-[var(--color-success-soft)] p-5 text-center">
+    <CheckCircle aria-hidden="true" className="mx-auto h-7 w-7 text-[var(--color-success)]" />
+    <p className="mt-2 text-sm font-semibold text-[var(--color-text)]">Paper request received. Contributors can now see demand for it.</p>
+    <div className="mt-4 flex flex-wrap justify-center gap-2"><button type="button" onClick={() => setSubmitted(false)} className="min-h-10 rounded-lg border border-[var(--color-input-border)] px-4 text-sm font-semibold text-[var(--color-text)]">Request another</button><Link to={returnTo} className="inline-flex min-h-10 items-center rounded-lg bg-[var(--color-primary)] px-4 text-sm font-semibold text-white">{returnLabel}</Link></div>
+  </div>;
+  return <form onSubmit={submit} className="space-y-4">
+    <p className="text-sm text-[var(--color-text-muted)]">Choose an existing module and the examination or marking scheme you need.</p>
+    <div className="grid gap-4 sm:grid-cols-2">
+      <label className="space-y-1.5 text-sm font-medium text-[var(--color-text)]"><span>Department</span><select required value={departmentId} onChange={event => setDepartmentId(event.target.value)} className={fieldClass}><option value="">Select department</option>{departments.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+      <label className="space-y-1.5 text-sm font-medium text-[var(--color-text)]"><span>Program</span><select required disabled={!departmentId} value={programId} onChange={event => setProgramId(event.target.value)} className={fieldClass}><option value="">Select program</option>{programs.map(item => <option key={item.id} value={item.id}>{item.code} — {item.name}</option>)}</select></label>
+      <label className="space-y-1.5 text-sm font-medium text-[var(--color-text)] sm:col-span-2"><span>Module</span><select required disabled={!programId} value={moduleId} onChange={event => setModuleId(event.target.value)} className={fieldClass}><option value="">Select module</option>{modules.map(item => <option key={item.id} value={item.id}>{item.code} — {item.name}</option>)}</select></label>
+      <label className="space-y-1.5 text-sm font-medium text-[var(--color-text)]"><span>Exam type</span><select value={category} onChange={event => setCategory(event.target.value as ExamCategory)} className={fieldClass}><option value="UE">University examination (UE)</option><option value="TEST">Test</option><option value="SUPP">Supplementary</option></select></label>
+      <label className="space-y-1.5 text-sm font-medium text-[var(--color-text)]"><span>Academic year (start year)</span><input required type="number" min={2000} max={new Date().getFullYear()} value={academicYear} onChange={event => setAcademicYear(event.target.value)} className={fieldClass} /><span className="block text-xs font-normal text-[var(--color-text-muted)]">For 2024/2025, enter 2024.</span></label>
+      {category === 'TEST' && <label className="space-y-1.5 text-sm font-medium text-[var(--color-text)]"><span>Test number</span><select value={testNumber} onChange={event => setTestNumber(Number(event.target.value) as 1 | 2)} className={fieldClass}><option value={1}>Test 1</option><option value={2}>Test 2</option></select></label>}
+    </div>
+    <label className="flex min-h-11 items-center gap-3 rounded-lg border border-[var(--color-input-border)] bg-[var(--color-input)] px-3 text-sm font-medium text-[var(--color-text)]"><input type="checkbox" checked={wantsMarkingScheme} onChange={event => setWantsMarkingScheme(event.target.checked)} className="h-4 w-4" />I need the marking scheme / answer key</label>
+    <label className="block space-y-1.5 text-sm font-medium text-[var(--color-text)]"><span>More details (optional)</span><textarea maxLength={400} rows={3} value={description} onChange={event => setDescription(event.target.value)} placeholder="Anything that helps contributors identify the paper" className="w-full rounded-lg border border-[var(--color-input-border)] bg-[var(--color-input)] p-3 text-sm text-[var(--color-text)]" /></label>
+    {error && <p role="alert" className="rounded-lg bg-[var(--color-danger-soft)] p-3 text-sm text-[var(--color-danger)]">{error}</p>}
+    <button type="submit" disabled={!moduleId || busy} className="min-h-11 w-full rounded-lg bg-[var(--color-primary)] px-4 text-sm font-semibold text-white disabled:opacity-50">{busy ? 'Sending request…' : 'Submit paper request'}</button>
+  </form>;
 };
 
 export const NotFoundPage: React.FC = () => (

@@ -12,6 +12,7 @@ interface AuthContextType {
   verifyAdminLogin: (challengeToken: string, code: string, rememberDevice?: boolean) => Promise<Session>;
   logout: () => void; refreshUser: () => Promise<void>;
   updateBioAndAvatar: (bio: string, avatarId: string) => Promise<void>;
+  updateUsername: (username: string) => Promise<void>;
   flashMessage: string | null; setFlashMessage: (message: string | null) => void;
 }
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -74,9 +75,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const user = await api.updateUserProfile(currentUser.username, { bio, avatarId });
     setCurrentUser({ ...currentUser, ...user, isLecturerVerified: currentUser.isLecturerVerified });
   };
+  const updateUsername = async (username: string) => {
+    if (!currentUser) return;
+    const user = await api.updateUserProfile(currentUser.username, { username });
+    setCurrentUser(current => current ? { ...current, ...user, isLecturerVerified: current.isLecturerVerified } : null);
+  };
   const role: Role = currentUser?.role || 'guest';
   return <AuthContext.Provider value={{ currentUser, role, loading, accessToken, isAuthenticated: !!accessToken && !!currentUser, isGuest: !accessToken,
-    login, verifyAdminLogin, logout, refreshUser, updateBioAndAvatar, flashMessage, setFlashMessage }}>{children}</AuthContext.Provider>;
+    login, verifyAdminLogin, logout, refreshUser, updateBioAndAvatar, updateUsername, flashMessage, setFlashMessage }}>{children}</AuthContext.Provider>;
 }
 export function useAuth() {
   const context = useContext(AuthContext);

@@ -10,6 +10,7 @@ import { AppNotification } from '../../types';
 import { Link } from '@epapers/ui/navigation';
 import { DEFAULT_AVATARS, resolveAvatarId, UsernameTile } from '../../components/common/UsernameTile';
 import { AccountActivity } from '../../components/common/AccountActivity';
+import { UsernameChangeForm } from '../../components/common/UsernameChangeForm';
 
 export const NotificationsPage: React.FC = () => {
   const { busy, run } = useApiAction();
@@ -156,21 +157,9 @@ export const SettingsPage: React.FC = () => {
           </div>
         )}
 
+        <div className="mt-6"><UsernameChangeForm /></div>
+
         <form onSubmit={handleSave} className="space-y-4 mt-6">
-          <div>
-            <label className="block text-xs font-semibold text-[var(--color-text)]  mb-1">
-              Archivist Username
-            </label>
-            <input
-              type="text"
-              disabled
-              value={currentUser?.username || ''}
-              className="w-full bg-[var(--color-sidebar)]  border border-[var(--color-border)]  rounded-lg p-2.5 text-xs text-[var(--color-text-muted)] font-mono"
-            />
-            <p className="text-[10px] text-[var(--color-neutral)] mt-1">
-              Username changes can be changed after 15 | 30 active days
-            </p>
-          </div>
 
           <div>
             <label className="block text-xs font-semibold text-[var(--color-text)]  mb-1">
