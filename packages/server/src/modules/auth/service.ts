@@ -189,8 +189,6 @@ export async function loginWithGoogle(profile: {
             fail(409, 'ACCOUNT_LINK_CONFLICT', 'This Google account needs account support before sign-in');
         if (existing && !existing.emailVerifiedAt)
             fail(409, 'VERIFY_EMAIL_FIRST', 'Verify your EPapers email before using Google sign-in');
-        if (existing?.role === 'ADMIN')
-            fail(403, 'ADMIN_VERIFICATION_REQUIRED', 'Administrators must use password and email verification');
         if (existing) active(existing);
         if (!existing) {
             const settings = await tx.$queryRaw<Array<{ value: unknown }>> `SELECT value FROM app_settings WHERE key='lockdown'`;
@@ -220,8 +218,6 @@ export async function loginWithGoogle(profile: {
             update: {},
         });
         active(user);
-        // Never allow an OAuth callback to bypass the administrator's email code.
-        if (user.role === 'ADMIN') fail(403, 'ADMIN_VERIFICATION_REQUIRED', 'Administrators must use password and email verification');
         if (!existing) {
             await tx.usernameRegistry.create({ data: { usernameNormalized: username, userId: user.id } });
             await audit(tx, user.id, 'REGISTER_GOOGLE');
@@ -231,7 +227,7 @@ export async function loginWithGoogle(profile: {
             create: { userId: user.id, provider: 'google', providerUserId: profile.id, avatarUrl: profile.avatarUrl || null },
             update: { avatarUrl: profile.avatarUrl || null },
         });
-        const issued = await issueSession(tx, user);
+        const issued = await issueSession(tx, user, randomUUID(), user.role === 'ADMIN');
         await audit(tx, user.id, 'LOGIN_GOOGLE');
         return { user, ...issued };
     });

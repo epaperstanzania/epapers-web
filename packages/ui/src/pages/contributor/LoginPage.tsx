@@ -62,7 +62,7 @@ export function LoginPage() {
     <div className="w-full max-w-md space-y-6 rounded-xl border border-white/70 bg-[var(--color-surface)]/95 p-6 shadow-sm backdrop-blur-sm sm:p-8">
       <div className="space-y-2 text-center"><EPapersLogo className="justify-center" />
         <h1 className="pt-2 font-heading text-2xl font-extrabold">{challenge ? 'Verify your sign-in' : 'Sign in to Epapers'}</h1>
-        <p className="text-xs text-[var(--color-text-muted)]">{challenge ? 'An email code is required to access your administrator account.' : 'Sign in with your username or email and password.'}</p>
+        <p className="text-xs text-[var(--color-text-muted)]">{challenge ? 'An email code is required to access your administrator account.' : 'Sign in with your username or email and password, or continue with Google.'}</p>
       </div>
       {notice && <p role="status" className="rounded-lg bg-[var(--color-warning-soft)] p-3 text-xs">{notice}</p>}
       {error && <p role="alert" className="rounded-lg bg-[var(--color-danger-soft)] p-3 text-sm text-[var(--color-danger)]">{error}</p>}

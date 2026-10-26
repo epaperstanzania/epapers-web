@@ -4,12 +4,12 @@ import { randomUUID } from 'node:crypto';
 
 const mocks = vi.hoisted(() => ({ db: { user: { findFirst: vi.fn(), findUnique: vi.fn() }, userSession: { findUnique: vi.fn() } }, tx: {
     user: { findUnique: vi.fn() }, userSession: { create: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), updateMany: vi.fn() },
-    job: { create: vi.fn() }, $queryRaw: vi.fn(), $executeRaw: vi.fn(),
+    oAuthIdentity: { findUnique: vi.fn(), upsert: vi.fn() }, job: { create: vi.fn() }, $queryRaw: vi.fn(), $executeRaw: vi.fn(),
 } }));
 vi.mock('@epapers/database', () => ({ db: mocks.db, withTransactionRetry: async (action: (tx: unknown) => unknown) => action(mocks.tx) }));
 vi.mock('@epapers/server/lib/rate-limit', () => ({ rateLimit: vi.fn() }));
 vi.mock('@epapers/auth/crypto', async importOriginal => ({ ...await importOriginal<object>(), verifyPassword: vi.fn(async (_hash: string, password: string) => password === 'Correct1'), hashPassword: vi.fn(async () => 'hash') }));
-import { login, verifyAdminLogin, reauthenticate, verifyAdminReauthentication, refresh, authenticate } from '@epapers/server/modules/auth/service';
+import { login, loginWithGoogle, verifyAdminLogin, reauthenticate, verifyAdminReauthentication, refresh, authenticate } from '@epapers/server/modules/auth/service';
 import { tokenHash } from '@epapers/auth/crypto';
 import { decrypt } from '@epapers/server/lib/encryption';
 import { verifyReauthentication, signAccess } from '@epapers/auth/jwt';
@@ -22,6 +22,8 @@ beforeEach(() => {
     mocks.db.user.findFirst.mockImplementation(async () => user);
     mocks.db.user.findUnique.mockImplementation(async () => user);
     mocks.tx.user.findUnique.mockImplementation(async () => user);
+    mocks.tx.oAuthIdentity.findUnique.mockResolvedValue(null);
+    mocks.tx.oAuthIdentity.upsert.mockResolvedValue({});
     mocks.tx.userSession.create.mockResolvedValue({ id: randomUUID(), expiresAt: new Date(Date.now() + 3600000) });
     mocks.tx.userSession.findFirst.mockResolvedValue({ id: 'session' });
     mocks.tx.job.create.mockImplementation(async ({ data }) => { const message = decrypt<{ text: string }>(data.payload.encrypted, 'email'); emailCode = message.text.match(/code is (\d{6})/)![1]; return {}; });
@@ -62,6 +64,23 @@ describe('administrator email verification', () => {
         const expiresAt = mocks.tx.userSession.create.mock.calls[0][0].data.expiresAt as Date;
         expect(expiresAt.getTime() - Date.now()).toBeGreaterThan(7 * 86400000 - 10000);
         expect(expiresAt.getTime() - Date.now()).toBeLessThanOrEqual(7 * 86400000);
+    });
+    it('allows verified Google sign-in for an existing admin and remembers the session for seven days without email OTP', async () => {
+        user.emailVerifiedAt = new Date();
+        const result = await loginWithGoogle({
+            id: randomUUID(),
+            email: user.email,
+            emailVerifiedAt: new Date(),
+        });
+        expect(result.user.role).toBe('admin');
+        expect(mocks.tx.job.create).not.toHaveBeenCalled();
+        expect(mocks.tx.oAuthIdentity.upsert).toHaveBeenCalledWith(expect.objectContaining({
+            create: expect.objectContaining({ userId: user.id, provider: 'google' }),
+        }));
+        const sessionData = mocks.tx.userSession.create.mock.calls[0][0].data;
+        expect(sessionData.adminEmailVerifiedAt).toBeInstanceOf(Date);
+        expect(sessionData.expiresAt.getTime() - Date.now()).toBeGreaterThan(7 * 86400000 - 10000);
+        expect(sessionData.expiresAt.getTime() - Date.now()).toBeLessThanOrEqual(7 * 86400000);
     });
     it('commits wrong-code attempts and locks the challenge after five failures', async () => {
         const challenge = await start(); const correctCode = emailCode;

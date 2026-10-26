@@ -27,7 +27,7 @@ describe.skipIf(!enabled)('real PostgreSQL foundation and auth', () => {
     it('runs on PostgreSQL and enforces positive XP', async () => { const version = await db.$queryRaw<Array<{
         version: string;
     }>> `SELECT version()`; expect(version[0].version).toContain('PostgreSQL'); const u = await user(); await expect(db.$executeRaw `INSERT INTO xp_ledger(user_id,amount,event_type) VALUES (${u.id}::UUID,-1,'ADMIN_ADJUSTMENT')`).rejects.toThrow(); });
-    it('links Google users to one local account and keeps administrator verification mandatory', async () => {
+    it('links Google users to one local account and signs in verified-email administrators without a login code', async () => {
         const externalId = randomUUID();
         const email = randomUUID().slice(0, 12) + '@example.com';
         const profile = { id: externalId, email, emailVerifiedAt: new Date(), fullName: 'Google Fixture', avatarUrl: 'https://example.com/avatar.png' };
@@ -44,8 +44,13 @@ describe.skipIf(!enabled)('real PostgreSQL foundation and auth', () => {
 
         const admin = await user();
         await db.user.update({ where: { id: admin.id }, data: { role: 'ADMIN', emailVerifiedAt: new Date() } });
-        await expect(loginWithGoogle({ ...profile, id: randomUUID(), email: admin.email })).rejects.toThrow();
-        expect(await db.oAuthIdentity.count({ where: { userId: admin.id } })).toBe(0);
+        const adminGoogleLogin = await loginWithGoogle({ ...profile, id: randomUUID(), email: admin.email });
+        expect(adminGoogleLogin.user.id).toBe(admin.id);
+        expect(adminGoogleLogin.user.role).toBe('admin');
+        const adminSession = await db.userSession.findUniqueOrThrow({ where: { id: adminGoogleLogin.session.id } });
+        expect(adminSession.adminEmailVerifiedAt).not.toBeNull();
+        expect(adminSession.expiresAt.getTime() - Date.now()).toBeGreaterThan(7 * 86400000 - 10000);
+        expect(await db.oAuthIdentity.count({ where: { userId: admin.id, provider: 'google' } })).toBe(1);
     });
     it('registers via handler, queues encrypted OTP, verifies email, and prevents role escalation', async () => {
         const suffix = randomUUID().replaceAll('-', '').slice(0, 12);
