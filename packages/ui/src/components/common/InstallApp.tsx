@@ -15,6 +15,7 @@ export function InstallApp() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_PORTAL !== 'web') return;
     if ('serviceWorker' in navigator) {
       void navigator.serviceWorker.register('/sw.js').catch(() => undefined);
     }

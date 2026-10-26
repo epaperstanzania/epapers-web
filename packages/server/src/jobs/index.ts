@@ -18,6 +18,18 @@ const payloadSchema = z.object({ fileId: z.string().uuid().optional(), paperId: 
 let stopping = false, lastMaintenance = 0, lastCleanup = 0, lastXpDay = '';
 process.on('SIGTERM', () => { stopping = true; });
 process.on('SIGINT', () => { stopping = true; });
+function safeErrorDetails(error: unknown): { errorType: string; errorCode?: string } {
+    if (!(error instanceof Error)) {
+        return { errorType: typeof error };
+    }
+    const code = typeof error === 'object' && error !== null && 'code' in error && typeof error.code === 'string'
+        ? error.code
+        : undefined;
+    return {
+        errorType: error.name,
+        ...(code && /^[A-Z0-9_]{1,32}$/i.test(code) ? { errorCode: code } : {}),
+    };
+}
 export async function tick(): Promise<boolean> {
     const token = randomUUID();
     const [job] = await db.$queryRaw<Array<{ id: string; type: string; payload: unknown; attempts: number; createdAt: Date }>>`
@@ -96,7 +108,13 @@ export async function tick(): Promise<boolean> {
             await reviewEffects(p.paperId!, p.reviewId);
         await withTransactionRetry(tx => tx.job.updateMany({ where: { id: job.id, leaseToken: token }, data: { status: 'done', leaseToken: null, lastError: null } }));
     }
-    catch {
+    catch (error) {
+        logger.error({
+            jobId: job.id,
+            jobType: job.type,
+            attempt: job.attempts,
+            ...safeErrorDetails(error),
+        }, 'Background job processing failed');
         await withTransactionRetry(tx => tx.job.updateMany({ where: { id: job.id, leaseToken: token }, data: { status: job.attempts >= 8 ? 'failed' : 'pending', leaseToken: null, runAt: new Date(Date.now() + Math.min(3600000, 1000 * 2 ** (job.attempts - 1))), lastError: 'Job processing failed' } }));
     }
     return true;

@@ -287,12 +287,17 @@ Pop-Location
 ```
 
 The typed project config in `worker/cloudflare.config.ts` names the Worker and
-installs a `*/1 * * * *` Cron Trigger. Verify deployment in the Cloudflare
-dashboard under **Workers & Pages → epapers-background-worker → Triggers** and
-inspect its invocation logs. Cron changes can take several minutes to propagate.
-Successful runs log `Scheduled worker batch completed` with a processed count;
+installs a `*/1 * * * *` Cron Trigger and enables persistent Worker logs with
+100% head sampling and invocation logs. After deployment, verify the trigger in
+the Cloudflare dashboard under **Workers & Pages → epapers-background-worker →
+Triggers**, then inspect **Observability → Logs**. Cron changes can take several
+minutes to propagate. Successful runs log `Scheduled worker batch completed`
+with a processed count;
 `processed: 0` means the endpoint ran but there were no due jobs. Confirm the
 database `workerHeartbeat` setting advances and monitor failed/retrying jobs.
+For worker batches that return 500, check the Vercel web/API function logs for
+`Scheduled worker batch failed`; individual job failures are logged with the job
+ID/type, attempt, error type and safe error code (never the message or payload).
 
 Do not deploy the Vercel portals as part of a Worker-only release. Do not run
 database migrations from the Cron Worker; keep migrations in the existing

@@ -183,7 +183,14 @@ export function route<T>(
                     { status: 409 },
                 );
             } else {
-                logger.error({ err: error, requestId }, 'Request failed');
+                const errorCode = typeof code === 'string' && /^[A-Z0-9_]{1,32}$/i.test(code) ? code : undefined;
+                logger.error({
+                    err: error,
+                    requestId,
+                    route: name,
+                    errorType: error instanceof Error ? error.name : typeof error,
+                    ...(errorCode ? { errorCode } : {}),
+                }, 'Request failed');
                 response = NextResponse.json(
                     { error: { code: 'INTERNAL_ERROR', message: 'Service is temporarily unavailable' } },
                     { status: 500 },

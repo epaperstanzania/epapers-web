@@ -11,5 +11,18 @@ export default defineConfig({
             EPAPERS_WORKER_TOKEN: bindings.secret(),
         },
         triggers: [triggers.scheduled({ schedule: '*/1 * * * *' })],
+        observability: {
+            logs: {
+                enabled: true,
+                headSamplingRate: 1,
+                invocationLogs: true,
+                persist: true,
+            },
+            traces: {
+                enabled: false,
+                headSamplingRate: 1,
+                persist: true,
+            },
+        },
     },
 });
