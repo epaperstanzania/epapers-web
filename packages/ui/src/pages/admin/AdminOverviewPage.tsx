@@ -146,10 +146,10 @@ export const AdminOverviewPage: React.FC = () => {
 
           <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
             {[
-              { label: 'Papers awaiting review', count: stats.pendingPapers, to: '/admin/review' },
-              { label: 'Reports awaiting review', count: stats.pendingFlags, to: '/admin/flags' },
-              { label: 'Takedown requests awaiting review', count: stats.pendingTakedowns, to: '/admin/takedowns' },
-              { label: 'Module and paper requests awaiting review', count: stats.pendingModuleReqs + stats.pendingPaperReqs, to: '/admin/module-requests' },
+              { label: 'Papers awaiting review', count: stats.pendingPapers.toLocaleString(), to: '/admin/review' },
+              { label: 'Reports awaiting review', count: stats.pendingFlags.toLocaleString(), to: '/admin/flags' },
+              { label: 'Takedown requests awaiting review', count: stats.pendingTakedowns.toLocaleString(), to: '/admin/takedowns' },
+              { label: 'Module / paper requests awaiting review', count: `${stats.pendingModuleReqs.toLocaleString()} / ${stats.pendingPaperReqs.toLocaleString()}`, to: '/admin/module-requests' },
             ].map((task) => (
               <Link
                 key={task.to}
@@ -158,7 +158,7 @@ export const AdminOverviewPage: React.FC = () => {
               >
                 <span className="min-w-0 leading-5">{task.label}</span>
                 <span className="flex shrink-0 items-center gap-2 text-[var(--color-primary)]">
-                  <span>{task.count.toLocaleString()}</span>
+                  <span>{task.count}</span>
                   <ArrowRight aria-hidden="true" className="h-4 w-4" />
                 </span>
               </Link>
