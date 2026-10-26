@@ -288,7 +288,7 @@
   min-height: 18rem;
   border-radius: 1.5rem;
   background-color: #00337a;
-  background-image: linear-gradient(90deg, rgba(0, 31, 78, .96), rgba(0, 51, 122, .80) 65%, rgba(0, 51, 122, .35)), url('/images/dit-community.jpg');
+  background-image: linear-gradient(90deg, rgba(0, 31, 78, .96), rgba(0, 51, 122, .80) 65%, rgba(0, 51, 122, .35)), url('/images/academic-community.jpg');
   background-position: center;
   background-size: cover;
   padding: clamp(1.5rem, 5vw, 3.5rem);

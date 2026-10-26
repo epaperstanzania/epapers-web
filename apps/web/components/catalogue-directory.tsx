@@ -65,7 +65,7 @@ export function DepartmentsDirectory({ departments }: { departments: Department[
     <div className={styles.directory}>
       <header className={styles.hero}>
         <div className={styles.heroContent}>
-          <p className={styles.eyebrow}>DIT academic community</p>
+          <p className={styles.eyebrow}>The EPapers community</p>
           <h1 className={styles.heroTitle}>Explore departments</h1>
           <p className={styles.heroDescription}>Find a field of study, then explore its programs, modules, and examination papers.</p>
         </div>

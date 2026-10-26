@@ -2,7 +2,7 @@
   "id": "/",
   "name": "EPapers Lecturer",
   "short_name": "EPapers Lecturer",
-  "description": "Review and contribute DIT examination papers.",
+  "description": "Review and share examination papers with the EPapers community.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

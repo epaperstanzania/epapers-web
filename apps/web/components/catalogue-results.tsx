@@ -48,7 +48,7 @@ export function HomeHero() {
       <div className={styles.heroContent}>
         <p className={styles.heroEyebrow}>Tusome Pamoja</p>
         <h1>Prepare with confidence.</h1>
-        <p>Explore examination papers by department, program and module. A shared academic archive, built by the DIT community.</p>
+        <p>Explore examination papers by department, program and module. A shared academic archive, built by the EPapers community.</p>
         <Link href="/departments">Browse departments <span aria-hidden="true">→</span></Link>
       </div>
     </section>
@@ -60,7 +60,7 @@ export function PageHeading({ kind }: { kind: 'search' | 'popular' }) {
     <header className={styles.pageHeading}>
       <p className={styles.eyebrow}>{kind === 'popular' ? 'Community favourites' : 'The examination archive'}</p>
       <h1>{kind === 'popular' ? 'Popular papers' : 'Search examination papers'}</h1>
-      <p>{kind === 'popular' ? 'Discover papers the DIT community uses most.' : 'Find past papers by module, category, year and semester.'}</p>
+      <p>{kind === 'popular' ? 'Discover papers learners across the EPapers community use most.' : 'Find past papers by module, category, year and semester.'}</p>
     </header>
   );
 }

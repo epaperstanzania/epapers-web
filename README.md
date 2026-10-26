@@ -1,8 +1,9 @@
 # EPapers V2
 
-EPapers is the DIT examination-paper archive. V2 migrates the existing application
-into four independently deployable Next.js App Router portals. The canonical API,
-database, identity, moderation rules, and background jobs remain shared.
+EPapers is a shared academic examination-paper archive for learners and educators.
+The current catalogue is based on DIT's curriculum. V2 migrates the existing
+application into four independently deployable Next.js App Router portals. The
+canonical API, database, identity, moderation rules, and background jobs remain shared.
 
 | Workspace | Local port | Production origin |
 | --- | --- | --- |

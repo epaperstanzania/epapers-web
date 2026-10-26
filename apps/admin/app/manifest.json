@@ -2,7 +2,7 @@
   "id": "/",
   "name": "EPapers Admin",
   "short_name": "EPapers Admin",
-  "description": "Manage the DIT examination archive.",
+  "description": "Manage the EPapers academic archive.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

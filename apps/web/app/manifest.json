@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "EPapers — DIT Examination Archive",
+  "name": "EPapers — Examination Archive",
   "short_name": "EPapers",
-  "description": "Browse and download DIT examination papers.",
+  "description": "Browse and download examination papers from the EPapers community.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -2,7 +2,7 @@
   "id": "/",
   "name": "EPapers Contributor",
   "short_name": "EPapers Upload",
-  "description": "Contribute DIT examination papers.",
+  "description": "Share examination papers with the EPapers community.",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",

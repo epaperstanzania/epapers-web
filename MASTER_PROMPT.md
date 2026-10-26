@@ -6,7 +6,7 @@ This document records the current EPapers architecture and provides a copy-ready
 
 ### Product
 
-EPapers is a single-institution (DIT) academic past-examination-paper archive. Its curriculum hierarchy is:
+EPapers is a community-facing academic past-examination-paper archive. The current catalogue is based on a single institution's curriculum (DIT); do not present DIT as the product brand or imply multi-university support unless that capability is explicitly implemented. Its curriculum hierarchy is:
 
 ```text
 Department → Program → Module → Examination paper
@@ -204,10 +204,14 @@ one session model, and consistent authorization across them:
 
 ## Product identity and scope
 
-EPapers is a single-institution (DIT) examination-paper archive, not a
-multi-tenant marketplace. The core hierarchy is Department → Program → Module
-→ Paper. Preserve the existing brand, terminology, workflows, and permissions.
-Do not invent unrelated features or silently remove existing ones.
+EPapers is a community-facing examination-paper archive. The current
+implementation has one institution's catalogue (DIT), not a multi-tenant
+marketplace. Keep the public-facing brand focused on the EPapers community and
+avoid repeatedly naming one institution. Do not add or claim university
+selection, cross-university catalogue isolation, or multi-tenant support unless
+those features are explicitly requested and implemented. The core hierarchy is
+Department → Program → Module → Paper. Preserve existing workflows and
+permissions; do not invent unrelated features or silently remove existing ones.
 
 Implement four coherent portals with clear ownership boundaries:
 
