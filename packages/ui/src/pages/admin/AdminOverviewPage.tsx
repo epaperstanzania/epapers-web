@@ -9,15 +9,9 @@ import {
   Split,
   Flag,
   FileMinus,
-  PlusSquare,
-  Users,
-  HardDrive,
-  Activity,
   ArrowRight,
-  CheckCircle,
-  AlertTriangle,
+  Download,
   History,
-  FileText,
 } from 'lucide-react';
 
 export const AdminOverviewPage: React.FC = () => {
@@ -60,72 +54,78 @@ export const AdminOverviewPage: React.FC = () => {
     </div>
   );
 
+  const metricCards = [
+    {
+      label: 'Pending moderation',
+      value: stats.pendingPapers.toLocaleString(),
+      detail: 'papers awaiting review',
+      icon: Split,
+      iconStyle: 'bg-[var(--color-warning-soft)] text-[var(--color-warning-text)]',
+      to: '/admin/review',
+    },
+    {
+      label: 'Flagged reports',
+      value: stats.pendingFlags.toLocaleString(),
+      detail: 'reports need attention',
+      icon: Flag,
+      iconStyle: 'bg-[var(--color-danger-soft)] text-[var(--color-danger)]',
+      to: '/admin/flags',
+    },
+    {
+      label: 'Takedown requests',
+      value: stats.pendingTakedowns.toLocaleString(),
+      detail: 'requests awaiting review',
+      icon: FileMinus,
+      iconStyle: 'bg-[var(--color-blue-tint)] text-[var(--color-primary)]',
+      to: '/admin/takedowns',
+    },
+    {
+      label: 'Total downloads',
+      value: stats.totalDownloads.toLocaleString(),
+      detail: `across ${stats.totalPapers.toLocaleString()} approved papers`,
+      icon: Download,
+      iconStyle: 'bg-[var(--color-cyan-tint)] text-[var(--color-accent-dark)]',
+    },
+  ];
+
   return (
-    <div className="min-w-0 space-y-5 sm:space-y-8">
-      {/* Top Header */}
+    <div className="min-w-0 space-y-5 sm:space-y-7">
+      <header className="space-y-1">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-primary)]">Administration</p>
+        <h1 className="font-heading text-2xl font-bold tracking-tight text-[var(--color-text)] sm:text-3xl">Overview</h1>
+        <p className="max-w-2xl text-sm leading-6 text-[var(--color-text-muted)]">
+          Review priority queues and monitor activity across the archive.
+        </p>
+      </header>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <Link
-          to="/admin/review"
-          className="min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-3.5 sm:p-5 shadow-xs hover:border-[var(--color-accent)] transition-all"
-        >
-          <div className="flex justify-between items-center text-xs text-[var(--color-text-muted)] mb-2">
-            <span className="font-bold uppercase tracking-wider">Pending Moderation</span>
-            <span className="w-7 h-7 rounded-lg bg-[var(--color-warning-soft)]  text-[var(--color-warning-text)]  flex items-center justify-center font-bold">
-              {stats.pendingPapers}
-            </span>
-          </div>
-          <span className="font-heading font-black text-xl sm:text-3xl text-[var(--color-text)] break-words">
-            {stats.pendingPapers} Papers
-          </span>
-        </Link>
+      <div className="grid min-w-0 grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:gap-4 xl:grid-cols-4">
+        {metricCards.map((card) => {
+          const Icon = card.icon;
+          const content = (
+            <>
+              <div className="flex min-w-0 items-start justify-between gap-3">
+                <span className="text-xs font-semibold leading-5 text-[var(--color-text-muted)] sm:text-sm">{card.label}</span>
+                <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${card.iconStyle}`}>
+                  <Icon aria-hidden="true" className="h-5 w-5" />
+                </span>
+              </div>
+              <div className="mt-4">
+                <p className="break-words font-heading text-2xl font-bold tracking-tight text-[var(--color-text)] sm:text-3xl">
+                  {card.value}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-[var(--color-text-muted)]">{card.detail}</p>
+              </div>
+            </>
+          );
+          const className = 'flex min-h-36 min-w-0 flex-col justify-between rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-xs transition-colors hover:border-[var(--color-accent)] focus-visible:border-[var(--color-accent)] sm:min-h-40 sm:p-5';
 
-        <Link
-          to="/admin/flags"
-          className="min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-3.5 sm:p-5 shadow-xs hover:border-[var(--color-accent)] transition-all"
-        >
-          <div className="flex justify-between items-center text-xs text-[var(--color-text-muted)] mb-2">
-            <span className="font-bold uppercase tracking-wider">Flagged Reports</span>
-            <span className="w-7 h-7 rounded-lg bg-[var(--color-danger-soft)]  text-[var(--color-danger)] flex items-center justify-center font-bold">
-              {stats.pendingFlags}
-            </span>
-          </div>
-          <span className="font-heading font-black text-xl sm:text-3xl text-[var(--color-text)] break-words">
-            {stats.pendingFlags} Reports
-          </span>
-        </Link>
-
-        <Link
-          to="/admin/takedowns"
-          className="min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-3.5 sm:p-5 shadow-xs hover:border-[var(--color-accent)] transition-all"
-        >
-          <div className="flex justify-between items-center text-xs text-[var(--color-text-muted)] mb-2">
-            <span className="font-bold uppercase tracking-wider">Takedown Inquiries</span>
-            <span className="w-7 h-7 rounded-lg bg-[var(--color-sidebar)]  text-[var(--color-text)]  flex items-center justify-center font-bold">
-              {stats.pendingTakedowns}
-            </span>
-          </div>
-          <span className="font-heading font-black text-xl sm:text-3xl text-[var(--color-text)] break-words">
-            {stats.pendingTakedowns} Notice
-          </span>
-
-        </Link>
-
-        <div className="min-w-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-3.5 sm:p-5 shadow-xs">
-          <div className="flex justify-between items-center text-xs text-[var(--color-text-muted)] mb-2">
-            <span className="font-bold uppercase tracking-wider">Total Download Volume</span>
-            <span className="w-7 h-7 rounded-lg bg-[var(--color-blue-tint)]  text-[var(--color-primary)] flex items-center justify-center font-bold">
-              DL
-            </span>
-          </div>
-          <span className="font-heading font-black text-xl sm:text-3xl text-[var(--color-primary)] break-words">
-            {stats.totalDownloads.toLocaleString()}
-          </span>
-          <span className="block text-xs text-[var(--color-neutral)] mt-1">
-            Across {stats.totalPapers} active papers
-          </span>
-        </div>
+          return card.to ? (
+            <Link key={card.label} to={card.to} className={className}>{content}</Link>
+          ) : (
+            <div key={card.label} className={className}>{content}</div>
+          );
+        })}
       </div>
 
       {/* Split section: Action shortcuts & Recent Audit Log */}
@@ -144,19 +144,25 @@ export const AdminOverviewPage: React.FC = () => {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Link to="/admin/review" className="rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] p-4 text-sm font-semibold text-[var(--color-text)] hover:border-[var(--color-primary)]">
-              {stats.pendingPapers} papers awaiting review
-            </Link>
-            <Link to="/admin/flags" className="rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] p-4 text-sm font-semibold text-[var(--color-text)] hover:border-[var(--color-primary)]">
-              {stats.pendingFlags} reports awaiting review
-            </Link>
-            <Link to="/admin/takedowns" className="rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] p-4 text-sm font-semibold text-[var(--color-text)] hover:border-[var(--color-primary)]">
-              {stats.pendingTakedowns} takedown requests awaiting review
-            </Link>
-            <Link to="/admin/module-requests" className="rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] p-4 text-sm font-semibold text-[var(--color-text)] hover:border-[var(--color-primary)]">
-              {stats.pendingModuleReqs} module and {stats.pendingPaperReqs} paper requests awaiting review
-            </Link>
+          <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
+            {[
+              { label: 'Papers awaiting review', count: stats.pendingPapers, to: '/admin/review' },
+              { label: 'Reports awaiting review', count: stats.pendingFlags, to: '/admin/flags' },
+              { label: 'Takedown requests awaiting review', count: stats.pendingTakedowns, to: '/admin/takedowns' },
+              { label: 'Module and paper requests awaiting review', count: stats.pendingModuleReqs + stats.pendingPaperReqs, to: '/admin/module-requests' },
+            ].map((task) => (
+              <Link
+                key={task.to}
+                to={task.to}
+                className="flex min-h-16 min-w-0 items-center justify-between gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] p-3.5 text-sm font-semibold text-[var(--color-text)] transition-colors hover:border-[var(--color-primary)] sm:p-4"
+              >
+                <span className="min-w-0 leading-5">{task.label}</span>
+                <span className="flex shrink-0 items-center gap-2 text-[var(--color-primary)]">
+                  <span>{task.count.toLocaleString()}</span>
+                  <ArrowRight aria-hidden="true" className="h-4 w-4" />
+                </span>
+              </Link>
+            ))}
           </div>
         </div>
 

@@ -196,8 +196,13 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
       {/* Mobile Drawer */}
       {mobileDrawerOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="fixed inset-0 bg-[var(--color-text)]/40" onClick={() => setMobileDrawerOpen(false)} />
-          <div className="relative w-[280px] max-w-[80vw] bg-[var(--color-sidebar)] text-[var(--color-text)] h-full flex flex-col p-4 shadow-sm z-50 border-r border-[var(--color-sidebar-border)]">
+          <button
+            type="button"
+            aria-label="Close admin navigation"
+            className="fixed inset-0 cursor-default bg-[var(--color-text)]/40"
+            onClick={() => setMobileDrawerOpen(false)}
+          />
+          <div role="dialog" aria-modal="true" aria-label="Admin navigation" className="relative z-50 flex h-full w-[280px] max-w-[80vw] flex-col border-r border-[var(--color-sidebar-border)] bg-[var(--color-sidebar)] p-4 text-[var(--color-text)] shadow-sm">
             <div className="flex items-center justify-between pb-3 border-b border-[var(--color-sidebar-border)]">
               <div className="flex items-center gap-2">
                 <EPapersLogo collapsed={false} />
@@ -206,8 +211,10 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                 </span>
               </div>
               <button
+                type="button"
+                aria-label="Close admin navigation"
                 onClick={() => setMobileDrawerOpen(false)}
-                className="p-1 rounded text-[var(--color-neutral)] hover:text-[var(--color-text)]"
+                className="grid min-h-11 min-w-11 place-items-center rounded-lg text-[var(--color-neutral)] hover:bg-[var(--color-hover)] hover:text-[var(--color-text)]"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -221,7 +228,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                     aria-expanded={openGroup === group.title}
                     aria-controls={`admin-mobile-nav-${idx}`}
                     onClick={() => setOpenGroup((current) => current === group.title ? '' : group.title)}
-                    className="flex min-h-9 w-full items-center justify-between rounded-md px-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-hover)] hover:text-[var(--color-text)]"
+                    className="flex min-h-11 w-full items-center justify-between rounded-md px-2 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-hover)] hover:text-[var(--color-text)]"
                   >
                     <span>{group.title}</span>
                     <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${openGroup === group.title ? 'rotate-180' : ''}`} />
@@ -243,7 +250,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                         end={item.to === '/admin'}
                         onClick={() => setMobileDrawerOpen(false)}
                         className={({ isActive }) =>
-                          `flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-colors ${
+                          `flex min-h-11 items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-colors ${
                             isActive
                               ? 'bg-[var(--color-active)] text-[var(--color-primary)] font-semibold'
                               : 'text-[var(--color-text)] hover:bg-[var(--color-hover)]'
@@ -277,8 +284,8 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
       {/* Main Admin Viewport */}
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar onOpenMobileDrawer={() => setMobileDrawerOpen(true)} variant="admin" />
-        <main id="main-content" className="epapers-portal-main flex-1 min-w-0 p-4 sm:p-6 lg:p-8 max-w-[1280px] w-full mx-auto">
-          <div key={location.pathname} className="epapers-page-transition">{children}</div>
+        <main id="main-content" className="epapers-portal-main mx-auto min-h-0 w-full min-w-0 max-w-[1280px] flex-1 p-4 sm:p-6 lg:p-8">
+          <div key={location.pathname} className="epapers-page-transition min-w-0">{children}</div>
         </main>
       </div>
     </div>

@@ -1,9 +1,9 @@
 import { bindings, defineConfig, triggers } from 'cf/config';
 import * as entrypoint from './cloudflare.ts' with { type: 'cf-worker' };
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
     worker: {
-        name: 'epapers-background-worker',
+        name: mode === 'backup' ? 'epapers-background-worker-backup' : 'epapers-background-worker',
         entrypoint,
         compatibilityDate: '2026-10-24',
         env: {
@@ -25,4 +25,4 @@ export default defineConfig({
             },
         },
     },
-});
+}));

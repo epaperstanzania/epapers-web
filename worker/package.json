@@ -13,7 +13,8 @@
     "start": "node --conditions=react-server --import tsx index.ts",
     "dev:cloudflare": "cf dev",
     "types:cloudflare": "cf workers types",
-    "deploy:cloudflare": "cf deploy"
+    "deploy:cloudflare": "cf deploy",
+    "deploy:cloudflare:backup": "cf deploy --mode backup"
   },
   "dependencies": {
     "@epapers/server": "workspace:*",

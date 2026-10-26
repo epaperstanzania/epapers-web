@@ -286,6 +286,20 @@ cf deploy --secrets-file .secrets
 Pop-Location
 ```
 
+For a second Worker with the same code, API origin, cron schedule and shared
+secret but a separate deployment name, first run a dry run and then deploy the
+backup from the repository root:
+
+```powershell
+pnpm --filter @epapers/worker exec cf deploy --mode backup --dry-run --secrets-file .secrets
+pnpm --filter @epapers/worker exec cf deploy --mode backup --secrets-file .secrets
+```
+
+The backup is active alongside the primary, not a standby: both Cron Triggers
+run every minute and add requests to the same API. The database job claim uses
+`FOR UPDATE SKIP LOCKED` to avoid two workers claiming the same job. Configure
+the same current `EPAPERS_WORKER_TOKEN` secret on both Workers and Vercel.
+
 The typed project config in `worker/cloudflare.config.ts` names the Worker and
 installs a `*/1 * * * *` Cron Trigger and enables persistent Worker logs with
 100% head sampling and invocation logs. After deployment, verify the trigger in
