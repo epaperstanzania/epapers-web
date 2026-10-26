@@ -93,7 +93,7 @@ export const GuestLayout: React.FC<{ children: React.ReactNode }> = ({ children 
         {/* Footer Info */}
         {!collapsed && (
           <div className="p-3 border-t border-[var(--color-sidebar-border)] text-[11px] text-[var(--color-text-muted)]">
-            <p className="font-semibold text-[var(--color-text)]">EPapers · DIT</p>
+            <p className="font-semibold text-[var(--color-text)]">Tusome Pamoja</p>
             <p className="mt-0.5">SourceExam Archive</p>
             <div className="flex gap-2 mt-1.5 text-[10px]">
               <Link to="/terms" className="hover:underline">Terms</Link>

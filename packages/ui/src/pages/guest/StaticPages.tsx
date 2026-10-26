@@ -27,7 +27,7 @@ export const HowItWorksPage: React.FC = () => (
       style={{ backgroundImage: "linear-gradient(105deg,rgba(0,31,78,.9),rgba(0,51,122,.72)),url('/images/tusome.jpg')" }}
     >
       <div className="p-6 text-white sm:p-10">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-200">EPapers · DIT</p>
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-200">Tusome Pamoja</p>
         <h1 className="mt-2 font-bold text-2xl sm:text-3xl">
           How EPapers Works
         </h1>
@@ -127,7 +127,7 @@ export const AboutPage: React.FC = () => (
   <div className="max-w-4xl mx-auto space-y-6">
     <div className="bg-[var(--color-surface)]  border border-[var(--color-border)]  rounded-xl p-6 sm:p-10 space-y-4">
       <div className="inline-flex items-center px-2.5 py-1 rounded-md bg-[var(--color-blue-tint)] text-[var(--color-primary)]   text-xs font-semibold">
-        EPapers · DIT
+        Tusome Pamoja
       </div>
 
       <h1 className="font-bold text-2xl sm:text-3xl text-[var(--color-text)] ">
